@@ -1,5 +1,6 @@
 # abstract\_hugpy
 ## Description
+**Description:**  
 A batteries-included bridge between your **abstract\_\*** ecosystem and popular **Hugging Face–style** NLP/Speech models. It packages **local model runners**, **text utilities**, **video→audio→transcribe→summarize** workflows, and optional **Flask blueprints** so you can expose everything over HTTP with almost no glue code.
 
 * Repository: `https://github.com/AbstractEndeavors/abstract_hugpy`

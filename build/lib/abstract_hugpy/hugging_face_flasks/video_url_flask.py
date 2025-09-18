@@ -243,7 +243,7 @@ def getThumbnailDirUrl():
         return get_json_call_response(value=message,status_code=500)
 
 @video_url_bp.route("/get_all_data", methods=["POST","GET"])
-def getThumbnailDirUrl():
+def getAllDataUrl():
     data = get_request_data(request)
     initialize_call_log(data=data)
     try:        

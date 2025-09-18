@@ -6,6 +6,7 @@ from PIL import Image
 import moviepy.editor as mp
 from moviepy.editor import *
 from abstract_ocr import extract_image_texts_from_directory
+from abstract_utilities import get_logFile
 _logger = get_logFile('image_utils')
 _logger.info('started')
 

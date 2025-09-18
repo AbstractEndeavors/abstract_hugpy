@@ -56,6 +56,7 @@ def init_data(self, video_url, video_id):
         'video_id': video_id,
         'directory': dir_path,
         'info_path': info_path,
+        'video_basename': video_basename,
         'video_path': video_path,
         'thumbnails_dir': thumbnails_dir,
         'total_info_path': total_info_path,
@@ -69,14 +70,17 @@ def init_data(self, video_url, video_id):
     }
     
     if os.path.isfile(data['whisper_path']):
-        data['whisper'] = safe_read_from_json(data['whisper_path'])
+        data['whisper'] = safe_load_from_file(data['whisper_path'])
     if os.path.isfile(data['metadata_path']):
         data['metadata'] = safe_load_from_file(data['metadata_path'])
     if os.path.isfile(data['thumbnails_path']):
         data['thumbnails'] = safe_load_from_file(data['thumbnails_path'])
     if os.path.isfile(data['srt_path']):
-        data['captions'] = safe_load_from_file(data['srt_path'])
-    
+        subs = pysrt.open(data['srt_path'])
+        data['captions'] = [
+            {"start": str(sub.start), "end": str(sub.end), "text": sub.text}
+            for sub in subs
+        ]
     self.update_url_data(data,video_url=video_url, video_id=video_id)
     return data
 def update_url_data(self,data,video_url=None, video_id=None):
@@ -105,8 +109,8 @@ def update_spec_data(self,spec_data,key,path_key,video_url=None, video_id=None,d
 def download_video(self, video_url):
     data = self.get_data(video_url)
     if not os.path.isfile(data['video_path']):
-        video_info = VideoDownloader(video_url, download_directory=data['directory']).info
-        safe_dump_to_file(video_info, data['info_path'])
+        video_info = for_dl_video(url=video_url, preferred_format="mp4",download_directory=data['directory'],output_filename=data['video_basename'],download_video=True)
+        safe_dump_to_file(data=video_info, file_path=data['info_path'])
         data['info'] = video_info
     return data['info']
 def get_all_data(self, video_url):

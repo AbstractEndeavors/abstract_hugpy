@@ -57,35 +57,43 @@ def load_gen_config() -> GenerationConfig:
     return GenerationConfig(**config)
 
 def run_t5_inference(text: str, min_length: int, max_length: int) -> str:
-    inputs = tokenizer("summarize: " + normalize_text(text), return_tensors="pt", truncation=True, max_length=512)
+    inputs = get_tokenizer()(
+        "summarize: " + normalize_text(text),
+        return_tensors="pt",
+        truncation=True,
+        max_length=512
+    )
     model = T5ForConditionalGeneration.from_pretrained(DEFAULT_DIR)
     gen_cfg = load_gen_config()
+
+    # Adjust to behave like pipeline
     gen_cfg.min_length = min_length
     gen_cfg.max_length = max_length
+    gen_cfg.no_repeat_ngram_size = 3   # reduce repetition
+    gen_cfg.num_beams = 4              # beam search for coherence
+    gen_cfg.early_stopping = True      # stop when done, don’t pad rambling
+
     with torch.no_grad():
-        out = model.generate(inputs.input_ids, **asdict(gen_cfg))
+        out = model.generate(inputs.input_ids, **gen_cfg.to_dict())
     return get_tokenizer().decode(out[0], skip_special_tokens=True)
 
-def summarize(
+
+def get_summary(
     text: str,
     summary_mode: Literal["short","medium","long","auto"] = "medium",
-    max_chunk_tokens: int = DEFAULT_CHUNK_TOK,
+    max_chunk_tokens: int = 200,   # smaller, like your split_to_chunk
     min_length: Optional[int] = None,
     max_length: Optional[int] = None
 ) -> str:
     txt = normalize_text(text)
-    tok_cnt = len(get_tokenizer().tokenize(txt))
-    if tok_cnt <= SHORTCUT_THRESHOLD:
-        mn = min_length or int(tok_cnt * 0.25)
-        mx = max_length or int(tok_cnt * 0.6)
-        return clean_output_text(run_t5_inference(txt, mn, mx))
     chunks = chunk_text(txt, max_chunk_tokens)
-    parts = []
+    summaries = []
     for chunk in chunks:
         cnt = len(get_tokenizer().tokenize(chunk))
         mn, mx = (min_length, max_length) if min_length and max_length else scale_lengths(summary_mode, cnt)
-        parts.append(clean_output_text(run_t5_inference(chunk, mn, mx)))
-    merged = " ".join(parts)
-    cnt2 = len(get_tokenizer().tokenize(merged))
-    mn2, mx2 = (min_length, max_length) if min_length and max_length else scale_lengths(summary_mode, cnt2)
-    return clean_output_text(run_t5_inference(merged, mn2, mx2))
+        summaries.append(clean_output_text(run_t5_inference(chunk, mn, mx)))
+    merged = " ".join(summaries)
+    words = merged.split()
+    if len(words) > 150:  # like your pipeline cutoff
+        merged = " ".join(words[:150]) + "..."
+    return merged

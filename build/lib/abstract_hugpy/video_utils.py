@@ -6,7 +6,7 @@ from .hugging_face_models.whisper_model import *
 from .image_utils import *
 from abstract_webtools import get_video_info, VideoDownloader
 from abstract_apis import *
-from abstract_videos.text_tools.summarizer_utils.summarizer_services import get_summary
+##from abstract_videos.text_tools.summarizer_utils.summarizer_services import get_summary
 from abstract_utilities.abstract_classes import SingletonMeta
 from abstract_utilities import make_list,get_logFile, safe_dump_to_file, safe_load_from_file, safe_read_from_json,get_any_value
 REMOVE_PHRASES = ['Video Converter', 'eeso', 'Auseesott', 'Aeseesott', 'esoft']
@@ -53,11 +53,67 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             self.initialized = True
             self.videos_directory = get_abs_videos_directory(VIDEOS_DIRECTORY)
             self.url_data = {}
+            self.complete_key_map={
+                "video_path":{"keys":True,"path":'video_path'},
+                "audio_path":{"keys":True,"path":'audio_path'},
+                "info":{"keys":True,"path":'info_path'},
+                "whisper":{"keys":['segments','text'],"path":'whisper_path'},
+                "metadata":{"keys":['keywords','description','title'],"path":'metadata_path'},
+                "captions":{"keys":True,"path":'srt_path'},
+                "thumbnails":{"keys":["thumbnail_texts","thumbnail_paths"],"path":'thumbnails_path'}
+                }
+            self.init_key_map={
+                "video_path":False,
+                "audio_path":False,
+                "info":False,
+                "whisper":False,
+                "metadata":False,
+                "captions":False,
+                "thumbnails":False
+                }
+            self.complete_keys = list(self.complete_key_map.keys())
+    def is_complete(self,key=None,video_url=None, video_id=None):
+        data = self.get_data(video_url=video_url, video_id=video_id)
+        if not os.path.isfile(data['total_info_path']):
+            safe_dump_to_file(data=self.init_key_map,file_path=data['total_info_path'])
+        total_info = safe_read_from_json(data['total_info_path'])
+        keys = make_list(key or self.complete_keys)
 
+        if total_info.get('total') == True:
+            return True
+        for key in keys:
+            if total_info.get(key) != True:
+                values = self.complete_key_map.get(key)
+                value_keys = values.get("keys")
+                path = data.get(values.get("path"))
+                if value_keys == True:
+                    if os.path.isfile(path):
+                        total_info[key] = True
+                else:
+                    key_data = safe_read_from_json(path)
+                    total_info_key = True
+                    for value_key in value_keys:
+                        key_value = key_data.get(value_key)
+                        if not key_value:
+                            total_info_key = False
+                            break
+                    if total_info_key:
+                        total_info[key] = True
+                        
+        total_bools = list(set(total_info.keys()))
+        if len(total_bools) == 1 and total_bools[0] == True:
+            total_info['total'] = True
+            total_data = self.get_data(video_url=video_url)
+            safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
+            safe_dump_to_file(data=total_data,file_path=data['total_data_path'])
+            return total_data
+        safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
     def _init_data(self, video_url, video_id):
         dir_path = os.path.join(self.videos_directory, video_id)
         os.makedirs(dir_path, exist_ok=True)
         info_path = os.path.join(dir_path, 'video_info.json')
+        total_info_path = os.path.join(dir_path, 'total_info.json')
+        total_data_path = os.path.join(dir_path, 'total_data.json') 
         thumbnails_dir = os.path.join(dir_path, 'thumbnails')
         os.makedirs(thumbnails_dir, exist_ok=True)
         video_info = VideoDownloader(video_url, download_directory=dir_path,download_video=False)
@@ -73,6 +129,8 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             'info_path': info_path,
             'video_path': video_path,
             'thumbnails_dir': thumbnails_dir,
+            'total_info_path': total_info_path,
+            'total_data_path':total_data_path,
             'thumbnails_path': os.path.join(dir_path, 'thumbnails.json'),
             'audio_path': os.path.join(dir_path, 'audio.wav'),
             'whisper_path': os.path.join(dir_path, 'whisper_result.json'),
@@ -87,8 +145,8 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             data['metadata'] = safe_load_from_file(data['metadata_path'])
         if os.path.isfile(data['thumbnails_path']):
             data['thumbnails'] = safe_load_from_file(data['thumbnails_path'])
-##        if os.path.isfile(data['srt_path']):
-##            data['captions'] = safe_load_from_file(data['srt_path'])
+        if os.path.isfile(data['srt_path']):
+            data['captions'] = safe_load_from_file(data['srt_path'])
         
         self.update_url_data(data,video_url=video_url, video_id=video_id)
         return data
@@ -133,7 +191,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
         data = self.get_data(video_url)
         thumbnails = self.get_thumbnail_data(video_url)
         thumbnail_paths = thumbnails.get('thumbnail_paths')
-        if thumbnail_paths == None:
+        if not thumbnail_paths:
             video_path =data.get('video_path')
             thumbnails_dir = data.get('thumbnails_dir')
             video_id = data.get('video_id')
@@ -144,9 +202,10 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
                 )
             data = self.update_thumbnails_data(thumbnails,video_url)
         thumbnail_texts = thumbnails.get('thumbnail_texts')
-        if thumbnail_texts == None:
+        if not thumbnail_texts:
             thumbnails['thumbnail_texts'] = [ocr_image(frame) for frame in thumbnail_paths]
             data = self.update_thumbnails_data(thumbnails,video_url)
+        self.is_complete(key='thumbnails',video_url=video_url)
         return data['thumbnails']
         
     def get_whisper_result(self, video_url):
@@ -156,6 +215,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             whisper = whisper_transcribe(audio)
             safe_dump_to_file(whisper, data['whisper_path'])
             data['whisper'] = whisper
+            self.is_complete(key='whisper',video_url=video_url)
         return data.get('whisper')
     def get_metadata_data(self, video_url):
         data = self.get_data(video_url)
@@ -190,17 +250,18 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
         data = self.get_data(video_url)
         metadata = self.get_metadata_data(video_url)
         title = metadata.get('title')
-        if title == None:
+        if not title:
             metadata['title'] = data['info'].get('title')
             data = self.update_meta_data(metadata,video_url)
         description = metadata.get('description')
-        if description == None:
+        if not description:
             metadata['description'] = self.get_video_summary(video_url)
             data = self.update_meta_data(metadata,video_url)
         keywords = metadata.get('keywords')
-        if keywords == None:
+        if not keywords:
             metadata['keywords'] = self.get_video_keywords(video_url)
             data = self.update_meta_data(metadata,video_url)
+        self.is_complete(key='metadata',video_url=video_url)
         return data['metadata']
     
     def get_captions(self, video_url):
@@ -208,32 +269,40 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
         if not os.path.isfile(data['srt_path']):
             whisper = self.get_whisper_result(video_url)
             export_srt(whisper.get('segments', []), data['srt_path'])
-##            data['captions'] = safe_load_from_file(data['srt_path'])
-##        return data['captions']
+            data['captions'] = safe_load_from_file(data['srt_path'])
+        self.is_complete(key='captions',video_url=video_url)
+        return data['captions']
 
     def get_all_data(self, video_url):
+        
+        data = self.is_complete(video_url=video_url)
+        if data:
+            return data
+        data = self.get_data(video_url)
         self.download_video(video_url)
         self.extract_audio(video_url)
         self.get_whisper_result(video_url)
         self.get_thumbnails(video_url)
         self.get_captions(video_url)
         self.get_metadata(video_url)
-        return self.get_data
-video_mgr = VideoDirectoryManager()
-
-def download_video(video_url): return video_mgr.download_video(video_url)
-def extract_video_audio(video_url): return video_mgr.extract_audio(video_url)
-def get_video_whisper_result(video_url): return video_mgr.get_whisper_result(video_url)
-def get_video_whisper_text(video_url): return video_mgr.get_whisper_text(video_url)
-def get_video_whisper_segments(video_url): return video_mgr.get_whisper_segments(video_url)
-def get_video_metadata(video_url): return video_mgr.get_metadata(video_url)
-def get_video_captions(video_url): return video_mgr.get_captions(video_url)
-def get_video_thumbnails(video_url): return video_mgr.get_thumbnails(video_url)
-def get_video_info(video_url): return video_mgr.get_data(video_url).get('info')
-def get_video_directory(video_url): return video_mgr.get_data(video_url).get('directory')
-def get_video_path(video_url): return video_mgr.get_data(video_url).get('video_path')
-def get_audio_path(video_url): return video_mgr.get_data(video_url).get('audio_path')
-def get_thumbnail_dir(video_url): return video_mgr.get_data(video_url).get('thumbnail_dir')
-def get_srt_path(video_url): return video_mgr.get_data(video_url).get('srt_path')
-def get_metadata_path(video_url): return video_mgr.get_data(video_url).get('metadata_path')
-def get_all_data(video_url): return video_mgr.get_all_data(video_url)
+        video_id = get_video_id(video_url)
+        return self.url_data[video_id]
+def get_video_mgr():
+    video_mgr = VideoDirectoryManager()
+    return video_mgr
+def download_video(video_url): return get_video_mgr().download_video(video_url)
+def extract_video_audio(video_url): return get_video_mgr().extract_audio(video_url)
+def get_video_whisper_result(video_url): return get_video_mgr().get_whisper_result(video_url)
+def get_video_whisper_text(video_url): return get_video_mgr().get_whisper_text(video_url)
+def get_video_whisper_segments(video_url): return get_video_mgr().get_whisper_segments(video_url)
+def get_video_metadata(video_url): return get_video_mgr().get_metadata(video_url)
+def get_video_captions(video_url): return get_video_mgr().get_captions(video_url)
+def get_video_thumbnails(video_url): return get_video_mgr().get_thumbnails(video_url)
+def get_video_info(video_url): return get_video_mgr().get_data(video_url).get('info')
+def get_video_directory(video_url): return get_video_mgr().get_data(video_url).get('directory')
+def get_video_path(video_url): return get_video_mgr().get_data(video_url).get('video_path')
+def get_audio_path(video_url): return get_video_mgr().get_data(video_url).get('audio_path')
+def get_thumbnail_dir(video_url): return get_video_mgr().get_data(video_url).get('thumbnail_dir')
+def get_srt_path(video_url): return get_video_mgr().get_data(video_url).get('srt_path')
+def get_metadata_path(video_url): return get_video_mgr().get_data(video_url).get('metadata_path')
+def get_all_data(video_url): return get_video_mgr().get_all_data(video_url)

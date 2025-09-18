@@ -1,5 +1,4 @@
-import os
-import re
+import os,re
 from urllib.parse import quote
 from collections import Counter
 import torch

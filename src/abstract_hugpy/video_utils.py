@@ -86,19 +86,21 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
                 values = self.complete_key_map.get(key)
                 value_keys = values.get("keys")
                 path = data.get(values.get("path"))
-                if value_keys == True:
-                    if os.path.isfile(path):
-                        total_info[key] = True
-                else:
-                    key_data = safe_read_from_json(path)
-                    total_info_key = True
-                    for value_key in value_keys:
-                        key_value = key_data.get(value_key)
-                        if not key_value:
-                            total_info_key = False
-                            break
-                    if total_info_key:
-                        total_info[key] = True
+                if os.path.isfile(path):
+                    if value_keys == True:
+                            total_info[key] = True
+                    else:
+                        key_data = safe_read_from_json(path)
+                        if isinstance(key_data,dict):
+                            total_info_key = True
+                            for value_key in value_keys:
+                                
+                                key_value = key_data.get(value_key)
+                                if not key_value:
+                                    total_info_key = False
+                                    break
+                            if total_info_key:
+                                total_info[key] = True
                         
         total_bools = list(set(total_info.keys()))
         if len(total_bools) == 1 and total_bools[0] == True:

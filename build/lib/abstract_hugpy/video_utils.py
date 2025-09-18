@@ -112,7 +112,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
         data = self.get_data(video_url)
         if not os.path.isfile(data['whisper_path']):
             audio = self.extract_audio(video_url)
-            whisper = whisper_transcibe(audio)
+            whisper = whisper_transcribe(audio)
             safe_dump_to_file(whisper, data['whisper_path'])
             data['whisper'] = whisper
         return data.get('whisper')

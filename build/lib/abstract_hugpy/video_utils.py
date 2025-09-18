@@ -87,8 +87,8 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             data['metadata'] = safe_load_from_file(data['metadata_path'])
         if os.path.isfile(data['thumbnails_path']):
             data['thumbnails'] = safe_load_from_file(data['thumbnails_path'])
-        if os.path.isfile(data['srt_path']):
-            data['captions'] = safe_load_from_file(data['srt_path'])
+##        if os.path.isfile(data['srt_path']):
+##            data['captions'] = safe_load_from_file(data['srt_path'])
         
         self.update_url_data(data,video_url=video_url, video_id=video_id)
         return data

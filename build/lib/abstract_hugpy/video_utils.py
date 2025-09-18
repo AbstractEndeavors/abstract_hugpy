@@ -208,8 +208,8 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
         if not os.path.isfile(data['srt_path']):
             whisper = self.get_whisper_result(video_url)
             export_srt(whisper.get('segments', []), data['srt_path'])
-            data['captions'] = safe_load_from_file(data['srt_path'])
-        return data['captions']
+##            data['captions'] = safe_load_from_file(data['srt_path'])
+##        return data['captions']
 
     def get_all_data(self, video_url):
         self.download_video(video_url)

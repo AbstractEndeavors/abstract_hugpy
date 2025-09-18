@@ -125,7 +125,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
     def get_metadata(self, video_url):
         data = self.get_data(video_url)
         if not os.path.isfile(data['metadata_path']):
-            whisper = self.get_whisper(video_url)
+            whisper = self.get_whisper_result(video_url)
             summary = get_summary(whisper.get('text', ''), min_length=500, max_length=600)
             _, keywords_raw, _ = refine_keywords(whisper.get('text', ''))
             keywords = list(set(word for kw in keywords_raw for word in kw.split()))

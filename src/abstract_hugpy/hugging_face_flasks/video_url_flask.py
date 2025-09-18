@@ -211,7 +211,7 @@ def getVideoMetadataPathUrl():
         return get_json_call_response(value=message,status_code=500)
 
 @video_url_bp.route("/get_video_thumbnails", methods=["POST","GET"])
-def getVideoMetadataPathUrl():
+def getVideoThumbnailsUrl():
     data = get_request_data(request)
     initialize_call_log(data=data)
     try:        
@@ -227,7 +227,7 @@ def getVideoMetadataPathUrl():
         return get_json_call_response(value=message,status_code=500)
 
 @video_url_bp.route("/get_thumbnail_dir", methods=["POST","GET"])
-def getVideoMetadataPathUrl():
+def getThumbnailDirUrl():
     data = get_request_data(request)
     initialize_call_log(data=data)
     try:        

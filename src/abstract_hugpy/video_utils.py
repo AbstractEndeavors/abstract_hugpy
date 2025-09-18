@@ -211,6 +211,14 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             data['captions'] = safe_load_from_file(data['srt_path'])
         return data['captions']
 
+    def get_all_data(self, video_url):
+        self.download_video(video_url)
+        self.extract_audio(video_url)
+        self.get_whisper_result(video_url)
+        self.get_thumbnails(video_url)
+        self.get_captions(video_url)
+        self.get_metadata(video_url)
+        return self.get_data
 video_mgr = VideoDirectoryManager()
 
 def download_video(video_url): return video_mgr.download_video(video_url)
@@ -228,3 +236,4 @@ def get_audio_path(video_url): return video_mgr.get_data(video_url).get('audio_p
 def get_thumbnail_dir(video_url): return video_mgr.get_data(video_url).get('thumbnail_dir')
 def get_srt_path(video_url): return video_mgr.get_data(video_url).get('srt_path')
 def get_metadata_path(video_url): return video_mgr.get_data(video_url).get('metadata_path')
+def get_all_data(video_url): return video_mgr.get_all_data(video_url)

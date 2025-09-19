@@ -1,0 +1,20 @@
+FULL_KEY_MAP = {
+    "title":        {"keys": ["title", "fulltitle", "seo_title"]},
+    "description":  {"keys": ["description", "summary", "seo_description"]},
+    "keywords":     {"keys": ["keywords", "categories", "tags", "seo_tags"]},
+    "category":     {"keys": ["category", "categories"], "derive": "classify_category"},
+    "transcript":   {"keys": ["text", "captions"], "source": ["whisper_result.json", "captions.srt"]},
+    "thumbnails":   {"keys": ["thumbnail", "image", "thumbnail_url", "thumbnail_paths"]},
+    "url":          {"keys": ["webpage_url", "url", "domain", "canonical_url"]},
+    "duration":     {"keys": ["duration", "duration_seconds", "duration_formatted"]},
+    "format":       {"keys": ["format", "format_note", "resolution"]},
+    "file_size":    {"keys": ["file_size", "file_size_mb"]},
+    "uploader":     {"keys": ["uploader", "uploader_id", "uploader_url"]},
+    "publication_date": {"keys": ["upload_date", "publication_date"]},
+    "schema_markup":    {"keys": ["schema_markup"]},
+    "social_metadata":  {"keys": ["social_metadata"]},
+    "video_url":    {"keys": ["contentUrl", "video_url"]},
+    "audio_path":   {"keys": ["audio_path"]},
+    "video_path":   {"keys": ["video_path"]},
+    "info_flags":   {"keys": ["info", "metadata", "whisper", "captions", "thumbnails"]}  # from total_info.json
+}

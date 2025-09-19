@@ -26,7 +26,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
                 "audio_path":{"keys":True,"path":'audio_path'},
                 "info":{"keys":True,"path":'info_path'},
                 "whisper":{"keys":['segments','text'],"path":'whisper_path'},
-                "metadata":{"keys":['keywords','description','title'],"path":'metadata_path'},
+                "metadata":{"keys":['keywords','summary','title','seodata'],"path":'metadata_path'},
                 "captions":{"keys":True,"path":'srt_path'},
                 "thumbnails":{"keys":["thumbnail_texts","thumbnail_paths"],"path":'thumbnails_path'}
                 }

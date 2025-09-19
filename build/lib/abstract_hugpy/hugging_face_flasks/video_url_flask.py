@@ -246,11 +246,15 @@ def getThumbnailDirUrl():
 def getAllDataUrl():
     data = get_request_data(request)
     initialize_call_log(data=data)
-        
-    video_url = data.get('url') or data.get('video_url')
-    if not video_url:
-        return get_json_call_response(value=f"url in {data}",status_code=400)
-    result = get_all_data(video_url)
-    if not result:
-        return get_json_call_response(value=f"no result for {data}",status_code=400)
-    return get_json_call_response(value=result,status_code=200)
+    try:            
+        video_url = data.get('url') or data.get('video_url')
+        if not video_url:
+            return get_json_call_response(value=f"url in {data}",status_code=400)
+        result = get_all_data(video_url)
+        if not result:
+            return get_json_call_response(value=f"no result for {data}",status_code=400)
+        return get_json_call_response(value=result,status_code=200)
+    except Exception as e:
+        message = f"{e}"
+        return get_json_call_response(value=message,status_code=500)
+

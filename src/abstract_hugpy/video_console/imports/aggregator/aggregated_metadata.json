@@ -1,0 +1,25 @@
+{
+  "id": null,
+  "title": null,
+  "description": null,
+  "keywords": [],
+  "category": "Entertainment",
+  "canonical_url": null,
+  "duration": null,
+  "uploader": {},
+  "publication_date": null,
+  "video_path": null,
+  "audio_path": null,
+  "transcript_excerpt": "",
+  "thumbnails_ranked": [],
+  "best_clip": {
+    "start": 0,
+    "end": 0,
+    "text": ""
+  },
+  "candidate_clips": [],
+  "hashtags": [],
+  "schema_markup": null,
+  "social_metadata": null,
+  "source_flags": {}
+}

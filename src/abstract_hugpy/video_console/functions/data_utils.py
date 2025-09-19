@@ -36,6 +36,8 @@ def is_complete(self,key=None,video_url=None, video_id=None):
         total_info['total'] = True
         total_data = self.get_data(video_url=video_url)
         safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
+        aggregate = aggregate_from_base_dir(data.get('directory'))
+        total_data.update(aggregate)
         safe_dump_to_file(data=total_data,file_path=data['total_data_path'])
         return total_data
     safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
@@ -69,6 +71,7 @@ def init_data(self, video_url, video_id):
         'srt_path': os.path.join(dir_path, 'captions.srt'),
         'metadata_path': os.path.join(dir_path, 'video_metadata.json'),
         'info': video_info.info,
+
     }
     
     if os.path.isfile(data['whisper_path']):
@@ -107,7 +110,7 @@ def update_spec_data(self,spec_data,key,path_key,video_url=None, video_id=None,d
     data[key] = spec_data
     path = data[path_key]
     self.update_url_data(data,video_url=video_url,video_id=video_id)
-    safe_dump_to_file(spec_data,path )
+    safe_dump_to_file(spec_data,path)
     
     return data
 def download_video(self, video_url):
@@ -131,7 +134,6 @@ def get_all_data(self, video_url):
     self.get_captions(video_url)
     self.get_metadata(video_url)
     video_id = get_video_id(video_url)
-    self.aggregate_key_maps(video_url=video_url,video_id=video_id)
     return self.url_data[video_id]
 
 

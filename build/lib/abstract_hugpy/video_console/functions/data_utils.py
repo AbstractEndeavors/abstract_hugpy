@@ -49,11 +49,11 @@ def init_data(self, video_url, video_id):
     total_data_path = os.path.join(dir_path, 'total_data.json') 
     thumbnails_dir = os.path.join(dir_path, 'thumbnails')
     os.makedirs(thumbnails_dir, exist_ok=True)
-    video_info = for_dl_video(url=video_url, preferred_format="mp4",download_directory=dir_path,download_video=False)
+    video_info = dl_video(video_url, download_directory=dir_path,get_info=True, download_video=False)
     video_id = video_info.get('id')
     video_basename = f"{video_id}.mp4"
     video_path = os.path.join(dir_path,video_basename)
-    safe_dump_to_file(data=video_info.info,file_path= info_path)
+    safe_dump_to_file(data=video_info,file_path= info_path)
 
     data = {
         'url': video_url,

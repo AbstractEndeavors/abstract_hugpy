@@ -5,7 +5,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
     def __init__(self,videos_directory=None):
         if not hasattr(self, 'initialized',):
             self.initialized = True
-            videos_directory = videos_directory or get_env_value('VIDEO_DIRECTORY')
+            videos_directory = str(Path( videos_directory or get_env_value('VIDEO_DIRECTORY')).resolve())
             os.makedirs(videos_directory,exist_ok=True)
             self.videos_directory = get_abs_videos_directory(videos_directory)
             self.url_data = {}
@@ -19,7 +19,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
                     "title": {"keys": ["title", "fulltitle"]},
                     "thumbnail": {"keys": ["thumbnail", "image"]},
                     "keywords": {"keys": ["keywords", "categories", "tags"]},
-                    "description": {"keys": ["description", "summary"]},
+                    "description": {"envkeys": ["description", "summary"]},
                     "url": {"keys": ["webpage_url", "url", "domain"]}
                 }
             }

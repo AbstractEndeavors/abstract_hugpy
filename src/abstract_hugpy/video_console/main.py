@@ -1,10 +1,13 @@
 from .imports import *
 from .initFuncs import initFuncs
+from abstract_security import get_env_value
 class VideoDirectoryManager(metaclass=SingletonMeta):
-    def __init__(self):
-        if not hasattr(self, 'initialized'):
+    def __init__(self,videos_directory=None):
+        if not hasattr(self, 'initialized',):
             self.initialized = True
-            self.videos_directory = get_abs_videos_directory(VIDEOS_DIRECTORY)
+            videos_directory = videos_directory or get_env_value('VIDEO_DIRECTORY')
+            os.makedirs(videos_directory,exist_ok=True)
+            self.videos_directory = get_abs_videos_directory(videos_directory)
             self.url_data = {}
             self.key_maps = {
                 "file_tiers": [  # fixed the typo here

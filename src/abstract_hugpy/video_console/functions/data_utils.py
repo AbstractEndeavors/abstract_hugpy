@@ -54,8 +54,7 @@ def init_data(self, video_url, video_id):
     video_basename = f"{video_id}.mp4"
     video_path = os.path.join(dir_path,video_basename)
     safe_dump_to_file(data=video_info.info,file_path= info_path)
-    if not os.path.isfile(info_path):
-        video_info = self.download_video(video_url)
+
     data = {
         'url': video_url,
         'video_id': video_id,
@@ -71,7 +70,7 @@ def init_data(self, video_url, video_id):
         'whisper_path': os.path.join(dir_path, 'whisper_result.json'),
         'srt_path': os.path.join(dir_path, 'captions.srt'),
         'metadata_path': os.path.join(dir_path, 'video_metadata.json'),
-        'info': video_info,
+        'info': video_info.info,
 
     }
     

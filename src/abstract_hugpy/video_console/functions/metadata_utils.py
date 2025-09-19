@@ -65,7 +65,7 @@ def update_meta_data(self, metadata, video_url=None, video_id=None, data=None):
         metadata, "metadata", "metadata_path",
         video_url=video_url, video_id=video_id, data=data
     )
-def get_meta_data(video_url):
+def get_meta_data(self,video_url):
     data = self.get_data(video_url)
     old_metadata = self.get_metadata_data(video_url)
     domain='https://typicallyoutliers.com'
@@ -81,9 +81,9 @@ def get_meta_data(video_url):
     return metadata
 def get_metadata(self, video_url):
     data = self.get_data(video_url)
-    metadata = data.get('metadata')
+    metadata = data.get('metadata') or {}
     if [key for key in ["summary","keywords"] if metadata.get(key) == None]:
-        metadata = get_meta_data(video_url)
+        metadata = self.get_meta_data(video_url)
     if not metadata.get("title"):
         metadata["title"] = self.get_video_title(video_url)
         data = self.update_meta_data(metadata, video_url)
@@ -99,7 +99,7 @@ def get_metadata(self, video_url):
              video_path=data.get('video_path'),
              filename=data.get('video_path'),
              title=metadata.get("title"),
-             summary=whisper_text,
+             summary=metadata.get("summary"),
              description=metadata.get("summary"),
              keywords=metadata.get("keywords"),
              thumbnails_dir=data.get('thumbnails_dir'),

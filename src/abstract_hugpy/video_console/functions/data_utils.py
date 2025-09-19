@@ -49,7 +49,7 @@ def init_data(self, video_url, video_id):
     total_data_path = os.path.join(dir_path, 'total_data.json') 
     thumbnails_dir = os.path.join(dir_path, 'thumbnails')
     os.makedirs(thumbnails_dir, exist_ok=True)
-    video_info = VideoDownloader(video_url, download_directory=dir_path,download_video=False)
+    video_info = VideoDownloader(video_url, download_directory=dir_path,download_video=True)
     video_id = video_info.info['id']
     video_basename = f"{video_id}.mp4"
     video_path = os.path.join(dir_path,video_basename)

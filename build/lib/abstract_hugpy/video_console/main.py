@@ -6,6 +6,21 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             self.initialized = True
             self.videos_directory = get_abs_videos_directory(VIDEOS_DIRECTORY)
             self.url_data = {}
+            self.key_maps = {
+                "file_tiers": [  # fixed the typo here
+                    "video_info.json",
+                    "whisper_result.json",
+                    "video_metadata.json"
+                ],
+                "key_maps": {
+                    "title": {"keys": ["title", "fulltitle"]},
+                    "thumbnail": {"keys": ["thumbnail", "image"]},
+                    "keywords": {"keys": ["keywords", "categories", "tags"]},
+                    "description": {"keys": ["description", "summary"]},
+                    "url": {"keys": ["webpage_url", "url", "domain"]}
+                }
+            }
+
             self.complete_key_map={
                 "video_path":{"keys":True,"path":'video_path'},
                 "audio_path":{"keys":True,"path":'audio_path'},

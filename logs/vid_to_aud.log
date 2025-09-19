@@ -1,0 +1,9 @@
+2025-09-18 19:11:06,924 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Keyword extraction failed: name 'kw_model' is not defined
+2025-09-18 19:11:06,942 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 19:11:06,963 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Keyword extraction failed: name 'kw_model' is not defined
+2025-09-18 19:39:38,329 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 20:22:38,403 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 20:54:48,180 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 20:57:27,653 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 21:01:26,177 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-18 21:05:47,253 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined

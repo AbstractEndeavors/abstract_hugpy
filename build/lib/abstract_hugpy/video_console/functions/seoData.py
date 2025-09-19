@@ -108,7 +108,9 @@ def generate_info_json(
 def get_seo_title(title=None, keywords=None, filename=None, title_length=70, description=None):
     """Construct SEO title with keyword priority."""
     primary_keyword = filename or (keywords[0] if keywords else "")
+    print(primary_keyword)
     seo_title = f"{primary_keyword} - {title}"
+    title_length= title_length or 70
     return get_from_list(seo_title, length=title_length)
 
 def get_seo_description(description=None, keywords=None, keyword_length=3, desc_length=300):
@@ -137,107 +139,112 @@ def get_title_tags_description(
         if keywords and len(keywords) > 0 and isinstance(keywords[0], list):
             keywords = keywords[0]
         if keywords:
-            keywords_str = ", ".join(keywords)
+            kedomainywords_str = ", ".join(keywords)
 
-    seo_description = eatAllQuotes(
-        get_seo_description(summary_desc, keywords_str, keyword_length=keyword_length, desc_length=desc_length)
+    seo_description = eatAll(
+        get_seo_description(summary_desc, keywords_str, keyword_length=keyword_length, desc_length=desc_length),["'",'"',' ','\n','\t']
     )
     seo_tags = [kw for kw in (keywords or []) if kw.lower() not in ["video", "audio", "file"]]
     return seo_title, keywords_str, seo_description, seo_tags
 
-def get_seo_data(info_data=None, **kwargs):
+def get_seo_data(video_path=None,
+                 filename=None,
+                 title=None,
+                 summary=None,
+                 description=None,
+                 keywords=None,
+                 thumbnails_dir=None,
+                 thumbnail_paths=None,
+                 whisper_result=None,
+                 audio_path=None,
+                 domain=None):
     """
     Enrich video/image info dict with SEO fields, captions, thumbnails, whisper, schema markup.
     """
-    info = info_data or {}
-    domain = kwargs.get("domain", "https://thedailydialectics.com")
-
-    # Core metadata
-    info = create_key_value(info, "categories", kwargs.get("categories") or {"ai": "Technology", "cannabis": "Health"})
-    info = create_key_value(info, "uploader", kwargs.get("uploader") or "The Daily Dialectics")
-    info = create_key_value(info, "domain", domain)
-    info = create_key_value(info, "videos_url", kwargs.get("videos_url") or f"{domain}/videos")
+    
 
     # Title/filename normalization
-    video_path = info.get("video_path")
-    filename = info.get("filename")
+
+    info = {}
+    domain = domain or "https://typicallyoutliers.com"
     if not filename and video_path:
         basename = os.path.basename(video_path)
         filename, ext = os.path.splitext(basename)
-        info.update({"basename": basename, "filename": filename})
-
-    title = info.get("title", filename)
-    summary = info.get("summary", "")
-    description = info.get("description", "")
+    title = title or filename
 
     # SEO text
     seo_title, keywords_str, seo_description, seo_tags = get_title_tags_description(
-        title=title, keywords=info.get("keywords", []), summary=summary, filename=filename, description=description
-    )
-    info.update({"seo_title": seo_title, "seo_description": seo_description, "seo_tags": seo_tags})
+        title=title,
+        keywords=keywords,
+        summary=summary,
+        filename=filename,
+        description=description
+        )
+    info["seo_data"] = {"seo_title": seo_title, "seo_description": seo_description, "seo_tags": seo_tags,"keywords_str":keywords_str}
 
     # Thumbnail defaults
-    thumbs_dir = info.get("thumbnails_directory")
-    if thumbs_dir and os.path.isdir(thumbs_dir):
-        thumbs = os.listdir(thumbs_dir)
-        if thumbs:
-            thumb_file = thumbs[0]
-            filepath = os.path.join(thumbs_dir, thumb_file)
-            alt_text = os.path.splitext(thumb_file)[0]
-            info["thumbnail"] = {"file_path": filepath, "alt_text": alt_text}
 
-    # Whisper → captions + thumbnail optimization
-    whisper_json = get_whisper_result_data(**info)
-    if whisper_json.get("segments"):
-        thumb_score = pick_optimal_thumbnail(whisper_json, info.get("keywords"), thumbs_dir, info=info)
+    
+    if thumbnail_paths:
+        thumb_file = thumbnail_paths[0]
+        thumb_base = os.path.basename(thumb_file)
+        alt_text = os.path.splitext(thumb_base)[0]
+        info["seo_data"]["thumbnail"] = {"file_path": thumb_file, "alt_text": alt_text}
+    elif thumbnails_dir and os.path.isdir(thumbnails_dir):
+        thumbs = os.listdir(thumbnails_dir)
+        thumb_file = thumbs[0]
+        thumb_base = os.path.join(thumbnails_dir,thumb_file)
+        alt_text = os.path.splitext(thumb_file)[0]
+        info["seo_data"]["thumbnail"] = {"file_path": thumb_file, "alt_text": alt_text}
+    if whisper_result.get("segments"):
+        thumb_score = pick_optimal_thumbnail(whisper_result, keywords, thumbnails_dir, info=info)
         if thumb_score:
             frame, score, matched_text = thumb_score
-            info["thumbnail"].update({
+            info["seo_data"]["thumbnail"].update({
                 "file_path": os.path.join(thumbs_dir, frame),
                 "alt_text": get_from_list(matched_text, length=100),
             })
 
-    # Captions
-    captions_path = os.path.join(info["info_dir"], "captions.srt")
-    export_srt_whisper(whisper_json, captions_path)
-    info["captions_path"] = captions_path
 
     # Audio duration
-    dur_s, dur_fmt = get_audio_duration(info.get("audio_path"))
-    info.update({"duration_seconds": dur_s, "duration_formatted": dur_fmt})
+    dur_s, dur_fmt = get_audio_duration(audio_path)
+    info["seo_data"]["duration_seconds"]=dur_s
+    info["seo_data"]["duration_formatted"]=dur_fmt
 
     # Schema + social metadata
-    info["schema_markup"] = {
+    info["seo_data"]["schema_markup"] = {
         "@context": "https://schema.org",
         "@type": "VideoObject",
-        "name": seo_title,
-        "description": seo_description,
-        "thumbnailUrl": info["thumbnail"]["file_path"],
+        "name": info["seo_data"]["seo_title"],
+        "description": info["seo_data"]["seo_description"],
+        "thumbnailUrl": info["seo_data"]["thumbnail"]["file_path"],
         "duration": f"PT{int(dur_s // 60)}M{int(dur_s % 60)}S",
         "uploadDate": get_time_now_iso(),
         "contentUrl": video_path,
-        "keywords": seo_tags,
+        "keywords": info["seo_data"]["seo_tags"],
     }
-    info["social_metadata"] = {
-        "og:title": seo_title,
-        "og:description": seo_description,
-        "og:image": info["thumbnail"]["file_path"],
+    info["seo_data"]["social_metadata"] = {
+        "og:title": info["seo_data"]["seo_title"],
+        "og:description": info["seo_data"]["seo_description"],
+        "og:image": info["seo_data"]["thumbnail"]["file_path"],
         "og:video": video_path,
         "twitter:card": "player",
-        "twitter:title": seo_title,
-        "twitter:description": seo_description,
-        "twitter:image": info["thumbnail"]["file_path"],
+        "twitter:title": info["seo_data"]["seo_title"],
+        "twitter:description": info["seo_data"]["seo_description"],
+        "twitter:image": info["seo_data"]["thumbnail"]["file_path"],
     }
 
     # Misc
-    info["category"] = next(
-        (v for k, v in info["categories"].items() if k in " ".join(seo_tags).lower()), "General"
+    info["seo_data"]["categories"] = info["seo_data"].get("category",{})
+    info["seo_data"]["category"] = next(
+        (v for k, v in info["seo_data"]["categories"].items() if k in " ".join(info["seo_data"]["seo_tags"] or "").lower()), "General"
     )
-    info["uploader"] = {"name": info["uploader"], "url": domain}
-    info["publication_date"] = get_time_now_iso()
-    info["video_metadata"] = get_video_metadata(video_path)
-    info["canonical_url"] = info.get("canonical_url") or domain
+    info["seo_data"]["uploader"] = info["seo_data"].get("uploader","typicallyoutliers")
+    info["seo_data"]["uploader"] = {"name": info["seo_data"]["uploader"], "url": domain}
+    info["seo_data"]["publication_date"] = get_time_now_iso()
+    info["seo_data"]["video_metadata"] = get_video_metadata(video_path)
+    info["seo_data"]["canonical_url"] = domain
 
     # Sitemap update
-    update_sitemap(info, f"{os.path.dirname(info['info_dir'])}/../sitemap.xml")
+##    update_sitemap(info, f"{os.path.dirname(info['info_dir'])}/../sitemap.xml")
     return info

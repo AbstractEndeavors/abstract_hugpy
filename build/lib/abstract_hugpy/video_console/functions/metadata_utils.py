@@ -1,5 +1,7 @@
 from ..imports import *
 from .seoData import *
+from ..utils import derive_video_metadata
+
 def _merge_sources(self, video_url):
     """Collect whisper, captions, thumbnails into one big text blob."""
     data = self.get_data(video_url)
@@ -24,7 +26,7 @@ def _summarize_text(text, max_len=120, min_len=50):
 
 def _extract_keywords(text, top_n=10):
     try:
-        kws = [kw for kw, _ in kw_model.extract_keywords(
+        kws = [kw for kw, _ in extract_keywords(
             text, keyphrase_ngram_range=(1,2), stop_words="english", top_n=top_n
         )]
         return list(dict.fromkeys(kws))  # dedup, preserve order
@@ -66,22 +68,42 @@ def update_meta_data(self, metadata, video_url=None, video_id=None, data=None):
 
 def get_metadata(self, video_url):
     data = self.get_data(video_url)
-    metadata = self.get_metadata_data(video_url)
-
+    old_metadata = self.get_metadata_data(video_url)
+    domain='https://typicallyoutliers.com'
+    directory = data.get('directory')
+    video_path = data.get('video_path')
+    whisper_text = self.get_whisper_text(video_url)
+    metadata = derive_video_metadata(
+        video_path=video_path,
+        repo_dir=directory,
+        domain=domain,
+        transcript=whisper_text
+        )
     if not metadata.get("title"):
         metadata["title"] = self.get_video_title(video_url)
         data = self.update_meta_data(metadata, video_url)
 
-    if not metadata.get("description"):
-        metadata["description"] = self.get_video_summary(video_url)
+    if not metadata.get("summary"):
+        metadata["summary"] = self.get_video_summary(video_url)
         data = self.update_meta_data(metadata, video_url)
 
     if not metadata.get("keywords"):
         metadata["keywords"] = self.get_video_keywords(video_url)
         data = self.update_meta_data(metadata, video_url)
     if not metadata.get("seodata"):
-        metadata["seodata"] = get_seo_data(data,domain='https://typicallyoutliers.com',summary=metadata["description"],**metadata)
+        metadata["seodata"] = get_seo_data(
+             video_path=data.get('video_path'),
+             filename=data.get('video_path'),
+             title=metadata.get("title"),
+             summary=whisper_text,
+             description=metadata.get("summary"),
+             keywords=metadata.get("keywords"),
+             thumbnails_dir=data.get('thumbnails_dir'),
+             thumbnail_paths=data.get('thumbnail_paths'),
+             whisper_result=self.get_whisper_result(video_url),
+             audio_path=data.get('audio_path'),
+             domain='https://typicallyoutliers.com'
+            )
         data = self.update_meta_data(metadata, video_url)
-    
     self.is_complete(key="metadata", video_url=video_url)
     return data["metadata"]

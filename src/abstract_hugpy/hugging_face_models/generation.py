@@ -1,3 +1,7 @@
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
+import torch,os
+from .config import DEFAULT_PATHS
+from abstract_utilities import SingletonMeta
 class generatorManager:
     def __init__(self):
         self.generator = pipeline('text-generation', model='distilgpt2', device= -1)
@@ -50,7 +54,7 @@ def generate_media_url(
 
     # Compute relative path under repository_dir
     rel_path = fs_path_abs[len(repo_abs) :].lstrip(os.sep)
-    rel_path_unix = quote(rel_path.replace(os.sep, "/"))
+    rel_path_unix = rel_path.replace(os.sep, "/")
     ext = os.path.splitext(fs_path_abs)[1].lower()
     prefix = EXT_TO_PREFIX.get(ext, "repository")
 

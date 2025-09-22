@@ -116,7 +116,7 @@ def update_spec_data(self,spec_data,key,path_key,video_url=None, video_id=None,d
 def download_video(self, video_url):
     data = self.get_data(video_url)
     if not os.path.isfile(data['video_path']):
-        video_info = for_dl_video(url=video_url, preferred_format="mp4",download_directory=data['directory'],output_filename=data['video_basename'],download_video=True)
+        video_info = VideoDownloader(url=video_url)#, preferred_format="mp4",download_directory=data['directory'],output_filename=data['video_basename'],download_video=True)
         safe_dump_to_file(data=video_info, file_path=data['info_path'])
         data['info'] = video_info
         

@@ -216,4 +216,5 @@ def get_bolshevid_videos(url,
                         get_info=get_info,
                         download_video=download_video)
     return video_urls
-
+url = 'https://www.youtube.com/shorts/rLlWcvLBluI'
+downloadvideo(url)

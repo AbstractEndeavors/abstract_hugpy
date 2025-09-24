@@ -1,5 +1,4 @@
 from ..imports import *
-from ...imports.aggregator import aggregate_from_base_dir
 from abstract_webtools.managers.videoDownloader import get_video_filepath,get_video_id,get_video_info
 from abstract_utilities import safe_read_from_json, safe_dump_to_file, get_any_value, make_list
 from abstract_webtools.managers.videoDownloader.src.functions.info_utils import _ensure_standard_paths
@@ -72,7 +71,7 @@ def init_data(self, video_url, video_id=None):
     total_info_path  = os.path.join(dir_path, "total_info.json")
     total_data_path  = os.path.join(dir_path, "total_data.json")
     aggregated_dir   = os.path.join(dir_path, "aggregated")
-    total_agg_path   = os.path.join(aggregated_dir, "total_aggregated.json")
+    total_agg_path   = os.path.join(dir_path, "total_aggregated.json")
     os.makedirs(video_info["thumbnails_dir"], exist_ok=True)
     os.makedirs(aggregated_dir, exist_ok=True)
 

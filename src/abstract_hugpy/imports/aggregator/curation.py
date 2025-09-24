@@ -351,11 +351,11 @@ def aggregate_and_curate(base_dir: Path,aggregated_dir=None):
     hashtags_path = os.path.join(aggregated_dir,"hashtags.txt")
     hashtags_str = " ".join(hashtags)
     aggregated_metadata_path = os.path.join(aggregated_dir,"aggregated_metadata.json")
-    aggregated_metadata = aggregate_metadata(base_dir)
+    aggregated_metadata = aggregate_metadata(str(base_dir))
     
-    total_aggregated_path = os.path.join(aggregated_dir,"aggregated_metadata.json")    
+    total_aggregated_path = os.path.join(str(base_dir),"total_aggregated.json")    
     aggregation_js = {"hashtags_path":hashtags_path,
-                      "hashtags":hashtags_str,
+                      "hashtags":hashtags,
                       "best_clip_path":best_clip_path,
                       "best_clip":best_clip_crop,
                       "metadata_path":aggregated_metadata_path,
@@ -370,10 +370,10 @@ def aggregate_and_curate(base_dir: Path,aggregated_dir=None):
         json.dump(aggregated, f, indent=2)
     # helper files
     with open(best_clip_path, "w", encoding="utf-8") as f:
-        if best_clip:
+        if best_clip_crop:
             f.write(best_clip_crop)
     with open(hashtags_path, "w", encoding="utf-8") as f:
-        f.write(hashtags_str)
+        f.write(hashtags)
     with open(total_aggregated_path, "w", encoding="utf-8") as f:
         json.dump(aggregation_js, f, indent=2)  
     return aggregation_js

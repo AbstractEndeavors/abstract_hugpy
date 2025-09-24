@@ -1,6 +1,6 @@
 from abstract_flask import *
 from abstract_utilities import *
-from ..video_utils import *
+from ..video_console import *
 video_url_bp,logger = get_bp('video_url_bp')
 
 @video_url_bp.route("/download_video", methods=["POST","GET"])

@@ -253,3 +253,11 @@
 2025-09-24 09:15:34,288 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitoring...
 2025-09-24 09:15:37,111 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Downloaded and stored at /home/computron/videos/rLlWcvLBluI/video.mp4
 2025-09-24 09:15:37,134 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitor: exited.
+2025-09-24 09:25:53,008 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Processing: https://www.youtube.com/shorts/rLlWcvLBluI
+2025-09-24 09:25:53,008 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitoring...
+2025-09-24 09:25:55,484 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Downloaded and stored at /home/computron/videos/rLlWcvLBluI/video.mp4
+2025-09-24 09:25:55,530 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitor: exited.
+2025-09-24 09:31:24,020 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Processing: https://www.youtube.com/shorts/rLlWcvLBluI
+2025-09-24 09:31:24,020 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitoring...
+2025-09-24 09:31:26,797 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Downloaded and stored at /home/computron/videos/rLlWcvLBluI/video.mp4
+2025-09-24 09:31:26,803 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitor: exited.

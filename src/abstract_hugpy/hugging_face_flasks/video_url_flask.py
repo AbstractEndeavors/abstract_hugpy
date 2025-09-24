@@ -1,9 +1,9 @@
 from abstract_flask import *
 from abstract_utilities import *
-from ..video_console import *
+from ..video_console.manager_utils import *
 from .imports import *
 video_url_bp,logger = get_bp('video_url_bp')
-
+from ..imports.aggregator import aggregate_from_base_dir
 @video_url_bp.route("/download_video", methods=["POST","GET"])
 def downloadVideo():
     data = get_request_data(request)

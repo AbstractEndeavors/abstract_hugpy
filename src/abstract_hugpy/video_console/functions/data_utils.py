@@ -1,4 +1,5 @@
 from ..imports import *
+from ...imports.aggregator import aggregate_from_base_dir
 from abstract_webtools.managers.videoDownloader import get_video_filepath,get_video_id,get_video_info
 from abstract_utilities import safe_read_from_json, safe_dump_to_file, get_any_value, make_list
 from abstract_webtools.managers.videoDownloader.src.functions.info_utils import _ensure_standard_paths

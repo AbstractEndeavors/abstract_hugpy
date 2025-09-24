@@ -6,8 +6,19 @@
 import os, json, re, math, string, statistics
 from pathlib import Path
 from .agg_utils import aggregate_metadata
-
-
+def get_duration(metadata=None,info=None):
+    metadata = metadata or {}
+    info = info or {}
+    duration = metadata.get("seodata",{}).get("seo_data",{}).get("duration_formatted") or info.get("duration")
+    return duration
+def get_best_clip_crop(best_clip=None,metadata=None,info=None):
+    metadata = metadata or {}
+    best_clip = best_clip or {}
+    duration = get_duration(metadata=metadata,info=info)
+    start = best_clip.get('start',0)
+    end = best_clip.get('end',duration)
+    best_clip_crop = f"{start},{end}\n"
+    return best_clip_crop
 def safe_load_json(p):
     try:
         with open(p, "r", encoding="utf-8") as f:
@@ -228,7 +239,7 @@ def make_hashtags(keywords, clip_text, title=None, limit=12):
             break
     return tags
 
-def aggregate_and_curate(base_dir: Path,aggregate_dir=None):
+def aggregate_and_curate(base_dir: Path,aggregated_dir=None):
     info         = safe_load_json(base_dir/"video_info.json")
     metadata     = safe_load_json(base_dir/"video_metadata.json")
     whisper      = safe_load_json(base_dir/"whisper_result.json")
@@ -259,8 +270,8 @@ def aggregate_and_curate(base_dir: Path,aggregate_dir=None):
     segs.sort(key=lambda x: (x["start"], x["end"]))
 
     # Best clip selection
-    best_clip, top5 = pick_best_clip(segs, list(keywords))
-
+    best_clip, top5 = pick_best_clip(segs, list(keywords)) or {}
+    best_clip = best_clip or {}
     # Thumbnail candidates
     thumb_candidates = []
     if metadata.get("thumbnail_url"):
@@ -301,7 +312,7 @@ def aggregate_and_curate(base_dir: Path,aggregate_dir=None):
             if any(n in text for n in needles):
                 return label
         return "Entertainment"
-
+    best_clip = best_clip or {}
     category = metadata.get("category") or classify_category(list(keywords), title or "", description or "")
 
     # Hashtags
@@ -327,31 +338,32 @@ def aggregate_and_curate(base_dir: Path,aggregate_dir=None):
         "hashtags": hashtags,
         "schema_markup": metadata.get("seodata",{}).get("seo_data",{}).get("schema_markup"),
         "social_metadata": metadata.get("seodata",{}).get("seo_data",{}).get("social_metadata"),
-        "source_flags": safe_load_json(base_dir/"total_info.json"),
+        "source_flags": safe_load_json(base_dir/"total_info.json")
     }
-
+    aggregated_path = os.path.join(aggregated_dir,"aggregated.json")
+    best_clip = best_clip or {}
     # write outputs
-    aggregate_dir =  aggregate_dir or os.path.join(str(base_dir),'aggregated')
-    os.makedirs(aggregate_dir,exist_ok=True)
-    aggregate_dir = Path(aggregate_dir)
-    best_clip_path = aggregate_dir/"best_clip.txt"
-    best_clip_crop = f"{best_clip['start']},{best_clip['end']}\n"
-    hashtags_path = aggregate_dir/"hashtags.txt"
+    aggregated_dir =  aggregated_dir or os.path.join(str(base_dir),'aggregated')
+    aggregated_dir = str(aggregated_dir)
+    os.makedirs(aggregated_dir,exist_ok=True)
+    best_clip_path = os.path.join(aggregated_dir,"best_clip.txt")
+    best_clip_crop = get_best_clip_crop(best_clip=best_clip,metadata=metadata,info=info)
+    hashtags_path = os.path.join(aggregated_dir,"hashtags.txt")
     hashtags_str = " ".join(hashtags)
-    aggregated_metadata_path = aggregate_dir/"aggregated_metadata.json"
+    aggregated_metadata_path = os.path.join(aggregated_dir,"aggregated_metadata.json")
     aggregated_metadata = aggregate_metadata(base_dir)
     
-    total_aggregated_path = aggregate_dir/"aggregated_metadata.json"    
+    total_aggregated_path = os.path.join(aggregated_dir,"aggregated_metadata.json")    
     aggregation_js = {"hashtags_path":hashtags_path,
-                      "best_clip_path":best_clip_path,
-                      "aggregated_path":aggregated_path,
-                      "metadata_path":aggregated_metadata_path,
                       "hashtags":hashtags_str,
+                      "best_clip_path":best_clip_path,
                       "best_clip":best_clip_crop,
-                      "aggregated": aggregated,
+                      "metadata_path":aggregated_metadata_path,
                       "metadata": aggregated_metadata,
+                      "aggregated_path":aggregated_path,
+                      "aggregated": aggregated,
                       "total_path":total_aggregated_path}
-    
+    best_clip = best_clip or {}
     with open(aggregated_metadata_path, "w", encoding="utf-8") as f:
         json.dump(aggregated_metadata, f, indent=2)    
     with open(aggregated_path, "w", encoding="utf-8") as f:
@@ -365,7 +377,7 @@ def aggregate_and_curate(base_dir: Path,aggregate_dir=None):
     with open(total_aggregated_path, "w", encoding="utf-8") as f:
         json.dump(aggregation_js, f, indent=2)  
     return aggregation_js
-def aggregate_from_base_dir(directory,aggregate_dir=None):
+def aggregate_from_base_dir(directory,aggregated_dir=None):
     BASE = Path(directory)
-    aggregation_js = aggregate_and_curate(BASE,aggregate_dir=aggregate_dir)
+    aggregation_js = aggregate_and_curate(BASE,aggregated_dir=aggregated_dir)
     return aggregation_js

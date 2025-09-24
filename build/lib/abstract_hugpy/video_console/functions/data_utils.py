@@ -1,4 +1,5 @@
 from ..imports import *
+from abstract_webtools.managers.videoDownloader import get_video_filepath,get_video_id,get_video_info
 from abstract_utilities import safe_read_from_json, safe_dump_to_file, get_any_value, make_list
 import os
 def is_complete(self,key=None,video_url=None, video_id=None):
@@ -49,12 +50,16 @@ def init_data(self, video_url, video_id):
     total_data_path = os.path.join(dir_path, 'total_data.json') 
     thumbnails_dir = os.path.join(dir_path, 'thumbnails')
     os.makedirs(thumbnails_dir, exist_ok=True)
-    video_info = VideoDownloader(video_url, download_directory=dir_path,download_video=True)
-    video_id = video_info.info['id']
-    video_basename = f"{video_id}.mp4"
-    video_path = os.path.join(dir_path,video_basename)
-    safe_dump_to_file(data=video_info.info,file_path= info_path)
-
+    video_info = get_video_info(video_url)
+    video_id = get_video_id(video_url)
+    video_basename = f"video.webm"
+    video_dir = dir_path
+    os.makedirs(video_dir, exist_ok=True)
+    video_path = os.path.join(video_dir,video_basename)
+    safe_dump_to_file(data=video_info,file_path= info_path)
+    aggregated_dir = os.path.join(dir_path, 'aggregated')
+    os.makedirs(aggregated_dir, exist_ok=True)
+    total_aggregated_path = os.path.join(aggregated_dir, 'total_aggregated_path')
     data = {
         'url': video_url,
         'video_id': video_id,
@@ -66,11 +71,13 @@ def init_data(self, video_url, video_id):
         'total_info_path': total_info_path,
         'total_data_path':total_data_path,
         'thumbnails_path': os.path.join(dir_path, 'thumbnails.json'),
-        'audio_path': os.path.join(dir_path, 'audio.wav'),
+        'audio_path': os.path.join(dir_path, 'audio.webm'),
         'whisper_path': os.path.join(dir_path, 'whisper_result.json'),
         'srt_path': os.path.join(dir_path, 'captions.srt'),
         'metadata_path': os.path.join(dir_path, 'video_metadata.json'),
-        'info': video_info.info,
+        'aggregated_dir': aggregated_dir,
+        'total_aggregated_path': total_aggregated_path,
+        'info': video_info,
 
     }
     
@@ -80,6 +87,8 @@ def init_data(self, video_url, video_id):
         data['metadata'] = safe_load_from_file(data['metadata_path'])
     if os.path.isfile(data['thumbnails_path']):
         data['thumbnails'] = safe_load_from_file(data['thumbnails_path'])
+    if os.path.isfile(data['total_aggregated_path']):
+        data['aggregate_data'] = safe_load_from_file(data['total_aggregated_path'])
     if os.path.isfile(data['srt_path']):
         subs = pysrt.open(data['srt_path'])
         data['captions'] = [
@@ -111,7 +120,6 @@ def update_spec_data(self,spec_data,key,path_key,video_url=None, video_id=None,d
     path = data[path_key]
     self.update_url_data(data,video_url=video_url,video_id=video_id)
     safe_dump_to_file(spec_data,path)
-    
     return data
 def download_video(self, video_url):
     data = self.get_data(video_url)
@@ -119,10 +127,18 @@ def download_video(self, video_url):
         video_info = VideoDownloader(url=video_url)#, preferred_format="mp4",download_directory=data['directory'],output_filename=data['video_basename'],download_video=True)
         safe_dump_to_file(data=video_info, file_path=data['info_path'])
         data['info'] = video_info
-        
     return data['info']
+def get_aggregated_data(self,video_url=None, video_id=None):
+    video_id = video_id or get_video_id(video_url=video_url)
+    data = self.get_data(video_url=video_url,video_id=video_id)
+    if data.get('aggregate_data') == None:
+        directory= data.get('directory')
+        aggregated_dir = data.get('aggregated_dir')
+        aggregate_js = aggregate_from_base_dir(directory=directory,aggregated_dir=aggregated_dir)
+        data['aggregate_data'] = aggregate_js
+        self.update_url_data(data=data,video_url=video_url, video_id=video_id)
+    return data.get('aggregate_data')
 def get_all_data(self, video_url):
-    
     data = self.is_complete(video_url=video_url)
     if data:
         return data
@@ -133,12 +149,12 @@ def get_all_data(self, video_url):
     self.get_thumbnails(video_url)
     self.get_captions(video_url)
     self.get_metadata(video_url)
+    self.get_aggregated_data(video_url)
     video_id = get_video_id(video_url)
     return self.url_data[video_id]
-
-
-
-
+def get_all_aggregated_data(self, video_url):
+    self.get_all_data(video_url)
+    return self.get_aggregated_data(video_url)
 def aggregate_key_maps(self, video_url=None, video_id=None) -> dict:
     """
     SEO-driven aggregator for video metadata.

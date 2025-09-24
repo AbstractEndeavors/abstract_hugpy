@@ -16,4 +16,7 @@ def get_audio_path(video_url): return get_video_mgr().get_data(video_url).get('a
 def get_thumbnail_dir(video_url): return get_video_mgr().get_data(video_url).get('thumbnail_dir')
 def get_srt_path(video_url): return get_video_mgr().get_data(video_url).get('srt_path')
 def get_metadata_path(video_url): return get_video_mgr().get_data(video_url).get('metadata_path')
-def get_all_data(video_url): return get_video_mgr().get_all_data(video_url)
+def get_all_data(video_url): return get_video_mgr().get_all_data(video_url).get('metadata_path')
+def get_aggregated_data_dir(video_url): return get_video_mgr().get_data(video_url).get('aggregated_dir')
+def get_aggregated_data_path(video_url): return get_video_mgr().get_data(video_url).get('total_aggregated_path')
+def get_aggregated_data(video_url): return get_video_mgr().get_all_aggregated_data(video_url)

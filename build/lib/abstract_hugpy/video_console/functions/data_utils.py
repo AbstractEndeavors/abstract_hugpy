@@ -1,6 +1,8 @@
 from ..imports import *
 from abstract_webtools.managers.videoDownloader import get_video_filepath,get_video_id,get_video_info
 from abstract_utilities import safe_read_from_json, safe_dump_to_file, get_any_value, make_list
+from abstract_webtools.managers.videoDownloader.src.functions.info_utils import _ensure_standard_paths
+
 import os
 def is_complete(self,key=None,video_url=None, video_id=None):
     data = self.get_data(video_url=video_url, video_id=video_id)
@@ -42,60 +44,79 @@ def is_complete(self,key=None,video_url=None, video_id=None):
         safe_dump_to_file(data=total_data,file_path=data['total_data_path'])
         return total_data
     safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
-def init_data(self, video_url, video_id):
-    dir_path = os.path.join(self.videos_directory, video_id)
-    os.makedirs(dir_path, exist_ok=True)
-    info_path = os.path.join(dir_path, 'video_info.json')
-    total_info_path = os.path.join(dir_path, 'total_info.json')
-    total_data_path = os.path.join(dir_path, 'total_data.json') 
-    thumbnails_dir = os.path.join(dir_path, 'thumbnails')
-    os.makedirs(thumbnails_dir, exist_ok=True)
-    video_info = get_video_info(video_url)
-    video_id = get_video_id(video_url)
-    video_basename = f"video.webm"
-    video_dir = dir_path
-    os.makedirs(video_dir, exist_ok=True)
-    video_path = os.path.join(video_dir,video_basename)
-    safe_dump_to_file(data=video_info,file_path= info_path)
-    aggregated_dir = os.path.join(dir_path, 'aggregated')
-    os.makedirs(aggregated_dir, exist_ok=True)
-    total_aggregated_path = os.path.join(aggregated_dir, 'total_aggregated_path')
-    data = {
-        'url': video_url,
-        'video_id': video_id,
-        'directory': dir_path,
-        'info_path': info_path,
-        'video_basename': video_basename,
-        'video_path': video_path,
-        'thumbnails_dir': thumbnails_dir,
-        'total_info_path': total_info_path,
-        'total_data_path':total_data_path,
-        'thumbnails_path': os.path.join(dir_path, 'thumbnails.json'),
-        'audio_path': os.path.join(dir_path, 'audio.webm'),
-        'whisper_path': os.path.join(dir_path, 'whisper_result.json'),
-        'srt_path': os.path.join(dir_path, 'captions.srt'),
-        'metadata_path': os.path.join(dir_path, 'video_metadata.json'),
-        'aggregated_dir': aggregated_dir,
-        'total_aggregated_path': total_aggregated_path,
-        'info': video_info,
+def init_data(self, video_url, video_id=None):
+    """
+    Initialize a full data record for a video.
+    Always enforces schema so file_path, info_path, etc. exist.
+    """
 
+    # 1. Resolve ID
+    video_id = video_id or get_video_id(video_url)
+
+    # 2. Ask registry for info (metadata only, no download yet)
+    video_info = self.registry.get_video_info(url=video_url, video_id=video_id, force_refresh=False)
+
+    # 3. Ensure schema (guarantees file_path, info_path, etc.)
+    video_info = _ensure_standard_paths(
+        video_info or {"video_id": video_id, "url": video_url},
+        self.video_root
+    )
+
+    # 4. Canonical base dir
+    dir_path = os.path.dirname(video_info["file_path"])
+    os.makedirs(dir_path, exist_ok=True)
+
+    # 5. Standard sidecar files
+    info_path        = video_info["info_path"]
+    total_info_path  = os.path.join(dir_path, "total_info.json")
+    total_data_path  = os.path.join(dir_path, "total_data.json")
+    aggregated_dir   = os.path.join(dir_path, "aggregated")
+    total_agg_path   = os.path.join(aggregated_dir, "total_aggregated.json")
+    os.makedirs(video_info["thumbnails_dir"], exist_ok=True)
+    os.makedirs(aggregated_dir, exist_ok=True)
+
+    # 6. Save canonical info.json immediately
+    safe_dump_to_file(video_info, info_path)
+
+    # 7. Build the unified data dict
+    data = {
+        "url": video_url,
+        "video_id": video_id,
+        "directory": dir_path,
+        "info_path": info_path,
+        "video_basename": os.path.basename(video_info["file_path"]),
+        "video_path": video_info["file_path"],
+        "thumbnails_dir": video_info["thumbnails_dir"],
+        "thumbnails_path": video_info.get("thumbnails_path"),
+        "audio_path": video_info.get("audio_path"),
+        "whisper_path": video_info.get("whisper_path"),
+        "srt_path": video_info.get("srt_path"),
+        "metadata_path": video_info.get("metadata_path"),
+        "total_info_path": total_info_path,
+        "total_data_path": total_data_path,
+        "aggregated_dir": aggregated_dir,
+        "total_aggregated_path": total_agg_path,
+        "info": video_info,
     }
-    
-    if os.path.isfile(data['whisper_path']):
-        data['whisper'] = safe_load_from_file(data['whisper_path'])
-    if os.path.isfile(data['metadata_path']):
-        data['metadata'] = safe_load_from_file(data['metadata_path'])
-    if os.path.isfile(data['thumbnails_path']):
-        data['thumbnails'] = safe_load_from_file(data['thumbnails_path'])
-    if os.path.isfile(data['total_aggregated_path']):
-        data['aggregate_data'] = safe_load_from_file(data['total_aggregated_path'])
-    if os.path.isfile(data['srt_path']):
-        subs = pysrt.open(data['srt_path'])
-        data['captions'] = [
+
+    # 8. Load optional existing sidecar files
+    if os.path.isfile(data["whisper_path"]):
+        data["whisper"] = safe_load_from_file(data["whisper_path"])
+    if os.path.isfile(data["metadata_path"]):
+        data["metadata"] = safe_load_from_file(data["metadata_path"])
+    if os.path.isfile(data["thumbnails_path"]):
+        data["thumbnails"] = safe_load_from_file(data["thumbnails_path"])
+    if os.path.isfile(total_agg_path):
+        data["aggregate_data"] = safe_load_from_file(total_agg_path)
+    if os.path.isfile(data["srt_path"]):
+        subs = pysrt.open(data["srt_path"])
+        data["captions"] = [
             {"start": str(sub.start), "end": str(sub.end), "text": sub.text}
             for sub in subs
         ]
-    self.update_url_data(data,video_url=video_url, video_id=video_id)
+
+    # 9. Register in memory
+    self.update_url_data(data, video_url=video_url, video_id=video_id)
     return data
 def update_url_data(self,data,video_url=None, video_id=None):
     video_id = video_id or get_video_id(video_url)
@@ -121,13 +142,36 @@ def update_spec_data(self,spec_data,key,path_key,video_url=None, video_id=None,d
     self.update_url_data(data,video_url=video_url,video_id=video_id)
     safe_dump_to_file(spec_data,path)
     return data
-def download_video(self, video_url):
-    data = self.get_data(video_url)
-    if not os.path.isfile(data['video_path']):
-        video_info = VideoDownloader(url=video_url)#, preferred_format="mp4",download_directory=data['directory'],output_filename=data['video_basename'],download_video=True)
-        safe_dump_to_file(data=video_info, file_path=data['info_path'])
-        data['info'] = video_info
-    return data['info']
+def download_video(self, video_url, video_id=None):
+    data = self.get_data(video_url, video_id=video_id)
+
+    # if already present, skip
+    if os.path.isfile(data["video_path"]):
+        return data["info"]
+
+    # tell VideoDownloader to place the file exactly where schema says
+    vd = VideoDownloader(
+        url=video_url,
+        download_directory=data["directory"],                # use canonical folder
+        output_filename=os.path.basename(data["video_path"]),# force name "video.mp4"
+        download_video=True,
+        get_info=True,
+    )
+
+    # merge downloader info into our schema
+    video_info = vd.info or {}
+    video_info.update({
+        "file_path": data["video_path"],
+        "info_path": data["info_path"],
+        "video_id": data["video_id"],
+    })
+    safe_dump_to_file(video_info, data["info_path"])
+    data["info"] = video_info
+
+    # refresh registry entry too
+    self.registry.edit_info(video_info, url=video_url, video_id=data["video_id"])
+    return video_info
+
 def get_aggregated_data(self,video_url=None, video_id=None):
     video_id = video_id or get_video_id(video_url=video_url)
     data = self.get_data(video_url=video_url,video_id=video_id)

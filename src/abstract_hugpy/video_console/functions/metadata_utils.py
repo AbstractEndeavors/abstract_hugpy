@@ -105,7 +105,7 @@ def get_metadata(self, video_url):
              thumbnails_dir=data.get('thumbnails_dir'),
              thumbnail_paths=data.get('thumbnail_paths'),
              whisper_result=self.get_whisper_result(video_url),
-             audio_path=data.get('audio_path'),
+             audio_path=self.get_audio_path(video_url),
              domain='https://typicallyoutliers.com'
             )
         data = self.update_meta_data(metadata, video_url)

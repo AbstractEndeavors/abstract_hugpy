@@ -1,10 +1,13 @@
 from .imports import *
 from .initFuncs import initFuncs
 from abstract_security import get_env_value
+from abstract_webtools import infoRegistry
 class VideoDirectoryManager(metaclass=SingletonMeta):
     def __init__(self,videos_directory=None):
         if not hasattr(self, 'initialized',):
             self.initialized = True
+            self.registry = infoRegistry()
+            self.video_root = self.registry.video_root
             videos_directory = str(Path( videos_directory or get_env_value('VIDEO_DIRECTORY')).resolve())
             os.makedirs(videos_directory,exist_ok=True)
             self.videos_directory = get_abs_videos_directory(videos_directory)

@@ -1,7 +1,7 @@
 from abstract_flask import *
 from abstract_utilities import *
 deep_coder_bp,logger = get_bp('deep_coder_bp')
-from .. import get_deep_coder
+from ..hugging_face_models.deepcoder import get_deep_coder
 deepcoder = get_deep_coder()
 
 @deep_coder_bp.route("/deepcoder_generate", methods=["POST","GET"])

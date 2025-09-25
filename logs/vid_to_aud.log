@@ -18,3 +18,4 @@
 2025-09-24 09:16:15,943 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
 2025-09-24 09:26:32,701 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
 2025-09-24 09:33:31,495 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined
+2025-09-24 10:09:49,065 - WARNING - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/video_console/functions/metadata_utils.py - Summarization failed: name 'summarizer' is not defined

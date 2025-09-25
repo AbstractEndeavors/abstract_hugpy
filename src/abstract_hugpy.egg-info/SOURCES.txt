@@ -43,6 +43,7 @@ src/abstract_hugpy/imports/curate_utils/agg_utils.py
 src/abstract_hugpy/imports/curate_utils/curation.py
 src/abstract_hugpy/imports/curate_utils/curation_utils.py
 src/abstract_hugpy/video_console/__init__.py
+src/abstract_hugpy/video_console/createut].py
 src/abstract_hugpy/video_console/imports.py
 src/abstract_hugpy/video_console/initFuncs.py
 src/abstract_hugpy/video_console/main.py

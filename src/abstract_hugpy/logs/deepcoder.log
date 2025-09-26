@@ -1,0 +1,4 @@
+2025-09-26 12:13:18,451 - INFO - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/hugpy_console/hugging_face_models/deepcoder.py - Loading tokenizer from /mnt/24T/hugging_face/modules/DeepCoder-14B...
+2025-09-26 12:13:19,105 - INFO - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/hugpy_console/hugging_face_models/deepcoder.py - Tokenizer loaded successfully.
+2025-09-26 12:13:19,111 - INFO - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/hugpy_console/hugging_face_models/deepcoder.py - Generation configuration loaded successfully.
+2025-09-26 12:13:19,125 - INFO - /home/computron/Documents/pythonTools/modules/abstract_hugpy/src/abstract_hugpy/hugpy_console/hugging_face_models/deepcoder.py - DeepCoder module initialized successfully.

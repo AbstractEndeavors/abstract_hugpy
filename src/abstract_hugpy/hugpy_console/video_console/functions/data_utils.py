@@ -160,7 +160,7 @@ def download_video(self, video_url, video_id=None):
     data = self.get_data(video_url, video_id=video_id)
 
 
-    video_path = data.get('video_path')
+
     info_path =  data.get('info_path')
     directory =  data.get('directory')
     video_path =  data.get('video_path')
@@ -174,23 +174,22 @@ def download_video(self, video_url, video_id=None):
     # tell VideoDownloader to place the file exactly where schema says
     
     
-    vd = VideoDownloader(
+    VideoDownloader(
         url=video_url,
         download_directory=directory,                # use canonical folder
         output_filename=basename,# force name "video.mp4"
         download_video=True,
-        get_info=True,
+
     )
     
     
     # merge downloader info into our schema
-    video_info = vd.info or {}
-    video_info.update(data)
-    safe_dump_to_file(video_info,info_path)
+    video_id= data.get('id') or data.get('video_id') or info.get('id') or info.get('video_id')
+    video_info = self.registry.get_video_info(video_id=video_id)
     data["info"].update(video_info) 
-    video_id= data.get('video_id')
+    
     # refresh registry entry too
-    self.registry.edit_info(video_info, url=video_url, video_id=video_id)
+    self.registry.edit_info(data["info"], url=video_url, video_id=video_id)
     return video_info
 
 def get_aggregated_data(self,video_url=None, video_id=None):

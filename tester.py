@@ -1,20 +1,13 @@
 from src.abstract_hugpy import *
 from abstract_webtools import *
 ##from abstract_apis import *
-video_url = 'https://www.youtube.com/watch?v=t-knFuqQdGc'
-info = registry.get_video_info(video_url)
-input(info)
-vd = VideoDownloader(
-        url=video_url,
-        download_video=True,
-        get_info=True,
-    )
-input(vd)
+video_url = 'https://youtu.be/0XFudmaObLI?list=RDMM8Q0cp4b9pvg'
+
+
 #all_data = postRequest(url,data={"url":'https://www.youtube.com/shorts/rLlWcvLBluI'})
 ##info = registry.get_video_info(url)
 video_mgr = get_video_mgr()
-input(video_mgr.download_video(video_url))
-video_mgr = get_video_mgr()
+
 data = video_mgr.get_data(video_url)
 input(data)
 video_id = get_video_id(video_url)

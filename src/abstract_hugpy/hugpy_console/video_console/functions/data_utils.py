@@ -103,7 +103,7 @@ def init_data(self, video_url, video_id=None):
         "url": video_url,
         "video_id": video_id,
         "directory": dir_path,
-        "video_basename": os.path.basename(video_info["video"]),
+        "video_basename": os.path.basename(video_info["video_path"]),
         "info": video_info,
     }
 

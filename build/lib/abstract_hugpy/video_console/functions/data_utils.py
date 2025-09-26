@@ -52,7 +52,7 @@ def init_data(self, video_url, video_id=None):
     video_info = self.registry.get_video_info(url=video_url, video_id=video_id, force_refresh=False)
 
     # 3. Ensure schema (guarantees file_path, info_path, etc.)
-    video_info = _ensure_standard_paths(
+    video_info = ensure_standard_paths(
         video_info or {"video_id": video_id, "url": video_url},
         self.video_root
     )

@@ -2,9 +2,6 @@ README.md
 pyproject.toml
 setup.py
 src/abstract_hugpy/__init__.py
-src/abstract_hugpy/hugpy_deepcoder_wsgi.py
-src/abstract_hugpy/hugpy_proxyvideo_wsgi.py
-src/abstract_hugpy/hugpy_video_wsgi.py
 src/abstract_hugpy.egg-info/PKG-INFO
 src/abstract_hugpy.egg-info/SOURCES.txt
 src/abstract_hugpy.egg-info/dependency_links.txt

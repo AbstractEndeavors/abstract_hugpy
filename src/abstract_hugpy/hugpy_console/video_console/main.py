@@ -33,7 +33,7 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
                 "info":{"keys":True,"path":'info_path'},
                 "whisper":{"keys":['segments','text'],"path":'whisper_path'},
                 "metadata":{"keys":['keywords','summary','title','seodata'],"path":'metadata_path'},
-                "captions":{"keys":True,"path":'srt_path'},
+                "captions":{"keys":True,"path":'captions_path'},
                 "thumbnails":{"keys":["thumbnail_texts","thumbnail_paths"],"path":'thumbnails_path'}
                 }
             self.init_key_map={

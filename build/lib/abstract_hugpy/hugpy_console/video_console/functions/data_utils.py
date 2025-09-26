@@ -40,8 +40,8 @@ def get_schema_paths(
     return path
 def is_complete(self, key=None, video_url=None, video_id=None):
     data = self.get_data(video_url=video_url, video_id=video_id)
-    total_info_path = data.get("total_info")
-
+    total_info_path = data.get("total_info_path")
+    input(total_info_path)
     if not os.path.isfile(total_info_path):
         safe_dump_to_file(self.init_key_map, total_info_path)
 
@@ -54,6 +54,7 @@ def is_complete(self, key=None, video_url=None, video_id=None):
     for k in keys:
         if not total_info.get(k):
             values = self.complete_key_map.get(k)
+            
             path = data.get(values.get("path"))
             if os.path.isfile(path):
                 if values.get("keys") is True:
@@ -68,7 +69,7 @@ def is_complete(self, key=None, video_url=None, video_id=None):
         total_info["total"] = True
         safe_dump_to_file(total_info, total_info_path)
 
-        total_data_path = data.get("total_data")
+        total_data_path = data.get("total_data_path")
         aggregate = aggregate_from_base_dir(data["directory"])
         data.update(aggregate)
         safe_dump_to_file(data, total_data_path)
@@ -91,11 +92,11 @@ def init_data(self, video_url, video_id=None):
         self.video_root
     )
 
-    dir_path = os.path.dirname(video_info["video"])
+    dir_path = os.path.dirname(video_info["video_path"])
     os.makedirs(dir_path, exist_ok=True)
 
     # 2. Save info.json immediately
-    safe_dump_to_file(video_info, video_info["info"])
+    safe_dump_to_file(data=video_info, file_path=video_info["info_path"])
     schema_paths = video_info.get("schema_paths", {})
     # 3. Build unified data dict
     data = {
@@ -159,16 +160,15 @@ def download_video(self, video_url, video_id=None):
     data = self.get_data(video_url, video_id=video_id)
 
 
-    video_path = get_any_value(data,'video_path')
-    input(data)
-    info_path = get_any_value(data,'info_path')
-    directory = get_any_value(data,'directory')
-    video_path = get_any_value(data,'video_path')
+    video_path = data.get('video_path')
+    info_path =  data.get('info_path')
+    directory =  data.get('directory')
+    video_path =  data.get('video_path')
 
     basename = os.path.basename(video_path)
     info = data.get('info')
     # if already present, skip
-    if os.path.isfile():
+    if os.path.isfile(video_path):
         return info
     
     # tell VideoDownloader to place the file exactly where schema says

@@ -7,8 +7,10 @@ video_url = 'https://youtu.be/0XFudmaObLI?list=RDMM8Q0cp4b9pvg'
 #all_data = postRequest(url,data={"url":'https://www.youtube.com/shorts/rLlWcvLBluI'})
 ##info = registry.get_video_info(url)
 video_mgr = get_video_mgr()
+metadata = video_mgr.get_metadata(video_url)
+aggregated_data = video_mgr.get_aggregated_data(video_url)
 
-data = video_mgr.get_data(video_url)
+
 input(data)
 video_id = get_video_id(video_url)
 input(video_id)

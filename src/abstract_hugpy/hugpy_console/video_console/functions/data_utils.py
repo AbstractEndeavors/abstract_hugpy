@@ -184,15 +184,15 @@ def get_all_data(self, video_url):
     if data:
         return data
     data = self.get_data(video_url)
-    self.download_video(video_url)
-    self.extract_audio(video_url)
-    self.get_whisper_result(video_url)
-    self.get_thumbnails(video_url)
-    self.get_captions(video_url)
-    self.get_metadata(video_url)
-    self.get_aggregated_data(video_url)
-    # force resync
-    return self.is_complete(video_url=video_url)
+    video_id = get_video_id(video_url=video_url)
+    self.download_video(video_url=video_url,video_id=video_id)
+    self.extract_audio(video_url=video_url,video_id=video_id)
+    self.get_whisper_result(video_url=video_url,video_id=video_id)
+    self.get_thumbnails(video_url=video_url,video_id=video_id)
+    self.get_captions(video_url=video_url,video_id=video_id)
+    self.get_metadata(video_url=video_url,video_id=video_id)
+    self.get_aggregated_data(video_url=video_url,video_id=video_id)
+    return self.is_complete(video_url=video_url,video_id=video_id)
 
 def get_all_aggregated_data(self, video_url):
     self.get_all_data(video_url)

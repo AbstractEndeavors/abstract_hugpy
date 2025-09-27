@@ -58,23 +58,16 @@ def is_complete(self, key=None, video_url=None, video_id=None):
     safe_dump_to_file(data=total_info,file_path=data['total_info_path'])
 def init_data(self, video_url, video_id=None):
     video_id = video_id or get_video_id(video_url)
-
-    # 1. Resolve metadata (registry first, then schema)
-    video_info = self.registry.get_video_info(
-        url=video_url, video_id=video_id, force_refresh=False
-    )
-    video_info = ensure_standard_paths(
-        video_info or {"video_id": video_id, "url": video_url},
-        self.video_root
-    )
+    video_info = self.registry.get_video_info(url=video_url, video_id=video_id, force_refresh=False)
+    video_info = ensure_standard_paths(video_info or {"video_id": video_id, "url": video_url}, self.video_root)
 
     dir_path = os.path.dirname(video_info["video_path"])
     os.makedirs(dir_path, exist_ok=True)
 
-    # 2. Save info.json immediately
+    # Save info.json
     safe_dump_to_file(data=video_info, file_path=video_info["info_path"])
     schema_paths = video_info.get("schema_paths", {})
-    # 3. Build unified data dict
+
     data = {
         **schema_paths,
         "url": video_url,
@@ -84,9 +77,12 @@ def init_data(self, video_url, video_id=None):
         "info": video_info,
     }
 
-    # 4. Load optional sidecar files
-    
+    # Ensure total_info.json is present and synced
+    total_info_path = data.get("total_info_path")
+    if not os.path.isfile(total_info_path):
+        safe_dump_to_file(self.init_key_map, total_info_path)
 
+    # preload whisper, metadata, thumbs if present
     def load_if_exists(key, target=None, loader=safe_load_from_file):
         path = schema_paths.get(f"{key}_path")
         if path and os.path.isfile(path):
@@ -97,16 +93,18 @@ def init_data(self, video_url, video_id=None):
     load_if_exists("thumbnails")
     load_if_exists("total_aggregated")
 
+    # captions
     srt_path = schema_paths.get("captions_path")
     if srt_path and os.path.isfile(srt_path):
         subs = pysrt.open(srt_path)
-        data["captions"] = [
-            {"start": str(sub.start), "end": str(sub.end), "text": sub.text}
-            for sub in subs
-        ]
+        data["captions"] = [{"start": str(sub.start), "end": str(sub.end), "text": sub.text} for sub in subs]
 
-    # 5. Register
+    # Register
     self.update_url_data(data, video_url=video_url, video_id=video_id)
+
+    # Now sync completeness
+    self.is_complete(video_url=video_url)
+
     return data
 def update_url_data(self,data,video_url=None, video_id=None):
     video_id = video_id or get_video_id(video_url)
@@ -193,8 +191,9 @@ def get_all_data(self, video_url):
     self.get_captions(video_url)
     self.get_metadata(video_url)
     self.get_aggregated_data(video_url)
-    video_id = get_video_id(video_url)
-    return self.url_data[video_id]
+    # force resync
+    return self.is_complete(video_url=video_url)
+
 def get_all_aggregated_data(self, video_url):
     self.get_all_data(video_url)
     return self.get_aggregated_data(video_url)

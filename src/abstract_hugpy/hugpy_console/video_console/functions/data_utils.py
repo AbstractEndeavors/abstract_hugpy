@@ -46,7 +46,7 @@ def is_complete(self, key=None, video_url=None, video_id=None):
         total_info["total"] = True
         safe_dump_to_file(total_info, total_info_path)
         total_aggregated_path = data.get("total_aggregated_path")
-        aggregate = self.get_aggregated_data(video_url=video_url, video_id=video_id):
+        aggregate = self.get_aggregated_data(video_url=video_url, video_id=video_id)
         safe_dump_to_file(aggregate, total_aggregated_path)
         return self.get_data(video_url=video_url, video_id=video_id)
          

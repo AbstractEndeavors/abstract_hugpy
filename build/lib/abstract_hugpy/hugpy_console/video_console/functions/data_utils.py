@@ -18,7 +18,7 @@ def get_schema_paths(video_url=None, video_info=None, video_id=None, video_root=
 def is_complete(self, key=None, video_url=None, video_id=None):
     data = self.get_data(video_url=video_url, video_id=video_id)
     total_info_path = data.get("total_info_path")
-    input(total_info_path)
+
     if not os.path.isfile(total_info_path):
         safe_dump_to_file(self.init_key_map, total_info_path)
 
@@ -163,7 +163,8 @@ def download_video(self, video_url, video_id=None):
     # merge downloader info into our schema
     video_id= data.get('id') or data.get('video_id') or info.get('id') or info.get('video_id')
     video_info = self.registry.get_video_info(video_id=video_id)
-    data["info"].update(video_info) 
+    data["info"].update(video_info)
+    data["video_path"]=video_path
     
     # refresh registry entry too
     self.registry.edit_info(data["info"], url=video_url, video_id=video_id)

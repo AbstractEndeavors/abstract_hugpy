@@ -1,47 +1,24 @@
 from ..imports import *
 from abstract_utilities import get_any_value
 
-def get_video_url_info(
-    video_url=None,
-    video_info=None,
-    video_id=None,
-    video_root=None
-    ):
+def get_video_url_info(video_url=None, video_info=None, video_id=None, video_root=None, registry=None):
+    registry = registry or infoRegistry(video_root)
     video_id = video_id or get_video_id(video_url)
-    video_info = video_info or  self.registry.get_video_info(
-        url=video_url, video_id=video_id, force_refresh=False
-    )
-    video_info = ensure_standard_paths(
-        video_info or {"video_id": video_id, "url": video_url},
-        video_root
-    )
+    video_info = video_info or registry.get_video_info(url=video_url, video_id=video_id, force_refresh=False)
+    video_info = ensure_standard_paths(video_info or {"video_id": video_id, "url": video_url}, video_root)
     return video_info or {}
-def get_schema_paths(
-    video_url=None,
-    video_info=None,
-    video_id=None,
-    video_root=None,
-    key=None
-    ):
-    if not video_info or not video_info.get('schema_paths'):
-        video_info = get_video_url_info(
-            video_url=video_url,
-            video_info=video_info,
-            video_id=video_id,
-            video_root=video_root
-            )
-    path = video_info.get('schema_paths',{})
+
+def get_schema_paths(video_url=None, video_info=None, video_id=None, video_root=None, key=None, registry=None):
+    video_info = get_video_url_info(video_url, video_info, video_id, video_root, registry=registry)
+    schema_paths = video_info.get('schema_paths', {})
     if key:
-        path = None
-        if schema_paths:
-            path = schema_paths.get(key)
-        
-        return path
-    return path
+        return schema_paths.get(key)
+    return schema_paths
+
 def is_complete(self, key=None, video_url=None, video_id=None):
     data = self.get_data(video_url=video_url, video_id=video_id)
     total_info_path = data.get("total_info_path")
-    input(total_info_path)
+
     if not os.path.isfile(total_info_path):
         safe_dump_to_file(self.init_key_map, total_info_path)
 
@@ -186,8 +163,11 @@ def download_video(self, video_url, video_id=None):
     # merge downloader info into our schema
     video_id= data.get('id') or data.get('video_id') or info.get('id') or info.get('video_id')
     video_info = self.registry.get_video_info(video_id=video_id)
-    data["info"].update(video_info) 
+    schema_paths = video_info.get('schema_paths', {})
+    data["info"].update(video_info)
     
+    data.update(schema_paths)
+    self.update_url_data(data, video_url=video_url, video_id=video_id)
     # refresh registry entry too
     self.registry.edit_info(data["info"], url=video_url, video_id=video_id)
     return video_info

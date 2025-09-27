@@ -21,7 +21,7 @@ def get_thumbnails(self,video_url):
     thumbnail_paths = thumbnails.get('thumbnail_paths',[])
     if not thumbnail_paths:
         video_path =data.get('video_path')
-        thumbnails_dir = data.get('thumbnails_dir')
+        thumbnails_dir = data.get('thumbnails_directory')
         video_id = data.get('video_id')
         thumbnail_paths = extract_video_frames_unique(
             video_path=video_path,

@@ -45,12 +45,11 @@ def is_complete(self, key=None, video_url=None, video_id=None):
     if all(total_info.get(k) for k in keys):
         total_info["total"] = True
         safe_dump_to_file(total_info, total_info_path)
-
-        total_data_path = data.get("total_data_path")
-        aggregate = aggregate_from_base_dir(data["directory"])
-        data.update(aggregate)
-        safe_dump_to_file(data, total_data_path)
-        return data
+        total_aggregated_path = data.get("total_aggregated_path")
+        aggregate = self.get_aggregated_data(video_url=video_url, video_id=video_id):
+        safe_dump_to_file(aggregate, total_aggregated_path)
+        return self.get_data(video_url=video_url, video_id=video_id)
+         
 
     safe_dump_to_file(total_info, total_info_path)
     return total_info
@@ -177,7 +176,7 @@ def get_aggregated_data(self,video_url=None, video_id=None):
     data = self.get_data(video_url=video_url,video_id=video_id)
     if data.get('aggregate_data') == None:
         directory= data.get('directory')
-        aggregated_dir = data.get('aggregated_dir')
+        aggregated_dir = data.get('aggregated_directory')
         aggregate_js = aggregate_from_base_dir(directory=directory,aggregated_dir=aggregated_dir)
         data['aggregate_data'] = aggregate_js
         self.update_url_data(data=data,video_url=video_url, video_id=video_id)

@@ -8,9 +8,6 @@ class VideoDirectoryManager(metaclass=SingletonMeta):
             self.initialized = True
             self.registry = infoRegistry()
             self.video_root = self.registry.video_root
-            videos_directory = str(Path( videos_directory or get_env_value('VIDEO_DIRECTORY')).resolve())
-            os.makedirs(videos_directory,exist_ok=True)
-            self.videos_directory = get_abs_videos_directory(videos_directory)
             self.url_data = {}
             self.key_maps = {
                 "file_tiers": [  # fixed the typo here

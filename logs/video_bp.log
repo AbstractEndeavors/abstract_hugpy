@@ -98,3 +98,5 @@
 2025-09-26 13:55:18,271 - ERROR - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - [VideoDownloader] Download failed: ERROR: ffmpeg exited with code 8
 2025-09-26 13:55:18,284 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/functions/download_utils.py - Monitor: exited.
 2025-09-26 14:31:49,005 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']
+2025-09-27 01:06:41,985 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']
+2025-09-27 01:12:44,723 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']

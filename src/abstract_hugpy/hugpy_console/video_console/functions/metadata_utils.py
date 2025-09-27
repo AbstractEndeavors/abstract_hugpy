@@ -102,7 +102,7 @@ def get_metadata(self, video_url):
              summary=metadata.get("summary"),
              description=metadata.get("summary"),
              keywords=metadata.get("keywords"),
-             thumbnails_dir=data.get('thumbnails_dir'),
+             thumbnails_dir=data.get('thumbnails_directory'),
              thumbnail_paths=data.get('thumbnail_paths'),
              whisper_result=self.get_whisper_result(video_url),
              audio_path=self.get_audio_path(video_url),

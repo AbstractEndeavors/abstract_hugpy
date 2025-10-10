@@ -10,7 +10,7 @@ from abstract_utilities import safe_read_from_json
 from abstract_ai.gpt_classes.prompt_selection.PromptBuilder import recursive_chunk
 from abstract_utilities import SingletonMeta
 DEFAULT_DIR = DEFAULT_PATHS["summarizer_t5"]
-MODEL_NAME = "gpt-4"
+MODEL_NAME = "t5-base"
 CHUNK_OVERLAP = 30
 DEFAULT_CHUNK_TOK = 450
 SHORTCUT_THRESHOLD = 200
@@ -18,6 +18,7 @@ class tokenizerManager(metaclass=SingletonMeta):
     def __init__(self):
         if not hasattr(self, 'initialized'):
             self.tokenizer = T5TokenizerFast.from_pretrained(DEFAULT_DIR)
+            self.initialized = True
 def get_tokenizer():
     return tokenizerManager().tokenizer
 def normalize_text(text: str) -> str:
@@ -57,14 +58,14 @@ def load_gen_config() -> GenerationConfig:
     return GenerationConfig(**config)
 
 def run_t5_inference(text: str, min_length: int, max_length: int) -> str:
-    inputs = get_tokenizer()(
+    tokenizer = get_tokenizer()
+    inputs = tokenizer(
         "summarize: " + normalize_text(text),
         return_tensors="pt",
         truncation=True,
         max_length=512
     )
-    model = T5ForConditionalGeneration.from_pretrained(DEFAULT_DIR)
-    gen_cfg = load_gen_config()
+    model, gen_cfg = get_t5_model_and_cfg()
 
     # Adjust to behave like pipeline
     gen_cfg.min_length = min_length
@@ -75,7 +76,7 @@ def run_t5_inference(text: str, min_length: int, max_length: int) -> str:
 
     with torch.no_grad():
         out = model.generate(inputs.input_ids, **gen_cfg.to_dict())
-    return get_tokenizer().decode(out[0], skip_special_tokens=True)
+    return tokenizer.decode(out[0], skip_special_tokens=True)
 
 
 def get_summary(

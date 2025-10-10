@@ -49,7 +49,7 @@ Output a full narrative paragraph (or two), not bullet points.
                           min_length=min_length,
                           do_sample=do_sample)[0]['generated_text']
 def get_flan_manager():
-    return flanManager().summarizer
+    return flanManager()
 def get_flan_summary(
     text: str,
     max_chunk: int = None,

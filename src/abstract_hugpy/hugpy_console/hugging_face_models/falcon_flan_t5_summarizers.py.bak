@@ -35,7 +35,7 @@ class flanManager:
             device=self.flan_device
         )
 
-def get_flan_summarizer(model_name: str | None = None):
+def get_flan_sumarizer(model_name:str=None):
     flan_mgr = flanManager(model_name=model_name)
     return flan_mgr.flan_summarizer
 def get_flan_summary(

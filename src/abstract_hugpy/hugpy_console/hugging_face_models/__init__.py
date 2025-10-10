@@ -4,3 +4,4 @@ from .falcon_flan_t5_summarizers import *
 from .generation import *
 from .keybert_model import *
 from .whisper_model import *
+from .summarizer_model import *

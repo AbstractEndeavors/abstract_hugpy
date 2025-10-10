@@ -14,11 +14,17 @@ MODEL_NAME = "gpt-4"
 CHUNK_OVERLAP = 30
 DEFAULT_CHUNK_TOK = 450
 SHORTCUT_THRESHOLD = 200
-class tokenizerManager(metaclass=SingletonMeta):
+
+class t5ModelManager(metaclass=SingletonMeta):
     def __init__(self):
-        if not hasattr(self, 'initialized'):
-            self.tokenizer = T5TokenizerFast.from_pretrained(DEFAULT_DIR)
+        if not hasattr(self, "initialized"):
+            self.model = T5ForConditionalGeneration.from_pretrained(DEFAULT_DIR)
+            self.gen_cfg = load_gen_config()
             self.initialized = True
+
+def get_t5_model_and_cfg():
+    m = t5ModelManager()
+    return m.model, m.gen_cfg
 def get_tokenizer():
     return tokenizerManager().tokenizer
 def normalize_text(text: str) -> str:
@@ -82,7 +88,7 @@ def run_t5_inference(text: str, min_length: int, max_length: int) -> str:
 def get_summary(
     text: str,
     summary_mode: Literal["short","medium","long","auto"] = "medium",
-    max_chunk_tokens: int = 200,   # smaller, like your split_to_chunk
+    max_chunk_tokens: int = 320,   # smaller, like your split_to_chunk
     min_length: Optional[int] = None,
     max_length: Optional[int] = None
 ) -> str:
@@ -94,7 +100,12 @@ def get_summary(
         mn, mx = (min_length, max_length) if min_length and max_length else scale_lengths(summary_mode, cnt)
         summaries.append(clean_output_text(run_t5_inference(chunk, mn, mx)))
     merged = " ".join(summaries)
-    words = merged.split()
+    # optional consolidation pass for coherence
+    try:
+        consolid = clean_output_text(run_t5_inference(merged, 80, 160))
+    except Exception:
+        consolid = merged
+    words = words = consolid.split()
     if len(words) > 150:  # like your pipeline cutoff
-        merged = " ".join(words[:150]) + "..."
-    return merged
+        consolid = " ".join(words[:150]) + "..."
+    return consolid

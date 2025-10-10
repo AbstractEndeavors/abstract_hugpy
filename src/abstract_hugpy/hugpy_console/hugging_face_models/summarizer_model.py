@@ -14,14 +14,22 @@ MODEL_NAME = "gpt-4"
 CHUNK_OVERLAP = 30
 DEFAULT_CHUNK_TOK = 450
 SHORTCUT_THRESHOLD = 200
-
+class tokenizerManager(metaclass=SingletonMeta):
+    def __init__(self):
+        if not hasattr(self, 'initialized'):
+            self.tokenizer = T5TokenizerFast.from_pretrained(DEFAULT_DIR)
+            self.initialized = True
 class t5ModelManager(metaclass=SingletonMeta):
     def __init__(self):
         if not hasattr(self, "initialized"):
             self.model = T5ForConditionalGeneration.from_pretrained(DEFAULT_DIR)
             self.gen_cfg = load_gen_config()
             self.initialized = True
-
+class tokenizerManager(metaclass=SingletonMeta):
+    def __init__(self):
+        if not hasattr(self, 'initialized'):
+            self.tokenizer = T5TokenizerFast.from_pretrained(DEFAULT_DIR)
+            self.initialized = True
 def get_t5_model_and_cfg():
     m = t5ModelManager()
     return m.model, m.gen_cfg

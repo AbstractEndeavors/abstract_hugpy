@@ -52,6 +52,7 @@ class SummarizerManager(metaclass=SingletonMeta):
     def __init__(self):
         if not hasattr(self, "initialized"):
             self.initialized = True
+            self.lock = threading.Lock()
             # Lazy-load tokenizer & model once
             self.tokenizer = get_T5TokenizerFast().from_pretrained(SUMMARIZER_DEFAULT_DIR)
             self.model = get_T5ForConditionalGeneration().from_pretrained(SUMMARIZER_DEFAULT_DIR)

@@ -45,7 +45,7 @@ class ZeroSearch(BaseModelManager):
         if not hasattr(self, "initialized"):
            
             self.model_dir = model_dir or DEFAULT_PATHS.get("zerosearch")
-
+            self.lock = threading.Lock()
             # ✅ Defensive safeguard
    
 

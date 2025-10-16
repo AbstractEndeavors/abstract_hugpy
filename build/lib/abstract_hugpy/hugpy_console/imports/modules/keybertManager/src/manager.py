@@ -53,6 +53,7 @@ class KeybertManager(metaclass=SingletonMeta):
         if not hasattr(self, 'initialized'):
             self.initialized = True
             self.model_path = model_path or DEFAULT_KEYBERT_PATH
+            self.lock = threading.Lock()
             self._sbert = load_sentence_bert_model(model_path=self.model_path)
             KeyBERT = get_KeyBERT()
             self._keybert = KeyBERT(self._sbert)

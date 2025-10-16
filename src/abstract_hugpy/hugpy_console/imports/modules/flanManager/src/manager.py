@@ -10,7 +10,7 @@ class FlanManager(BaseModelManager):
     def __init__(self, model_dir=None, use_quantization=None):
         # BaseModelManager handles singleton setup and environment resolution
         super().__init__(modrl_name="flan", model_dir=model_dir, use_quantization=use_quantization)
-
+        self.lock = threading.Lock()
     # ------------------------------------------------------------------
     # Model + tokenizer loading (overrides BaseModelManager)
     # ------------------------------------------------------------------

@@ -27,7 +27,7 @@ class DeepCoder(BaseModelManager):
         if not hasattr(self, "initialized"):
             self.initialized = True
             self.model_dir = model_dir or DEFAULT_PATHS.get("deepcoder")
-
+            self.lock = threading.Lock()
             # ✅ Defensive safeguard
 
             self.torch_env = TorchEnvManager()

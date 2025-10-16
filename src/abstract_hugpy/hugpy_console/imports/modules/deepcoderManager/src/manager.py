@@ -49,7 +49,7 @@ def resolve_model_path(entry):
 # ZeroSearch Persistent Manager
 # --------------------------------------------------------------------------
 
-class DeepCoderManager(BaseModelManager):
+class DeepCoder(BaseModelManager):
     """Server-optimized persistent manager for DeepCoder-14B-Preview."""
 
     def __init__(self, model_dir: str = None, use_quantization: bool = False):

@@ -32,9 +32,10 @@ class ZeroSearch(metaclass=SingletonMeta):
             self.device = env.device
             self.dtype = env.dtype
             self.use_quantization = use_quantization or env.use_quantization
-
+            self.model_dir = resolve_model_path(model_dir or _DEFAULT_PATH)
+            logger.info(f"DeepCoder using model_dir: {self.model_dir}")
             # ✅ FIX: Resolve the actual path string
-            self.model_dir = self._resolve_model_path(model_dir or _DEFAULT_PATH)
+         
 
             self.model = None
             self.tokenizer = None

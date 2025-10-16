@@ -1,53 +1,78 @@
 from ..imports import *
 from .manager import ZeroSearch
-def get_deep_coder(module_path=None,
-                   torch_dtype=None,
-                   use_quantization=None
-                   ):
 
-    zerosearch = ZeroSearch(
-        model_dir=module_path,
-        use_quantization=use_quantization
-        )
-    return zerosearch
-def try_deep_coder(module_path=None,
-                   torch_dtype=None,
-                   use_quantization=None):
-    # Example usage
+logger = get_logFile("zerosearch_interface")
+
+# --------------------------------------------------------------------------
+# Factory
+# --------------------------------------------------------------------------
+def get_zerosearch(model_dir: str = None, use_quantization: bool = None):
+    """
+    Retrieve or initialize the persistent ZeroSearch singleton.
+
+    Args:
+        model_dir (str, optional): Path to local model directory or HF repo ID.
+        use_quantization (bool, optional): Enable 4-bit quantization if available.
+
+    Returns:
+        ZeroSearch: Initialized singleton instance.
+    """
     try:
-        # Initialize the DeepCoder module
-        deepcoder = get_deep_coder(module_path=module_path,
-                   torch_dtype=torch_dtype,
-                   use_quantization=use_quantization)
-        logger.info("DeepCoder logger initialized and active.")
-        # Generate text from a prompt
-        prompt = "Write a Python function to calculate the factorial of a number."
-        generated_text = deepcoder.generate(
+        zerosearch = ZeroSearch(
+            model_dir=model_dir,
+            use_quantization=use_quantization,
+        )
+        logger.info("ZeroSearch manager initialized and active.")
+        return zerosearch
+    except Exception as e:
+        logger.error(f"Failed to initialize ZeroSearch: {e}")
+        raise
+
+
+# --------------------------------------------------------------------------
+# Smoke test / Example usage
+# --------------------------------------------------------------------------
+def try_zerosearch(model_dir: str = None, use_quantization: bool = None):
+    """
+    Quick functional test to verify ZeroSearch model and pipeline behavior.
+    """
+    try:
+        zerosearch = get_zerosearch(
+            model_dir=model_dir,
+            use_quantization=use_quantization,
+        )
+
+        logger.info("ZeroSearch smoke test starting...")
+
+        # Basic text generation
+        prompt = "Write a concise summary of what a transformer model is."
+        output = zerosearch.generate(
             prompt=prompt,
-            max_new_tokens=2,
-            use_chat_template=False
+            max_new_tokens=200,
+            temperature=0.7,
+            top_p=0.9,
         )
-        print("Generated Text:", generated_text)
+        print("\n--- ZeroSearch Output ---\n", output)
 
-        # Generate text using chat template
+        # Chat-style example
         messages = [
-            {"role": "system", "content": "You are a helpful coding assistant."},
-            {"role": "user", "content": "Explain how to implement a binary search in Python."}
+            {"role": "system", "content": "You are a precise and factual assistant."},
+            {"role": "user", "content": "Explain how gradient descent works."},
         ]
-        chat_response = deepcoder.generate(
-            prompt=messages,
-            max_new_tokens=1000,
-            use_chat_template=True
+        chat_output = zerosearch.generate(
+            prompt="",
+            messages=messages,
+            use_chat_template=True,
+            max_new_tokens=300,
         )
-        print("Chat Response:", chat_response)
+        print("\n--- ZeroSearch Chat Response ---\n", chat_output)
 
-        # Save output
-        deepcoder.save_output(chat_response, "./output/binary_search_explanation.txt")
+        # Show environment info
+        info = zerosearch.get_info()
+        print("\n--- ZeroSearch Info ---\n", info)
 
-        # Get model info
-        model_info = deepcoder.get_model_info()
-        print("Model Info:", model_info)
+        logger.info("ZeroSearch test completed successfully.")
 
     except Exception as e:
-        logger.error(f"Example usage failed: {str(e)}")
-
+        logger.error(f"ZeroSearch test failed: {e}")
+        raise

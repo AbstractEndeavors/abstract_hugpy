@@ -1,18 +1,5 @@
-## DeepCoder/ZeroSearch Persistent Manager (Server-optimized)
-```python
-import os, logging, threading
-from typing import Dict, List, Optional, Union
-from concurrent.futures import ThreadPoolExecutor
-
-from abstract_utilities import SingletonMeta
-from .imports import (
-    get_torch,
-    get_pipeline,
-    get_AutoTokenizer,
-    get_AutoModelForCausalLM,
-    get_GenerationConfig,
-)
-from .constants import DEFAULT_PATHS, MODULE_DEFAULTS
+## ZeroSearch/ZeroSearch Persistent Manager (Server-optimized)
+from ..imports import *
 
 
 # --------------------------------------------------------------------------
@@ -26,52 +13,59 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger("ZeroSearch")
+logger = get_logFile("deepcoder")
+_DEFAULT_PATH = DEFAULT_PATHS.get("deepcoder")
 
 
-# --------------------------------------------------------------------------
-# Torch env resolver (cached)
-# --------------------------------------------------------------------------
-_TORCH_ENV = None
+def resolve_model_path(entry):
+    """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
+    if entry is None:
+        logger.error("DeepCoder: DEFAULT_PATHS entry missing.")
+        return None
 
-def get_torch_env():
-    global _TORCH_ENV
-    if _TORCH_ENV is not None:
-        return _TORCH_ENV
+    if isinstance(entry, dict):
+        local_path = entry.get("path")
+        repo_id = entry.get("id")
 
-    torch = get_torch()
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.float16 if device == "cuda" else torch.float32
-    _TORCH_ENV = (torch, device, dtype)
-    logger.info(f"Torch env: device={device}, dtype={dtype}")
-    return _TORCH_ENV
+        if local_path and os.path.exists(local_path):
+            logger.info(f"DeepCoder resolved local model path: {local_path}")
+            return local_path
 
+        if repo_id:
+            logger.info(f"DeepCoder resolved remote repo id: {repo_id}")
+            return repo_id
+
+        logger.error(f"DeepCoder: malformed entry: {entry}")
+        return None
+
+    if isinstance(entry, str):
+        logger.info(f"DeepCoder using direct model string: {entry}")
+        return entry
+
+    logger.error(f"DeepCoder: invalid model path type: {type(entry)}")
+    return None
 
 # --------------------------------------------------------------------------
 # ZeroSearch Persistent Manager
 # --------------------------------------------------------------------------
-class ZeroSearch(metaclass=SingletonMeta):
-    """Persistent DeepCoder model interface optimized for long-running services."""
+
+class DeepCoderManager(BaseModelManager):
+    """Server-optimized persistent manager for DeepCoder-14B-Preview."""
 
     def __init__(self, model_dir: str = None, use_quantization: bool = False):
-        if hasattr(self, "initialized"):
-            return
+        if not hasattr(self, "initialized"):
+            self.initialized = True
+            self.torch_env = TorchEnvManager()
+            self.torch = self.torch_env.torch
+            self.device = self.torch_env.device
+            self.dtype = self.torch_env.dtype
+            self.use_quantization = self.torch_env.use_quantization
+            self.preload()
 
-        self.initialized = True
-        self.model_dir = model_dir or DEFAULT_PATHS.get("deepcoder")
-        self.use_quantization = use_quantization
-        self.model = None
-        self.tokenizer = None
-        self.pipeline = None
-        self.lock = threading.Lock()
 
-        torch, device, dtype = get_torch_env()
-        self.torch, self.device, self.dtype = torch, device, dtype
 
-        logger.info(f"Initializing ZeroSearch on {self.device} ({self.dtype})...")
-        self._preload_async()
 
-    # ------------------------------------------------------------------
+
     # Background preload
     # ------------------------------------------------------------------
     def _preload_async(self):
@@ -99,27 +93,31 @@ class ZeroSearch(metaclass=SingletonMeta):
         self._load_generation_config()
         self._create_pipeline()
 
-    def _load_model(self):
-        torch = self.torch
+    def _load_model_and_tokenizer(self):
         logger.info(f"Loading DeepCoder model from {self.model_dir}...")
-        kwargs = {"torch_dtype": self.dtype, "device_map": "auto" if self.device == "cuda" else None}
+        AutoModelForCausalLM = get_AutoModelForCausalLM()
+        AutoTokenizer = get_AutoTokenizer()
 
-        if self.use_quantization and self.device == "cuda":
+        kwargs = {"torch_dtype": self.dtype}
+        if "cuda" in self.device:
+            kwargs["device_map"] = "auto"
+
+        if self.use_quantization and "cuda" in self.device:
             try:
-                from transformers import BitsAndBytesConfig
                 kwargs["quantization_config"] = BitsAndBytesConfig(load_in_4bit=True)
                 logger.info("Using 4-bit quantization.")
             except ImportError:
                 logger.warning("bitsandbytes not installed; skipping quantization.")
 
-        return get_AutoModelForCausalLM().from_pretrained(self.model_dir, **kwargs)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_dir, **kwargs)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, trust_remote_code=True)
 
-    def _load_tokenizer(self):
-        tok = get_AutoTokenizer().from_pretrained(self.model_dir, trust_remote_code=True)
-        if tok.pad_token_id is None:
-            tok.pad_token_id = tok.eos_token_id
+        if self.tokenizer.pad_token_id is None:
+            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             logger.info("Set pad_token_id to eos_token_id.")
-        return tok
+
+        logger.info("DeepCoder model and tokenizer loaded successfully.")
+
 
     def _load_generation_config(self):
         try:
@@ -130,16 +128,15 @@ class ZeroSearch(metaclass=SingletonMeta):
             self.generation_config = None
 
     def _create_pipeline(self):
-        """Create and cache the generation pipeline."""
-        if self.pipeline is not None:
-            return
+        if not self.model or not self.tokenizer:
+            raise RuntimeError("Model and tokenizer must be loaded first.")
         self.pipeline = get_pipeline()(
             "text-generation",
             model=self.model,
             tokenizer=self.tokenizer,
-            device=0 if self.device == "cuda" else -1,
+            device=0 if "cuda" in self.device else -1,
         )
-        logger.info("ZeroSearch text-generation pipeline initialized.")
+        logger.info("DeepCoder text-generation pipeline initialized.")
 
     # ------------------------------------------------------------------
     # Core API
@@ -153,11 +150,11 @@ class ZeroSearch(metaclass=SingletonMeta):
         use_chat_template: bool = False,
         messages: Optional[List[Dict[str, str]]] = None,
     ) -> str:
-        """Thread-safe text generation call."""
+        """Thread-safe lazy generation wrapper."""
         with self.lock:
             if self.model is None or self.tokenizer is None:
-                logger.info("Lazy-loading model due to first request...")
-                self._load_model_and_tokenizer()
+                logger.info("Lazy-loading DeepCoder model due to first request...")
+                self._safe_preload()
 
             if use_chat_template and messages:
                 inputs = self.tokenizer.apply_chat_template(
@@ -183,15 +180,13 @@ class ZeroSearch(metaclass=SingletonMeta):
                 )
                 result = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
                 return result.strip()
-
             except RuntimeError as e:
                 if "CUDA out of memory" in str(e):
-                    logger.error("OOM detected. Clearing CUDA cache and retrying on CPU...")
+                    logger.error("OOM detected. Moving DeepCoder to CPU...")
                     self._recover_to_cpu()
                     return self.generate(prompt, max_new_tokens, temperature, top_p)
                 else:
                     raise
-
     # ------------------------------------------------------------------
     # Recovery
     # ------------------------------------------------------------------
@@ -206,11 +201,4 @@ class ZeroSearch(metaclass=SingletonMeta):
     # ------------------------------------------------------------------
     # Info & housekeeping
     # ------------------------------------------------------------------
-    def get_info(self) -> Dict[str, Union[str, int]]:
-        return {
-            "model_dir": self.model_dir,
-            "device": self.device,
-            "dtype": str(self.dtype),
-            "quantized": self.use_quantization,
-            "initialized": self.model is not None,
-        }
+

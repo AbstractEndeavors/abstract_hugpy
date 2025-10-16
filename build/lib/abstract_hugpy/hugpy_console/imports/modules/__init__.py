@@ -4,7 +4,9 @@ from .keybertManager import *
 from .summarizerManager import *
 from .whisperManager import *
 from .zerosearchManager import *
+from .deepcoderManager import *
 bp_list = [
+    hugpy_zerosearch_bp,
     hugpy_deepcoder_bp,
     whisper_bp,
     summarizer_bp,

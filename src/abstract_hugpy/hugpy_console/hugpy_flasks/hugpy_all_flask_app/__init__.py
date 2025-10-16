@@ -1,8 +1,8 @@
 from abstract_flask import *
-from .hugpy_zerosearch_flask import hugpy_zerosearch_bp
-from .hugpy_deepcoder_flask_app import hugpy_deepcoder_bp
-from .hugpy_proxyvideo_flask_app import hugpy_proxyvideo_bp
-from .hugpy_video_flask_app import hugpy_video_bp
+from ..hugpy_zerosearch_flask import hugpy_zerosearch_bp
+from ..hugpy_deepcoder_flask_app import hugpy_deepcoder_bp
+from ..hugpy_proxyvideo_flask_app import hugpy_proxyvideo_bp
+from ..hugpy_video_flask_app import hugpy_video_bp
 
 
 

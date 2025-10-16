@@ -1,5 +1,4 @@
 from ..imports import *
-from ..modules import *
 def extract_keywords(text, top_n=10):
     try:
         kws = [kw for kw, _ in get_extract_keywords(

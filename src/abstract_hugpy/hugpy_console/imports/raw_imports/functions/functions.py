@@ -1,6 +1,6 @@
 from .imports import *
 from ..videoDownloader.manager_utils import get_video_info
-from abstract_hugpy.hugpy_console.video_console.functions.whisper_utils import get_whisper_text
+from ...modules.whisperManager.src.manager_utils import get_whisper_text
 def get_text(
     *args,
     text=None,

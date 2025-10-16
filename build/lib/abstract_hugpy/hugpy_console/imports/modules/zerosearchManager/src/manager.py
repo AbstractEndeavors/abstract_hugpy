@@ -1,4 +1,4 @@
-## DeepCoder/ZeroSearch Persistent Manager (Server-optimized)
+## ZeroSearch/ZeroSearch Persistent Manager (Server-optimized)
 from ..imports import *
 
 
@@ -14,7 +14,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger("ZeroSearch")
-
+_DEFAULT_PATH = DEFAULT_PATHS.get("zerosearch")
 
 
 
@@ -34,7 +34,7 @@ class ZeroSearch(metaclass=SingletonMeta):
             self.use_quantization = use_quantization or env.use_quantization
 
             # ✅ FIX: Resolve the actual path string
-            self.model_dir = self._resolve_model_path(model_dir or DEFAULT_PATHS.get("zerosearch"))
+            self.model_dir = self._resolve_model_path(model_dir or _DEFAULT_PATH)
 
             self.model = None
             self.tokenizer = None
@@ -45,35 +45,33 @@ class ZeroSearch(metaclass=SingletonMeta):
             self._preload_async()
 
 
-    def _resolve_model_path(self, entry):
-        """Return a valid model directory or Hugging Face repo string."""
+
+    def resolve_model_path(entry):
+        """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
         if entry is None:
-            logger.error("No model entry provided for deepcoder.")
+            logger.error("ZeroSearch: DEFAULT_PATHS entry missing.")
             return None
 
-        # If it's a dict from DEFAULT_PATHS
         if isinstance(entry, dict):
             local_path = entry.get("path")
             repo_id = entry.get("id")
 
             if local_path and os.path.exists(local_path):
-                logger.info(f"Resolved local model path: {local_path}")
+                logger.info(f"ZeroSearch resolved local model path: {local_path}")
                 return local_path
 
             if repo_id:
-                logger.info(f"Resolved remote repo id: {repo_id}")
+                logger.info(f"ZeroSearch resolved remote repo id: {repo_id}")
                 return repo_id
 
-            logger.error(f"Malformed model entry: {entry}")
+            logger.error(f"ZeroSearch: malformed entry: {entry}")
             return None
 
-        # If it's already a string
         if isinstance(entry, str):
-            logger.info(f"Resolved string model entry: {entry}")
+            logger.info(f"ZeroSearch using direct model string: {entry}")
             return entry
 
-        # Fallback case
-        logger.error(f"Unrecognized model entry type: {type(entry)} ({entry})")
+        logger.error(f"ZeroSearch: invalid type for model path: {type(entry)}")
         return None
 
     # Background preload
@@ -104,7 +102,7 @@ class ZeroSearch(metaclass=SingletonMeta):
         self._create_pipeline()
 
     def _load_model(self):
-        logger.info(f"Loading DeepCoder model from {self.model_dir}...")
+        logger.info(f"Loading ZeroSearch model from {self.model_dir}...")
         kwargs = {"torch_dtype": self.dtype, "device_map": "auto" if "cuda" in self.device else None}
 
         if self.use_quantization and "cuda" in self.device:

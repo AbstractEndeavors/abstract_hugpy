@@ -15,7 +15,7 @@ from sentence_transformers.util import cos_sim
 from transformers import BitsAndBytesConfig
 from .config import DEFAULT_PATHS
 from typing import *
-SUMMARIZER_DIR = DEFAULT_PATHS["summarizer_t5"]
+SUMMARIZER_DIR = DEFAULT_PATHS["summarizer"]
 FLAN_MODEL_NAME = DEFAULT_PATHS["flan"]
 # ------------------------------------------------------------------------------
 # 3. LONGFORM SUMMARIZATION (T5 / FLAN / LED)

@@ -9,7 +9,7 @@ from .config import DEFAULT_PATHS
 from abstract_utilities import safe_read_from_json
 from abstract_ai.gpt_classes.prompt_selection.PromptBuilder import recursive_chunk
 from abstract_utilities import SingletonMeta
-DEFAULT_DIR = DEFAULT_PATHS["summarizer_t5"]
+DEFAULT_DIR = DEFAULT_PATHS["summarizer"]
 MODEL_NAME = "gpt-4"
 CHUNK_OVERLAP = 30
 DEFAULT_CHUNK_TOK = 450

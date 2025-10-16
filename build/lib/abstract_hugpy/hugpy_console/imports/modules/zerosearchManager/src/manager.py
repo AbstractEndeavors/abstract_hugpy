@@ -17,7 +17,33 @@ logger = logging.getLogger("ZeroSearch")
 _DEFAULT_PATH = DEFAULT_PATHS.get("zerosearch")
 
 
+def resolve_model_path(entry):
+    """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
+    if entry is None:
+        logger.error("ZeroSearch: DEFAULT_PATHS entry missing.")
+        return None
 
+    if isinstance(entry, dict):
+        local_path = entry.get("path")
+        repo_id = entry.get("id")
+
+        if local_path and os.path.exists(local_path):
+            logger.info(f"ZeroSearch resolved local model path: {local_path}")
+            return local_path
+
+        if repo_id:
+            logger.info(f"ZeroSearch resolved remote repo id: {repo_id}")
+            return repo_id
+
+        logger.error(f"ZeroSearch: malformed entry: {entry}")
+        return None
+
+    if isinstance(entry, str):
+        logger.info(f"ZeroSearch using direct model string: {entry}")
+        return entry
+
+    logger.error(f"ZeroSearch: invalid type for model path: {type(entry)}")
+    return None
 
 # --------------------------------------------------------------------------
 # ZeroSearch Persistent Manager
@@ -32,7 +58,7 @@ class ZeroSearch(metaclass=SingletonMeta):
             self.device = env.device
             self.dtype = env.dtype
             self.use_quantization = use_quantization or env.use_quantization
-            self.model_dir = self.resolve_model_path(model_dir or _DEFAULT_PATH)
+            self.model_dir = resolve_model_path(model_dir or _DEFAULT_PATH)
             logger.info(f"DeepCoder using model_dir: {self.model_dir}")
             # ✅ FIX: Resolve the actual path string
          
@@ -47,33 +73,7 @@ class ZeroSearch(metaclass=SingletonMeta):
 
 
 
-    def resolve_model_path(entry):
-        """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
-        if entry is None:
-            logger.error("ZeroSearch: DEFAULT_PATHS entry missing.")
-            return None
 
-        if isinstance(entry, dict):
-            local_path = entry.get("path")
-            repo_id = entry.get("id")
-
-            if local_path and os.path.exists(local_path):
-                logger.info(f"ZeroSearch resolved local model path: {local_path}")
-                return local_path
-
-            if repo_id:
-                logger.info(f"ZeroSearch resolved remote repo id: {repo_id}")
-                return repo_id
-
-            logger.error(f"ZeroSearch: malformed entry: {entry}")
-            return None
-
-        if isinstance(entry, str):
-            logger.info(f"ZeroSearch using direct model string: {entry}")
-            return entry
-
-        logger.error(f"ZeroSearch: invalid type for model path: {type(entry)}")
-        return None
 
     # Background preload
     # ------------------------------------------------------------------

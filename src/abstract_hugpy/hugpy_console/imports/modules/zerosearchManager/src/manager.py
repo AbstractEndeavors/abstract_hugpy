@@ -43,7 +43,7 @@ def resolve_model_path(entry):
 class ZeroSearch(metaclass=SingletonMeta):
     """Persistent ZeroSearch model interface optimized for long-running inference."""
 
-    def __init__(self, model_dir: str = None, use_quantization: bool = False):
+    def __init__(self, model_dir: str = None, use_quantization: bool = False,**kwargs):
         if hasattr(self, "initialized"):
             return
 

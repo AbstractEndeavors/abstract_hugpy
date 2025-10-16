@@ -52,7 +52,7 @@ def resolve_model_path(entry):
 class DeepCoder(BaseModelManager):
     """Server-optimized persistent manager for DeepCoder-14B-Preview."""
 
-    def __init__(self, model_dir: str = None, use_quantization: bool = False):
+    def __init__(self, model_dir: str = None,torch_dtype=None, use_quantization: bool = False,**kwargs):
         if not hasattr(self, "initialized"):
             self.initialized = True
             self.torch_env = TorchEnvManager()

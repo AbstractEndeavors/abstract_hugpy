@@ -5,8 +5,6 @@ from ..imports import *
 # Logging
 # --------------------------------------------------------------------------
 logger = get_logFile("zerosearch")
-_DEFAULT_PATH = DEFAULT_PATHS.get("zerosearch")
-
 
 def resolve_model_path(entry):
     """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
@@ -44,28 +42,34 @@ class ZeroSearch(metaclass=SingletonMeta):
     """Persistent ZeroSearch model interface optimized for long-running inference."""
 
     def __init__(self, model_dir: str = None, use_quantization: bool = False,**kwargs):
-        if hasattr(self, "initialized"):
-            return
+        if not hasattr(self, "initialized"):
+           
+            self.model_dir = model_dir or DEFAULT_PATHS.get("zerosearch")
 
-        self.initialized = True
-        env = TorchEnvManager()
-        self.torch = env.torch
-        self.device = env.device
-        self.dtype = env.dtype
-        self.use_quantization = use_quantization or env.use_quantization
-        self.model_dir = resolve_model_path(
-                model_dir or DEFAULT_PATHS.get("zerosearch")
+            # ✅ Defensive safeguard
+            if isinstance(self.model_dir, dict):
+                from .manager_utils import resolve_model_path
+                self.model_dir = resolve_model_path(self.model_dir)
+
+            self.initialized = True
+            env = TorchEnvManager()
+            self.torch = env.torch
+            self.device = env.device
+            self.dtype = env.dtype
+            self.use_quantization = use_quantization or env.use_quantization
+            self.model_dir = resolve_model_path(
+                    model_dir or DEFAULT_PATHS.get("zerosearch")
+                )
+            self.model = None
+            self.tokenizer = None
+            self.pipeline = None
+            self.generation_config = None
+            self.lock = threading.Lock()
+
+            logger.info(
+                f"ZeroSearch initializing on {self.device} ({self.dtype}) [quantized={self.use_quantization}]"
             )
-        self.model = None
-        self.tokenizer = None
-        self.pipeline = None
-        self.generation_config = None
-        self.lock = threading.Lock()
-
-        logger.info(
-            f"ZeroSearch initializing on {self.device} ({self.dtype}) [quantized={self.use_quantization}]"
-        )
-        self._preload_async()
+            self._preload_async()
 
     # ------------------------------------------------------------------
     # Async preload

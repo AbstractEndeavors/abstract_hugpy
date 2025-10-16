@@ -111,7 +111,6 @@ def get_video_url(url=None, video_url=None):
 def return_num_str(obj):
     return int(obj) if is_number(obj) else obj
 logger = get_logFile('videos_console')
-self.lock = threading.Lock()
 
 
 

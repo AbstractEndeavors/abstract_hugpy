@@ -44,15 +44,15 @@ class ZeroSearch(metaclass=SingletonMeta):
             logger.info(f"ZeroSearch starting on {self.device} ({self.dtype}) [quantized={self.use_quantization}]")
             self._preload_async()
 
-    # ✅ NEW HELPER
-    def _resolve_model_path(self, entry):
+
+    def _resolve_model_path(entry):
+        """Return a valid model directory or HF repo string from DEFAULT_PATHS entry."""
         if isinstance(entry, dict):
-            path = entry.get("path")
-            if path and os.path.exists(path):
-                return path
+            local_path = entry.get("path")
+            if local_path and os.path.exists(local_path):
+                return local_path
             return entry.get("id")
         return entry
-
     # ------------------------------------------------------------------
     # Background preload
     # ------------------------------------------------------------------

@@ -27,7 +27,7 @@ MODULE_DEFAULTS = {
     "deepcoder": {
         "path": "/mnt/24T/hugging_face/modules/DeepCoder-14B",
         "id": "agentica-org/DeepCoder-14B-Preview",
-        "name": "deepcoder"
+        "name": "DeepCoder"
     },
     "huggingface": {
         "path": "/mnt/24T/hugging_face/modules/hugging_face_models",
@@ -41,12 +41,12 @@ MODULE_DEFAULTS = {
     }
 }
 DEFAULT_PATHS = {
-    "whisper": MODULE_DEFAULTS.get("whisper"),
-    "keybert": MODULE_DEFAULTS.get("keybert"),
-    "summarizer": MODULE_DEFAULTS.get("summarizer"),
-    "flan": MODULE_DEFAULTS.get("flan"),
-    "bigbird": MODULE_DEFAULTS.get("bigbird"),
-    "deepcoder": MODULE_DEFAULTS.get("deepcoder"),
-    "huggingface": MODULE_DEFAULTS.get("huggingface"),
-    "zerosearch": MODULE_DEFAULTS.get("zerosearch")
+    "whisper": MODULE_DEFAULTS.get("whisper").get('path'),
+    "keybert": MODULE_DEFAULTS.get("keybert").get('path'),
+    "summarizer": MODULE_DEFAULTS.get("summarizer").get('path'),
+    "flan": MODULE_DEFAULTS.get("flan").get('path'),
+    "bigbird": MODULE_DEFAULTS.get("bigbird").get('path'),
+    "deepcoder": MODULE_DEFAULTS.get("deepcoder").get('path'),
+    "huggingface": MODULE_DEFAULTS.get("huggingface").get('path'),
+    "zerosearch": MODULE_DEFAULTS.get("zerosearch").get('path')
 }

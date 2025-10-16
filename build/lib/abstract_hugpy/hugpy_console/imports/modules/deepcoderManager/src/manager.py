@@ -9,12 +9,39 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("zerosearch_server.log"),
+        logging.FileHandler("deepcoder_server.log"),
         logging.StreamHandler()
     ]
 )
 logger = get_logFile("deepcoder")
 
+def resolve_model_path(entry):
+    """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
+    if entry is None:
+        logger.error("DeepCoder: DEFAULT_PATHS entry missing.")
+        return None
+
+    if isinstance(entry, dict):
+        local_path = entry.get("path")
+        repo_id = entry.get("id")
+
+        if local_path and os.path.exists(local_path):
+            logger.info(f"DeepCoder resolved local model path: {local_path}")
+            return local_path
+
+        if repo_id:
+            logger.info(f"DeepCoder resolved remote repo id: {repo_id}")
+            return repo_id
+
+        logger.error(f"DeepCoder: malformed entry: {entry}")
+        return None
+
+    if isinstance(entry, str):
+        logger.info(f"DeepCoder using direct model string: {entry}")
+        return entry
+
+    logger.error(f"DeepCoder: invalid model path type: {type(entry)}")
+    return None
 # --------------------------------------------------------------------------
 # ZeroSearch Persistent Manager
 # --------------------------------------------------------------------------

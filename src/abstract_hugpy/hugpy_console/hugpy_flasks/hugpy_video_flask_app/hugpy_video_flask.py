@@ -1,7 +1,5 @@
 from abstract_flask import *
 from abstract_utilities import *
-
-from ...imports.aggregator import aggregate_from_base_dir
 from ...imports import *
 hugpy_video_bp,logger = get_bp('hugpy_video_bp')
 @hugpy_video_bp.route("/download_video", methods=["POST","GET"])

@@ -23,7 +23,7 @@ logger = logging.getLogger("ZeroSearch")
 # ZeroSearch Persistent Manager
 # --------------------------------------------------------------------------
 class ZeroSearch(metaclass=SingletonMeta):
-    ...
+
     def __init__(self, model_dir: str = None, use_quantization: bool = False):
         if not hasattr(self, "initialized"):
             self.initialized = True
@@ -75,7 +75,7 @@ class ZeroSearch(metaclass=SingletonMeta):
         # Fallback case
         logger.error(f"Unrecognized model entry type: {type(entry)} ({entry})")
         return None
---------------------------------------------------
+
     # Background preload
     # ------------------------------------------------------------------
     def _preload_async(self):

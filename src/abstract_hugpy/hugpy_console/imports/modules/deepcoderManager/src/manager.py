@@ -16,6 +16,8 @@ logging.basicConfig(
 logger = get_logFile("deepcoder")
 _DEFAULT_PATH = DEFAULT_PATHS.get("deepcoder")
 
+from .config import DEFAULT_PATHS, MODULE_DEFAULTS
+
 
 def resolve_model_path(entry):
     """Return a valid model path or HF repo id from DEFAULT_PATHS entry."""
@@ -58,6 +60,10 @@ class DeepCoder(BaseModelManager):
             self.torch_env = TorchEnvManager()
             self.torch = self.torch_env.torch
             self.device = self.torch_env.device
+            self.model_dir = resolve_model_path(
+                model_dir or DEFAULT_PATHS.get("deepcoder")
+            )
+
             self.dtype = self.torch_env.dtype
             self.use_quantization = self.torch_env.use_quantization
             self.preload()

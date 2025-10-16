@@ -53,8 +53,9 @@ class ZeroSearch(metaclass=SingletonMeta):
         self.device = env.device
         self.dtype = env.dtype
         self.use_quantization = use_quantization or env.use_quantization
-        self.model_dir = resolve_model_path(model_dir or _DEFAULT_PATH)
-
+        self.model_dir = resolve_model_path(
+                model_dir or DEFAULT_PATHS.get("zerosearch")
+            )
         self.model = None
         self.tokenizer = None
         self.pipeline = None

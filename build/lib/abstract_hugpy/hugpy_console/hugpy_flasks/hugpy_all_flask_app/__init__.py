@@ -13,7 +13,7 @@ bp_list = [
     hugpy_proxyvideo_bp,
     hugpy_video_bp
 ]
-URL_PREFIX = "hugpy/"
+URL_PREFIX = "/hugpy/"
 
 def hugpy_all_app(debug=True):
     ALLOWED_ORIGINS = [
@@ -30,7 +30,7 @@ def hugpy_all_app(debug=True):
         url_prefix=URL_PREFIX
     )
 
-    @app.route(f"/{URL_PREFIX}/endpoints", methods=["GET","post"])
+    @app.route(f"/{eatAll(URL_PREFIX,['/'])}/endpoints", methods=["GET","post"])
     def list_endpoints():
         """Return all available endpoints with methods."""
         output = []

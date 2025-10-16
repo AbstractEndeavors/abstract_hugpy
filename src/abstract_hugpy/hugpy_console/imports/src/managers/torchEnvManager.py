@@ -11,6 +11,12 @@ class TorchEnvManager(metaclass=SingletonMeta):
     def __init__(self):
         if not hasattr(self, "initialized"):
             self.initialized = True
+            self.model_dir = model_dir or DEFAULT_PATHS.get("zerosearch")
+
+            # ✅ Defensive safeguard
+            if isinstance(self.model_dir, dict):
+                from .manager_utils import resolve_model_path
+                self.model_dir = resolve_model_path(self.model_dir)
             self.torch = get_torch()
             self.device = self._determine_device()
             self.dtype = self._determine_dtype()

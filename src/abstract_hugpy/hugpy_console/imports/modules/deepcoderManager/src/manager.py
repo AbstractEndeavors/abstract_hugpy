@@ -57,12 +57,16 @@ class DeepCoder(BaseModelManager):
     def __init__(self, model_dir: str = None,torch_dtype=None, use_quantization: bool = False,**kwargs):
         if not hasattr(self, "initialized"):
             self.initialized = True
+            self.model_dir = model_dir or DEFAULT_PATHS.get("deepcoder")
+
+            # ✅ Defensive safeguard
+            if isinstance(self.model_dir, dict):
+                from .manager_utils import resolve_model_path
+                self.model_dir = resolve_model_path(self.model_dir)
             self.torch_env = TorchEnvManager()
             self.torch = self.torch_env.torch
             self.device = self.torch_env.device
-            self.model_dir = resolve_model_path(
-                model_dir or DEFAULT_PATHS.get("deepcoder")
-            )
+
 
             self.dtype = self.torch_env.dtype
             self.use_quantization = self.torch_env.use_quantization

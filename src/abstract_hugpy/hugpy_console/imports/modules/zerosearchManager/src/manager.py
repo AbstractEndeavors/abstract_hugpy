@@ -34,7 +34,7 @@ class ZeroSearch(metaclass=SingletonMeta):
             self.use_quantization = use_quantization or env.use_quantization
 
             # ✅ FIX: Resolve the actual path string
-            self.model_dir = self._resolve_model_path(model_dir or DEFAULT_PATHS.get("deepcoder"))
+            self.model_dir = self._resolve_model_path(model_dir or DEFAULT_PATHS.get("zerosearch"))
 
             self.model = None
             self.tokenizer = None
@@ -45,15 +45,37 @@ class ZeroSearch(metaclass=SingletonMeta):
             self._preload_async()
 
 
-    def _resolve_model_path(entry):
-        """Return a valid model directory or HF repo string from DEFAULT_PATHS entry."""
+    def _resolve_model_path(self, entry):
+        """Return a valid model directory or Hugging Face repo string."""
+        if entry is None:
+            logger.error("No model entry provided for deepcoder.")
+            return None
+
+        # If it's a dict from DEFAULT_PATHS
         if isinstance(entry, dict):
             local_path = entry.get("path")
+            repo_id = entry.get("id")
+
             if local_path and os.path.exists(local_path):
+                logger.info(f"Resolved local model path: {local_path}")
                 return local_path
-            return entry.get("id")
-        return entry
-    # ------------------------------------------------------------------
+
+            if repo_id:
+                logger.info(f"Resolved remote repo id: {repo_id}")
+                return repo_id
+
+            logger.error(f"Malformed model entry: {entry}")
+            return None
+
+        # If it's already a string
+        if isinstance(entry, str):
+            logger.info(f"Resolved string model entry: {entry}")
+            return entry
+
+        # Fallback case
+        logger.error(f"Unrecognized model entry type: {type(entry)} ({entry})")
+        return None
+--------------------------------------------------
     # Background preload
     # ------------------------------------------------------------------
     def _preload_async(self):

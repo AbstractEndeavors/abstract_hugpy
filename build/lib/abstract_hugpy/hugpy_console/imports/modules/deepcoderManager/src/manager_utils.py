@@ -1,22 +1,23 @@
 from ..imports import *
-from .manager import ZeroSearch
-def get_deep_coder(module_path=None,
+from .manager import DeepCoder
+def get_deepcoder(module_path=None,
                    torch_dtype=None,
                    use_quantization=None
                    ):
 
-    zerosearch = ZeroSearch(
+    deepcoder = DeepCoder(
         model_dir=module_path,
+        torch_dtype=torch_dtype,
         use_quantization=use_quantization
         )
-    return zerosearch
-def try_deep_coder(module_path=None,
+    return deepcoder
+def try_deepcoder(module_path=None,
                    torch_dtype=None,
                    use_quantization=None):
     # Example usage
     try:
         # Initialize the DeepCoder module
-        deepcoder = get_deep_coder(module_path=module_path,
+        deepcoder = get_deepcoder(module_path=module_path,
                    torch_dtype=torch_dtype,
                    use_quantization=use_quantization)
         logger.info("DeepCoder logger initialized and active.")

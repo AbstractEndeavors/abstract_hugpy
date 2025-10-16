@@ -13,6 +13,11 @@ src/abstract_hugpy.egg-info/top_level.txt
 src/abstract_hugpy/hugpy_console/__init__.py
 src/abstract_hugpy/hugpy_console/abstract_hugpy.py
 src/abstract_hugpy/hugpy_console/routes.py
+src/abstract_hugpy/hugpy_console/hugging_face_models/__init__.py
+src/abstract_hugpy/hugpy_console/hugging_face_models/config.py
+src/abstract_hugpy/hugpy_console/hugging_face_models/routes.py
+src/abstract_hugpy/hugpy_console/hugging_face_models/metadata/__init__.py
+src/abstract_hugpy/hugpy_console/hugging_face_models/metadata/metadata.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/__init__.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/test_hugpys.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_deepcoder_flask_app/__init__.py

@@ -2,9 +2,9 @@ from abstract_flask import *
 from abstract_utilities import *
 from ...video_console import *
 from ...imports import *
-from ...hugging_face_models.deepcoder import get_deep_coder
+
 hugpy_deepcoder_bp,logger = get_bp('hugpy_deepcoder_bp')
-deepcoder = get_deep_coder()
+deepcoder = get_deepcoder()
 
 @hugpy_deepcoder_bp.route("/deepcoder_generate", methods=["POST","GET"])
 def deepcoderGenerate():

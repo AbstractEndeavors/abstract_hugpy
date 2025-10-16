@@ -1,5 +1,5 @@
 from abstract_flask import *
-from ..hugpy_zerosearch_flask_app import hugpy_zerosearch_bp
+from ..hugpy_zerosearch_flask import hugpy_zerosearch_bp
 from ..hugpy_deepcoder_flask_app import hugpy_deepcoder_bp
 from ..hugpy_proxyvideo_flask_app import hugpy_proxyvideo_bp
 from ..hugpy_video_flask_app import hugpy_video_bp
@@ -8,12 +8,13 @@ from ..hugpy_video_flask_app import hugpy_video_bp
 
 
 bp_list = [
-    hugpy_zerosearch_bp,
-    hugpy_deepcoder_bp,
-    hugpy_proxyvideo_bp,
-    hugpy_video_bp
+    (hugpy_zerosearch_bp, "/hugpy"),
+    (hugpy_deepcoder_bp, "/hugpy"),
+    (hugpy_proxyvideo_bp, "/hugpy"),
+    (hugpy_video_bp, "/hugpy"),
 ]
-URL_PREFIX = "/hugpy/"
+
+URL_PREFIX = "hugpy/"
 
 def hugpy_all_app(debug=True):
     ALLOWED_ORIGINS = [
@@ -30,7 +31,7 @@ def hugpy_all_app(debug=True):
         url_prefix=URL_PREFIX
     )
 
-    @app.route(f"/{eatAll(URL_PREFIX,['/'])}/endpoints", methods=["GET","post"])
+    @app.route(f"/{URL_PREFIX}/endpoints", methods=["GET","post"])
     def list_endpoints():
         """Return all available endpoints with methods."""
         output = []

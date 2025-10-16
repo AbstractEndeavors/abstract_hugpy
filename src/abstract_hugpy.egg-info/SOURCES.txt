@@ -5,6 +5,7 @@ src/abstract_hugpy/__init__.py
 src/abstract_hugpy/hugpy_deepcoder_wsgi.py
 src/abstract_hugpy/hugpy_proxyvideo_wsgi.py
 src/abstract_hugpy/hugpy_video_wsgi.py
+src/abstract_hugpy/hugpy_zerosearch_wsgi.py
 src/abstract_hugpy.egg-info/PKG-INFO
 src/abstract_hugpy.egg-info/SOURCES.txt
 src/abstract_hugpy.egg-info/dependency_links.txt
@@ -26,6 +27,8 @@ src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_proxyvideo_flask_app/__init_
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_proxyvideo_flask_app/hugpy_proxyvideo_flask.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_video_flask_app/__init__.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_video_flask_app/hugpy_video_flask.py
+src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_zerosearch_flask_app/__init__.py
+src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_zerosearch_flask_app/hugpy_zerosearch_flask.py
 src/abstract_hugpy/hugpy_console/imports/__init__.py
 src/abstract_hugpy/hugpy_console/imports/imports.py
 src/abstract_hugpy/hugpy_console/imports/modules/__init__.py

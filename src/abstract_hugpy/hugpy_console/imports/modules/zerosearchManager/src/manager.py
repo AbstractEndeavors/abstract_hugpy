@@ -38,7 +38,7 @@ def resolve_model_path(entry):
 # --------------------------------------------------------------------------
 # ZeroSearch Persistent Manager
 # --------------------------------------------------------------------------
-class ZeroSearch(metaclass=SingletonMeta):
+class ZeroSearch(BaseModelManager):
     """Persistent ZeroSearch model interface optimized for long-running inference."""
 
     def __init__(self, model_dir: str = None, use_quantization: bool = False,**kwargs):

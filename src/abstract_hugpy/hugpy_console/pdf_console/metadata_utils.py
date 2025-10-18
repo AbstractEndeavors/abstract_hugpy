@@ -159,5 +159,9 @@ def save_pdf_text_metadata(pdf_path: str, output_dir: str = None):
     print(f"📘 Manifest: {manifest_path}")
     return manifest_path
 def scan_matadata_from_pdf_dirs(pdf_dirs,output_dir=None):
+    if pdf_dirs and isinstance(pdf_dirs,str) and os.path.isdir(pdf_dirs):
+        pdf_dirs = [os.path.join(pdf_dirs,item) for item in os.listdir(pdf_dirs) if os.path.isdir(os.path.join(pdf_dirs,item)) or item.endswith('.pdf')]
+    pdf_dirs
     for pdf_dir in make_list(pdf_dirs):
         save_pdf_text_metadata(pdf_path=pdf_dir, output_dir=output_dir)
+scan_matadata_from_pdf_dirs("/mnt/24T/media/thedailydialectics/pdfs/wipow")

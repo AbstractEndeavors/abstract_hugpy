@@ -88,6 +88,7 @@ def get_summarizer_summary(
     max_chunk_tokens: int = 200,
     min_length: Optional[int] = None,
     max_length: Optional[int] = None,
+    summary_words = 150
 ) -> str:
     mgr = SummarizerManager()
     txt = normalize_text(text)
@@ -101,6 +102,6 @@ def get_summarizer_summary(
 
     merged = " ".join(summaries)
     words = merged.split()
-    if len(words) > 150:
+    if len(words) > summary_words:
         merged = " ".join(words[:150]) + "..."
     return merged

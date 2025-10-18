@@ -107,3 +107,7 @@
 2025-09-27 04:24:18,571 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']
 2025-09-27 04:30:56,097 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']
 2025-09-27 04:37:16,270 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/download_utils.py - [infoRegistry] Pruned 1 invalid entries: ['RDMM8Q0cp4b9pvg']
+2025-10-18 11:24:35,868 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/info_registry.py - [infoRegistry] Pruned 1 invalid entries: ['0XFudmaObLI']
+2025-10-18 11:24:38,532 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/videoDownloader.py - Monitoring...
+2025-10-18 11:24:38,535 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/info_registry.py - [infoRegistry] Pruned 1 invalid entries: ['0XFudmaObLI']
+2025-10-18 11:24:41,283 - INFO - /home/computron/miniconda/lib/python3.12/site-packages/abstract_webtools/managers/videoDownloader/src/videoDownloader.py - Monitor: exited.

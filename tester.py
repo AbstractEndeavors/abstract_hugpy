@@ -7,8 +7,7 @@ video_mgr = VideoPipeline(video_url)
 #all_data = postRequest(url,data={"url":'https://www.youtube.com/shorts/rLlWcvLBluI'})
 ##info = registry.get_video_info(url)
 everything = {}
-result = deepcoder.generate("hello")
-input(result)
+
 everything["video_id"]=get_video_id(video_url)
 print(everything["video_id"])
 everything["info"]=video_mgr.download_video()

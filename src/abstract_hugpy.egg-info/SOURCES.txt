@@ -128,7 +128,7 @@ src/abstract_hugpy/hugpy_console/metadata_console/__init__.py
 src/abstract_hugpy/hugpy_console/metadata_console/metadata_utils.py
 src/abstract_hugpy/hugpy_console/metadata_console/page_summary_generator_fast.py
 src/abstract_hugpy/hugpy_console/metadata_console/run_page_summary.py
-src/abstract_hugpy/hugpy_console/metadata_console/summay_judge.py
+src/abstract_hugpy/hugpy_console/metadata_console/summary_judge.py
 src/abstract_hugpy/hugpy_console/video_console/__init__.py
 src/abstract_hugpy/hugpy_console/video_console/imports.py
 src/abstract_hugpy/hugpy_console/video_console/main/__init__.py

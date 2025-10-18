@@ -124,10 +124,11 @@ src/abstract_hugpy/hugpy_console/imports/src/managers/__init__.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/base_manager.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/module_imports.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/torchEnvManager.py
-src/abstract_hugpy/hugpy_console/pdf_console/__init__.py
-src/abstract_hugpy/hugpy_console/pdf_console/metadata_utils.py
-src/abstract_hugpy/hugpy_console/pdf_console/page_summary_generator_fast.py
-src/abstract_hugpy/hugpy_console/pdf_console/run_page_summary.py
+src/abstract_hugpy/hugpy_console/metadata_console/__init__.py
+src/abstract_hugpy/hugpy_console/metadata_console/metadata_utils.py
+src/abstract_hugpy/hugpy_console/metadata_console/page_summary_generator_fast.py
+src/abstract_hugpy/hugpy_console/metadata_console/run_page_summary.py
+src/abstract_hugpy/hugpy_console/metadata_console/summay_judge.py
 src/abstract_hugpy/hugpy_console/video_console/__init__.py
 src/abstract_hugpy/hugpy_console/video_console/imports.py
 src/abstract_hugpy/hugpy_console/video_console/main/__init__.py

@@ -164,4 +164,3 @@ def scan_matadata_from_pdf_dirs(pdf_dirs,output_dir=None):
     pdf_dirs
     for pdf_dir in make_list(pdf_dirs):
         save_pdf_text_metadata(pdf_path=pdf_dir, output_dir=output_dir)
-scan_matadata_from_pdf_dirs("/mnt/24T/media/thedailydialectics/pdfs/wipow")

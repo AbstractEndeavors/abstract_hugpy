@@ -10,10 +10,10 @@ def downloadVideo():
     try:
         result = get_from_local_host('download_video',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/extract_video_audio", methods=["POST","GET"])
 def extractVideoAudio():
@@ -21,10 +21,10 @@ def extractVideoAudio():
     try:
         result = get_from_local_host('extract_video_audio',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_whisper_result", methods=["POST","GET"])
 def getVideoWhisperResult():
@@ -32,10 +32,10 @@ def getVideoWhisperResult():
     try:
         result = get_from_local_host('get_video_whisper_result',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_whisper_text", methods=["POST","GET"])
 def getVideoWhisperText():
@@ -43,10 +43,10 @@ def getVideoWhisperText():
     try:
         result = get_from_local_host('get_video_whisper_text',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_whisper_segments", methods=["POST","GET"])
 def getVideoWhisperSegments():
@@ -54,10 +54,10 @@ def getVideoWhisperSegments():
     try:
         result = get_from_local_host('get_video_whisper_segments',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_metadata", methods=["POST","GET"])
 def getVideoMetadata():
@@ -65,10 +65,10 @@ def getVideoMetadata():
     try:
         result = get_from_local_host('get_video_metadata',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_captions", methods=["POST","GET"])
 def getVideoCaptions():
@@ -76,10 +76,10 @@ def getVideoCaptions():
     try:
         result = get_from_local_host('get_video_captions',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_info", methods=["POST","GET"])
 def getVideoInfo():
@@ -87,10 +87,10 @@ def getVideoInfo():
     try:
         result = get_from_local_host('get_video_info',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_directory", methods=["POST","GET"])
 def getVideoDirectory():
@@ -98,10 +98,10 @@ def getVideoDirectory():
     try:
         result = get_from_local_host('get_video_directory',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_path", methods=["POST","GET"])
 def getVideoPath():
@@ -109,10 +109,10 @@ def getVideoPath():
     try:
         result = get_from_local_host('get_video_path',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_audio_path", methods=["POST","GET"])
 def getVideoAudioPath():
@@ -120,10 +120,10 @@ def getVideoAudioPath():
     try:
         result = get_from_local_host('get_video_audio_path',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_srt_path", methods=["POST","GET"])
 def getVideoSrtPath():
@@ -131,10 +131,10 @@ def getVideoSrtPath():
     try:
         result = get_from_local_host('get_video_srt_path',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)
 
 @hugpy_proxyvideo_bp.route("/api/get_video_metadata_path", methods=["POST","GET"])
 def getVideoMetadataPath():
@@ -142,7 +142,7 @@ def getVideoMetadataPath():
     try:
         result = get_from_local_host('get_video_metadata_path',request)
         logger.info(result)
-        return get_json_response(value=result,status_code=200)
+        return get_json_call_response(value=result,status_code=200)
     except Exception as e:
         message = f"{e}"
-        return get_json_response(value=message,status_code=500)
+        return get_json_call_response(value=message,status_code=500)

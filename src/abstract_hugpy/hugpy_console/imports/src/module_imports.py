@@ -59,7 +59,7 @@ def get_LEDForConditionalGeneration():
     return getattr(get_transformers(), "LEDForConditionalGeneration")
 
 def get_AutoModelForCausalLM():
-    return getattr(get_transformers(), "AutoModelForCausalLM")
+    return getattr(get_sentence_transformers(), "AutoModelForCausalLM")
 
 
 # --------------------------------------------------------------------------

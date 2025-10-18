@@ -1,0 +1,42 @@
+{
+    "whisper": {
+        "path": "/mnt/24T/hugging_face/modules/whisper_base",
+        "repo_id": "openai/whisper-base",
+        "handle": "whisper"
+    },
+    "keybert": {
+        "path": "/mnt/24T/hugging_face/modules/all_minilm_l6_v2",
+        "repo_id": "sentence-transformers/all-MiniLM-L6-v2",
+        "handle": "keybert"
+    },
+    "summarizer": {
+        "path": "/mnt/24T/hugging_face/modules/text_summarization",
+        "repo_id": "Falconsai/text_summarization",
+        "handle": "summarizer"
+    },
+    "flan": {
+        "path": "/mnt/24T/hugging_face/modules/flan_t5_xl",
+        "repo_id": "google/flan-t5-xl",
+        "handle": "flan"
+    },
+    "bigbird": {
+        "path": "/mnt/24T/hugging_face/modules/led_large_16384",
+        "repo_id": "allenai/led-large-16384",
+        "handle": "bigbird"
+    },
+    "deepcoder": {
+        "path": "/mnt/24T/hugging_face/modules/DeepCoder-14B",
+        "repo_id": "agentica-org/DeepCoder-14B-Preview",
+        "handle": "deepcoder"
+    },
+    "huggingface": {
+        "path": "/mnt/24T/hugging_face/modules/hugging_face_models",
+        "repo_id": "huggingface/hub",
+        "handle": "hugging_face_models"
+    },   # not a model
+    "zerosearch": {
+        "path": "/mnt/24T/hugging_face/modules/ZeroSearch_dataset",
+        "repo_id": "ZeroSearch/dataset",
+        "handle": "ZeroSearch"
+    }         # dataset, not a model
+}

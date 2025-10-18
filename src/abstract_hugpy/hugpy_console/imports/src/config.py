@@ -45,7 +45,7 @@ MODULE_DEFAULTS = {
         "name": "hugging_face_models"
     },
     "zerosearch": {
-        "path": "/mnt/24T/hugging_face/modules/ZeroSearch_dataset",
+        "path": "/mnt/24T/hugging_face/modules/all_minilm_l6_v2",
         "id": "ZeroSearch/dataset",
         "name": "ZeroSearch"
     }

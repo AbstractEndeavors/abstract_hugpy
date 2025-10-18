@@ -25,6 +25,8 @@ src/abstract_hugpy/hugpy_console/hugpy_flasks/test_hugpys.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_all_flask_app/__init__.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_deepcoder_flask_app/__init__.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_deepcoder_flask_app/hugpy_deepcoder_flask.py
+src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_deepzero_flask_app/__init__.py
+src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_deepzero_flask_app/hugpy_deepzero_flask.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_proxyvideo_flask_app/__init__.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_proxyvideo_flask_app/hugpy_proxyvideo_flask.py
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_video_flask_app/__init__.py
@@ -33,7 +35,15 @@ src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_zerosearch_flask_app/__init_
 src/abstract_hugpy/hugpy_console/hugpy_flasks/hugpy_zerosearch_flask_app/hugpy_zerosearch_flask.py
 src/abstract_hugpy/hugpy_console/imports/__init__.py
 src/abstract_hugpy/hugpy_console/imports/imports.py
+src/abstract_hugpy/hugpy_console/imports/initializer/__init__.py
+src/abstract_hugpy/hugpy_console/imports/initializer/callDeepZero.py
+src/abstract_hugpy/hugpy_console/imports/initializer/src/GetModuleVars.py
+src/abstract_hugpy/hugpy_console/imports/initializer/src/ModelHubLoader.py
+src/abstract_hugpy/hugpy_console/imports/initializer/src/ModuleSource.py
+src/abstract_hugpy/hugpy_console/imports/initializer/src/__init__.py
+src/abstract_hugpy/hugpy_console/imports/initializer/src/datas/__init__.py
 src/abstract_hugpy/hugpy_console/imports/modules/__init__.py
+src/abstract_hugpy/hugpy_console/imports/modules/generation.py
 src/abstract_hugpy/hugpy_console/imports/modules/imports.py
 src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/__init__.py
 src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/imports.py
@@ -42,13 +52,6 @@ src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/src/imports.py
 src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/src/manager.py
 src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/src/manager_utils.py
 src/abstract_hugpy/hugpy_console/imports/modules/bigbirdManager/src/server.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/__init__.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/imports.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/src/__init__.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/src/bigbird_module.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/src/manager.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/src/manager_utils.py
-src/abstract_hugpy/hugpy_console/imports/modules/deepcoderManager/src/server.py
 src/abstract_hugpy/hugpy_console/imports/modules/flanManager/__init__.py
 src/abstract_hugpy/hugpy_console/imports/modules/flanManager/imports.py
 src/abstract_hugpy/hugpy_console/imports/modules/flanManager/src/__init__.py
@@ -71,16 +74,16 @@ src/abstract_hugpy/hugpy_console/imports/modules/summarizerManager/src/manager_u
 src/abstract_hugpy/hugpy_console/imports/modules/summarizerManager/src/server.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/__init__.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/imports.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/__init__.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/imports.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/src/__init__.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/src/manager.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/src/manager_utils.py
+src/abstract_hugpy/hugpy_console/imports/modules/whisperManager (Copy)/src/server.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/src/__init__.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/src/manager.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/src/manager_utils.py
 src/abstract_hugpy/hugpy_console/imports/modules/whisperManager/src/server.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/__init__.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/imports.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/src/__init__.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/src/manager.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/src/manager_utils.py
-src/abstract_hugpy/hugpy_console/imports/modules/zerosearchManager/src/server.py
 src/abstract_hugpy/hugpy_console/imports/raw_imports/__init__.py
 src/abstract_hugpy/hugpy_console/imports/raw_imports/db.py
 src/abstract_hugpy/hugpy_console/imports/raw_imports/imports.py
@@ -119,6 +122,7 @@ src/abstract_hugpy/hugpy_console/imports/src/curate_utils/curation.py
 src/abstract_hugpy/hugpy_console/imports/src/curate_utils/curation_utils.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/__init__.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/base_manager.py
+src/abstract_hugpy/hugpy_console/imports/src/managers/module_imports.py
 src/abstract_hugpy/hugpy_console/imports/src/managers/torchEnvManager.py
 src/abstract_hugpy/hugpy_console/video_console/__init__.py
 src/abstract_hugpy/hugpy_console/video_console/imports.py

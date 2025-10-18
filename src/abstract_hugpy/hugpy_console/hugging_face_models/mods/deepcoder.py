@@ -2,10 +2,11 @@ import torch
 from abstract_utilities import SingletonMeta,get_logFile
 from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig
 from transformers import BitsAndBytesConfig
-from .config import DEFAULT_PATHS
+from config import *
 from typing import *
-DEFAULT_PATH = DEFAULT_PATHS["deepcoder"]
-logger = get_logFile("deepcoder")
+
+def get_bool(obj):
+    return True if obj is not False else obj 
 class DeepCoder(metaclass=SingletonMeta):
     """A robust Python module for interacting with the DeepCoder-14B-Preview model."""
     def __init__(
@@ -23,15 +24,44 @@ class DeepCoder(metaclass=SingletonMeta):
             device (str): Device to load the model on (e.g., 'cuda', 'cpu').
             torch_dtype (torch.dtype): Data type for model weights (e.g., torch.float16).
             use_quantization (bool): Whether to use 4-bit quantization for memory efficiency.
-        """
+        """name = "deepcoder"
         if not hasattr(self, 'initialized'):
+        class GetModuleVars(metaclass=SingletonMeta):
+            """A robust Python module for interacting with the DeepCoder-14B-Preview model."""
+            def __init__(self,name,use_fast=True,trust_remote_code=True
+                logger = get_logFile("deepcoder")
+                self.cache_dir=None
+                self.source=None
+                self.is_cuda = None
+                self.device = None
+                self.trust_remote_code = get_bool(trust_remote_code)
+                self.use_fast = get_bool(use_fast)
+
+            def get_source(name,cache_dir=None):
+                self.cache_dir = cache_dir or MODEL_SOURCES.get(name)
+            def get_cache(name,source=None):
+                self.source = source or MODEL_CACHE_DIRS.get(name)
+            def is_cuda_available():
+                self.is_cuda = torch.cuda.is_available()
+            def get_device():
+                self.device = "cuda" if self.is_cuda else "cpu"
+
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.source,
+                use_fast=self.use_fast,
+                cache_dir=self.cache_dir,           # optional
+                trust_remote_code=self.trust_remote_code     # if the repo needs it
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.source,
+                cache_dir=self.cache_dir,           # optional
+                trust_remote_code=self.trust_remote_code     # if required by the repo
+            ).to(self.device)
             self.initialized=True
-            self.model_dir = model_dir
-            self.device = device
+            
             self.torch_dtype = torch_dtype
             self.use_quantization = use_quantization
-            self.model = None
-            self.tokenizer = None
             self.generation_config = None
 
             try:
@@ -182,16 +212,16 @@ class DeepCoder(metaclass=SingletonMeta):
             "quantized": self.use_quantization
         }
 
-def get_deep_coder(module_path=None,
+def get_deep_coder(model_dir=None,
                    torch_dtype=None,
                    use_quantization=None
                    ):
-    module_path = module_path or DEFAULT_PATH
+
     torch_dtype = torch_dtype or torch.float16
     if use_quantization == None:
         use_quantization = True 
     deepcoder = DeepCoder(
-        model_dir=module_path,
+        model_dir=model_dir,
         torch_dtype=torch_dtype,
         use_quantization=use_quantization
         )
@@ -236,3 +266,4 @@ def try_deep_coder(module_path=None,
 
     except Exception as e:
         logger.error(f"Example usage failed: {str(e)}")
+get_deep_coder()

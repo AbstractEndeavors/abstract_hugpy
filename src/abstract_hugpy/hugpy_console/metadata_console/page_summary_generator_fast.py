@@ -196,6 +196,4 @@ def run_page_summary_generator_fast(base_dir: str | Path = None, env_path: str |
         process_patent_dir(patent_dir)
     print("🏁 All summaries complete.")
 
-# ------------------------------------------------------------------
-if __name__ == "__main__":
-    run_page_summary_generator_fast()
+

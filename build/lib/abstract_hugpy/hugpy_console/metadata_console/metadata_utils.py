@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 abstract_ocr.extract_pdf_text
 -----------------------------
@@ -50,14 +49,17 @@ def extract_pdf_pages(
     pdf_path: str,
     output_dir: str,
     domain: str = "https://thedailydialectics.com",
-    subpath: str = "pdfs/wipow"
+    subpath: str = "pdfs"
 ) -> List[Dict]:
     """
     Extracts text and image per page, saves .txt and .png, and
     compiles a single manifest JSON for all pages.
     """
+    dir_path = os.path.dirname(pdf_path)
+    rel_path=dir_path.split('/mnt/24T/media/thedailydialectics/pdfs')[1]
     pdf_path = Path(pdf_path)
     pdf_name = pdf_path.stem
+    subpath = f"pdfs/{rel_path}"
     pdf_url = f"{domain}/{subpath}/{pdf_name}/{pdf_name}.pdf"
 
     output_dir = Path(output_dir)
@@ -65,7 +67,7 @@ def extract_pdf_pages(
     img_dir = output_dir / "thumbnails"
     text_dir.mkdir(parents=True, exist_ok=True)
     img_dir.mkdir(parents=True, exist_ok=True)
-
+    
     doc = fitz.open(pdf_path)
     manifest = []
 
@@ -150,6 +152,7 @@ def save_pdf_text_metadata(pdf_path: str, output_dir: str = None):
        pdf_path = os.path.join(output_dir,basename)
     else:
         output_dir = dirname
+    print(f"pdf_path = {pdf_path}")
     manifest = extract_pdf_pages(pdf_path, output_dir)
     manifest_path = os.path.join(output_dir, f"{Path(pdf_path).stem}_manifest.json")
     with open(manifest_path, "w", encoding="utf-8") as f:
@@ -163,4 +166,7 @@ def scan_matadata_from_pdf_dirs(pdf_dirs,output_dir=None):
         pdf_dirs = [os.path.join(pdf_dirs,item) for item in os.listdir(pdf_dirs) if os.path.isdir(os.path.join(pdf_dirs,item)) or item.endswith('.pdf')]
     pdf_dirs
     for pdf_dir in make_list(pdf_dirs):
-        save_pdf_text_metadata(pdf_path=pdf_dir, output_dir=output_dir)
+        try:
+            save_pdf_text_metadata(pdf_path=pdf_dir, output_dir=output_dir)
+        except Exception as e:
+            print(f"{e}")

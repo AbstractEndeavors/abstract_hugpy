@@ -20,6 +20,7 @@ Usage
 
 
 from ..imports import *
+from .metadata_utils import scan_matadata_from_pdf_dirs
 from .summary_judge import SummaryJudge
 
 # ------------------------------------------------------------------
@@ -167,7 +168,10 @@ def update_manifest(patent_dir: Path, new_entries: list):
 def process_patent_dir(patent_dir: Path):
     txt_files = list(patent_dir.glob("*.txt"))
     if not txt_files:
-        return
+        scan_matadata_from_pdf_dirs([patent_dir],output_dir=patent_dir)
+        txt_files = list(patent_dir.glob("*.txt"))
+        if not txt_files:
+            return 
     print(f"\n📄 Processing {patent_dir.name} ({len(txt_files)} pages)...")
     results = []
     with mproc.Pool(N_PROCESSES) as pool:
@@ -186,14 +190,17 @@ def run_page_summary_generator_fast(base_dir: str | Path = None, env_path: str |
     if not base_dir.exists():
         raise FileNotFoundError(f"Base directory not found: {base_dir}")
 
-    pdf_dirs = [d for d in base_dir.iterdir() if d.is_dir()]
+    pdf_dirs = [p for p in get_files_and_dirs(str(BASE_DIR),allowed_exts=['.pdf'])[-1] if '_page_' not in p]
     if not pdf_dirs:
         print(f"⚠️ No subdirectories found in {base_dir}")
         return
 
     print(f"🏗 Using base directory: {base_dir}")
-    for patent_dir in pdf_dirs:
-        process_patent_dir(patent_dir)
+    for p in patents:
+        directory = p
+        if os.path.isfile(p):
+            directory = os.path.dirname(p)
+        process_patent_dir(Path(directory))
     print("🏁 All summaries complete.")
 
 

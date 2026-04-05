@@ -32,7 +32,7 @@ MODEL_HOME = Path(get_env_value("MODEL_HOME") or os.path.expanduser("~/.cache/ab
 MODEL_REGISTRY: Dict[str, ModelConfig] = {
 
     "whisper": ModelConfig(
-        name="whisper",
+        name="openai_whisper",
         hub_id="openai/whisper-base",
         folder="whisper_base",
         task="speech-to-text",

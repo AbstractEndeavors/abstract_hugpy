@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name='abstract_hugpy',
-    version='0.1.160',
+    version='0.1.161',
     author='putkoff',
     author_email='partners@abstractendeavors.com',
     description='The `abstract_hugpy` module is designed to facilitate hugging face modules',
@@ -24,7 +24,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
-    install_requires=['abstract_utilities','requests'],
+    install_requires=['abstract_utilities','requests','openai_whisper'],
     python_requires=">=3.6",
     # Add this line to include wheel format in your distribution
     setup_requires=['wheel']

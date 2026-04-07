@@ -11,9 +11,9 @@ from both, deduplicates, and computes density in one call.
 
 from __future__ import annotations
 
-import re
+import re,dataclasses
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field,asdict
 from typing import Dict, List, Optional, Tuple
 
 from .imports import (
@@ -30,7 +30,7 @@ from .imports import (
 # ---------------------------------------------------------------------------
 class ToDictMixin:
     def to_dict(self) -> dict:
-        return dataclasses.asdict(self)
+        return asdict(self)
 
 @dataclass(frozen=True)
 class KeywordRequest(ToDictMixin):

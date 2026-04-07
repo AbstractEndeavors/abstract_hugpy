@@ -28,9 +28,12 @@ from .imports import (
 # ---------------------------------------------------------------------------
 # Schema
 # ---------------------------------------------------------------------------
+class ToDictMixin:
+    def to_dict(self) -> dict:
+        return dataclasses.asdict(self)
 
 @dataclass(frozen=True)
-class KeywordRequest:
+class KeywordRequest(ToDictMixin):
     """Immutable parameter bag for any extraction call."""
 
     text: str
@@ -41,8 +44,9 @@ class KeywordRequest:
     keyphrase_ngram_range: Tuple[int, int] = (1, 2)
 
 
+
 @dataclass
-class KeywordResult:
+class KeywordResult(ToDictMixin):
     """
     Structured output — callers inspect named fields instead of
     guessing dict keys or positional returns.
@@ -61,7 +65,7 @@ class KeywordResult:
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
-class KeywordPreset:
+class KeywordPreset(ToDictMixin):
     """
     Frozen bag of defaults a preset name resolves to.
     Only non-None values override the caller's explicit kwargs.
@@ -72,15 +76,12 @@ class KeywordPreset:
     use_mmr: Optional[bool] = None
     stop_words: Optional[str] = None
     keyphrase_ngram_range: Optional[Tuple[int, int]] = None
-
-    # Post-processing controls (used by refine_keywords, ignored by extract_*)
-    min_density: Optional[float] = None     # drop keywords below this %
-    max_density: Optional[float] = None     # flag keywords above this % (stuffing)
-    min_score: Optional[float] = None       # keybert confidence floor
-    max_words_per_phrase: Optional[int] = None  # cap phrase length
-    dedupe_stems: Optional[bool] = None     # collapse "running"/"runs" → "run"
-
-
+    min_density: Optional[float] = None
+    max_density: Optional[float] = None
+    min_score: Optional[float] = None
+    max_words_per_phrase: Optional[int] = None
+    dedupe_stems: Optional[bool] = None
+    
 _PRESETS: Dict[str, KeywordPreset] = {}
 
 

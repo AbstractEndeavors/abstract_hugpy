@@ -158,7 +158,7 @@ register_preset(
 # ---------------------------------------------------------------------------
 
 @dataclass
-class RefinedResult:
+class RefinedResult(ToDictMixin):
     """
     Output of refine_keywords — the raw KeywordResult plus
     post-processed fields useful for SEO, metadata, and content strategy.

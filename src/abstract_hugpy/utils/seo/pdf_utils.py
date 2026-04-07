@@ -64,24 +64,30 @@ except KeyError:
 
 @dataclass
 class PDFSeoResult:
-    """Bundle of summary + keywords for a given text scope."""
-
-    scope: str = ""                     # "full" | "page:3" etc.
-    text: str = ""                      # the raw input text
+    scope: str = ""
+    text: str = ""
     summary: str = ""
     keywords: Optional[RefinedResult] = None
+
+    def to_dict(self) -> dict:
+        return {
+            "scope": self.scope,
+            "text": self.text,
+            "summary": self.summary,
+            "keywords": self.keywords.to_dict() if self.keywords is not None else None,
+        }
 
 
 @dataclass
 class PDFSeoReport:
-    """Full document report — the document-level result plus per-page."""
-
     full: Optional[PDFSeoResult] = None
     pages: List[PDFSeoResult] = field(default_factory=list)
 
-    @property
-    def page_count(self) -> int:
-        return len(self.pages)
+    def to_dict(self) -> dict:
+        return {
+            "full": self.full.to_dict() if self.full is not None else None,
+            "pages": [p.to_dict() for p in self.pages],
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -222,3 +228,4 @@ def analyze_pdf(pdf_dir: str) -> PDFSeoReport:
         )
 
     return report
+analyze_media_text = _analyze

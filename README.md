@@ -10,7 +10,7 @@ This module provides NLP and ML enrichment across the media pipeline.
 * metadata generation (titles, descriptions, SEO)
 * multimodal refinement (text, audio, video)
 
-Full system: [https://github.com/AbstractEndeavors/abstract_media_platform](https://github.com/AbstractEndeavors/abstract_media_platform)
+Full system: [https://github.com/AbstractEndeavors/abstract_media_intelligence](https://github.com/AbstractEndeavors/abstract_media_intelligence)
 
 ---
 

@@ -1,6 +1,6 @@
 # abstract_hugpy
 
-## Part of the Abstract Media Intelligence Platform
+## Part of the Abstract Intelligence Platform
 
 This module provides NLP and ML enrichment across the media pipeline.
 
@@ -10,7 +10,7 @@ This module provides NLP and ML enrichment across the media pipeline.
 * metadata generation (titles, descriptions, SEO)
 * multimodal refinement (text, audio, video)
 
-Full system: [https://github.com/AbstractEndeavors/abstract-media-intelligence](https://github.com/AbstractEndeavors/abstract-media-intelligence)
+Full system: [https://github.com/AbstractEndeavors/abstract-media-intelligence](https://github.com/AbstractEndeavors/abstract-intelligence)
 
 ---
 

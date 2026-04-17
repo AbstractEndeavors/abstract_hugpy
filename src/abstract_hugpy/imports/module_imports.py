@@ -91,24 +91,32 @@ def get_transformers(module=None):
     if module is None:
         return tf
 
-    _dispatch = {
-        "AutoTokenizer": tf.AutoTokenizer,
-        "AutoModelForSeq2SeqLM": tf.AutoModelForSeq2SeqLM,
-        "AutoModelForCausalLM": tf.AutoModelForCausalLM,
-        "GenerationConfig": tf.GenerationConfig,
-        "BitsAndBytesConfig": tf.BitsAndBytesConfig,
-        "pipeline": tf.pipeline,
-        "LEDTokenizer": tf.LEDTokenizer,
-        "LEDForConditionalGeneration": tf.LEDForConditionalGeneration,
-        "T5TokenizerFast": tf.T5TokenizerFast,
-        "T5ForConditionalGeneration": tf.T5ForConditionalGeneration,
+    allowed = {
+        "AutoTokenizer",
+        "AutoModelForSeq2SeqLM",
+        "AutoModelForCausalLM",
+        "GenerationConfig",
+        "BitsAndBytesConfig",
+        "pipeline",
+        "LEDTokenizer",
+        "LEDForConditionalGeneration",
+        "T5TokenizerFast",
+        "T5ForConditionalGeneration",
     }
-    if module not in _dispatch:
+    if module not in allowed:
         raise KeyError(
             f"Unknown transformers sub-module {module!r}. "
-            f"Available: {sorted(_dispatch)}"
+            f"Available: {sorted(allowed)}"
         )
-    return _dispatch[module]
+
+    try:
+        return getattr(tf, module)
+    except AttributeError as exc:
+        raise AttributeError(
+            f"transformers module is missing {module!r}. "
+            f"This can happen if transformers is only partially initialized "
+            f"during a circular import or concurrent first-load."
+        ) from exc
 
 
 # ---------------------------------------------------------------------------

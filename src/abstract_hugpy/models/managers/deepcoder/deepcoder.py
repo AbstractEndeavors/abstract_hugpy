@@ -11,8 +11,8 @@ from .imports import (
     Optional,
     Union,
 )
-input(DEFAULT_PATHS)
-DEFAULT_PATH: str = DEFAULT_PATHS["deepcoder"]
+
+DEFAULT_PATH: str = DEFAULT_PATHS.get("deepcoder")
 logger = get_logFile("deepcoder")
 
 

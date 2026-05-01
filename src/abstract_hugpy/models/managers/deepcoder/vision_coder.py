@@ -132,8 +132,13 @@ def get_vision_coder(
         model_dir=module_path or DEFAULT_PATHS["qwen_vl"],
         torch_dtype=torch_dtype,
     )
-def deepcoder_image_analysis(image_path,prompt):
-    vision = get_vision_coder()
+def deepcoder_image_analysis(
+    image_path,
+    prompt,
+    module_path: Optional[str] = None,
+    torch_dtype=None
+    ):
+    vision = get_vision_coder(module_path=module_path,torch_dtype=torch_dtype)
 
     result = vision.analyze_image(
         image_path=image_path,

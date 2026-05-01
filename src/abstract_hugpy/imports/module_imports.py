@@ -92,6 +92,7 @@ def get_transformers(module=None):
         return tf
 
     allowed = {
+        "AutoProcessor",
         "AutoTokenizer",
         "AutoModelForSeq2SeqLM",
         "AutoModelForCausalLM",
@@ -102,7 +103,8 @@ def get_transformers(module=None):
         "LEDForConditionalGeneration",
         "T5TokenizerFast",
         "T5ForConditionalGeneration",
-        "AutoModelForVision2Seq"
+        "AutoModelForVision2Seq",
+        "Qwen2_5_VLForConditionalGeneration"
     }
     if module not in allowed:
         raise KeyError(

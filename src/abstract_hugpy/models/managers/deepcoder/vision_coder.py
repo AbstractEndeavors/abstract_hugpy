@@ -5,27 +5,25 @@ from .imports import (
     SingletonMeta,
     get_logFile,
     require,
-    Dict,
     Optional,
-    Union,
+    DEFAULT_PATHS,
 )
 
 from PIL import Image
 
+DEFAULT_VISION_PATH = DEFAULT_PATHS["qwen_vl"]
+input(DEFAULT_VISION_PATH)
 logger = get_logFile("vision_coder")
 
 
 class VisionCoder(metaclass=SingletonMeta):
     """
-    Vision-language manager for image analysis.
-
-    This should be separate from DeepCoder because DeepCoder is currently
-    loaded as a text-only causal language model.
+    Vision-language manager for local Qwen2.5-VL image analysis.
     """
 
     def __init__(
         self,
-        model_dir: str,
+        model_dir: Optional[str] = None,
         device: Optional[str] = None,
         torch_dtype=None,
     ):
@@ -36,7 +34,7 @@ class VisionCoder(metaclass=SingletonMeta):
         require("transformers", reason="VisionCoder requires HuggingFace transformers")
 
         self.initialized = True
-        self.model_dir = model_dir
+        self.model_dir = model_dir or DEFAULT_VISION_PATH
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.torch_dtype = torch_dtype or torch.float16
 
@@ -47,13 +45,17 @@ class VisionCoder(metaclass=SingletonMeta):
         self._load_processor()
 
     def _load_model(self):
-        AutoModelForVision2Seq = get_transformers("AutoModelForVision2Seq")
+        Qwen2_5_VLForConditionalGeneration = get_transformers(
+            "Qwen2_5_VLForConditionalGeneration"
+        )
 
-        self.model = AutoModelForVision2Seq.from_pretrained(
+        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
             self.model_dir,
             torch_dtype=self.torch_dtype,
+            device_map="auto",
             trust_remote_code=True,
-        ).to(self.device)
+            local_files_only=True,
+        )
 
         self.model.eval()
 
@@ -63,6 +65,7 @@ class VisionCoder(metaclass=SingletonMeta):
         self.processor = AutoProcessor.from_pretrained(
             self.model_dir,
             trust_remote_code=True,
+            local_files_only=True,
         )
 
     def analyze_image(
@@ -101,8 +104,9 @@ class VisionCoder(metaclass=SingletonMeta):
             padding=True,
         )
 
+        target_device = next(self.model.parameters()).device
         inputs = {
-            key: value.to(self.device)
+            key: value.to(target_device)
             for key, value in inputs.items()
         }
 
@@ -112,17 +116,20 @@ class VisionCoder(metaclass=SingletonMeta):
                 max_new_tokens=max_new_tokens,
             )
 
+        generated_ids = output_ids[:, inputs["input_ids"].shape[1]:]
+
         return self.processor.batch_decode(
-            output_ids,
+            generated_ids,
             skip_special_tokens=True,
+            clean_up_tokenization_spaces=False,
         )[0]
 
 
 def get_vision_coder(
-    module_path: str,
+    module_path: Optional[str] = None,
     torch_dtype=None,
 ) -> VisionCoder:
     return VisionCoder(
-        model_dir=module_path,
+        model_dir=module_path or DEFAULT_PATHS["qwen_vl"],
         torch_dtype=torch_dtype,
     )

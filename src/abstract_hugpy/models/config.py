@@ -6,6 +6,7 @@ from typing import Dict
 from huggingface_hub import snapshot_download
 from abstract_security import get_env_value
 
+
 # ---------------------------------------------------------------------
 # Model configuration
 # ---------------------------------------------------------------------
@@ -23,14 +24,17 @@ class ModelConfig:
 # Model storage root
 # ---------------------------------------------------------------------
 
-MODEL_HOME = Path(get_env_value("MODEL_HOME") or os.path.expanduser("~/.cache/abstract_models"))
+MODEL_HOME = Path(
+    get_env_value("MODEL_HOME")
+    or os.path.expanduser("~/.cache/abstract_models")
+)
+
 
 # ---------------------------------------------------------------------
 # Model registry
 # ---------------------------------------------------------------------
 
 MODEL_REGISTRY: Dict[str, ModelConfig] = {
-
     "whisper": ModelConfig(
         name="openai_whisper",
         hub_id="openai/whisper-base",
@@ -73,6 +77,14 @@ MODEL_REGISTRY: Dict[str, ModelConfig] = {
         task="code-generation",
     ),
 
+    # Qwen2.5-VL local image analysis model
+    "qwen_vl": ModelConfig(
+        name="qwen_vl",
+        hub_id="Qwen/Qwen2.5-VL-7B-Instruct",
+        folder="Qwen2.5-VL-7B-Instruct",
+        task="vision-language",
+    ),
+
     "huggingface": ModelConfig(
         name="huggingface",
         hub_id="huggingface/hub",
@@ -108,8 +120,6 @@ def get_model_config(key: str) -> ModelConfig:
 # ---------------------------------------------------------------------
 
 def get_model_path(key: str) -> Path:
-
-    # environment override
     env_override = os.environ.get(f"MODEL_{key.upper()}")
 
     if env_override:
@@ -120,18 +130,50 @@ def get_model_path(key: str) -> Path:
     return MODEL_HOME / cfg.folder
 
 
+def model_looks_downloaded(path: Path) -> bool:
+    """
+    Lightweight check to avoid treating partial Hugging Face / Git-LFS
+    pointer directories as usable model directories.
+    """
+    if not path.exists() or not path.is_dir():
+        return False
+
+    if not (path / "config.json").exists():
+        return False
+
+    safetensor_files = list(path.glob("*.safetensors"))
+
+    if safetensor_files:
+        # Real shards should not be tiny Git-LFS pointer files.
+        for file_path in safetensor_files:
+            if file_path.stat().st_size < 1024 * 1024:
+                return False
+        return True
+
+    # Some small models may not use safetensors, so allow tokenizer/config-only
+    # models to pass if they have expected Hugging Face files.
+    expected_any = [
+        "pytorch_model.bin",
+        "model.safetensors.index.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+        "preprocessor_config.json",
+        "processor_config.json",
+    ]
+
+    return any((path / name).exists() for name in expected_any)
+
+
 # ---------------------------------------------------------------------
 # Model download
 # ---------------------------------------------------------------------
 
 def ensure_model(key: str) -> Path:
-
     cfg = get_model_config(key)
     path = get_model_path(key)
 
-    if not path.exists():
-
-        path.parent.mkdir(parents=True, exist_ok=True)
+    if not model_looks_downloaded(path):
+        path.mkdir(parents=True, exist_ok=True)
 
         snapshot_download(
             repo_id=cfg.hub_id,
@@ -141,27 +183,33 @@ def ensure_model(key: str) -> Path:
 
     return path
 
+
 def resolve_model_source(key: str) -> str:
     local = get_model_path(key)
     env_override = os.environ.get(f"MODEL_{key.upper()}")
+
     if env_override and not local.exists():
         raise FileNotFoundError(
             f"MODEL_{key.upper()}={env_override} was set but path doesn't exist"
         )
-    if local.exists():
+
+    if model_looks_downloaded(local):
         return str(local)
+
     return get_model_config(key).hub_id
+
 
 # ---------------------------------------------------------------------
 # Backwards compatibility
 # ---------------------------------------------------------------------
+
 class _LazyModelPaths:
     """
     Dict-like that resolves on access, not import.
 
     Managers that cache DEFAULT_PATHS["foo"] in __init__ get the
     correct value at construction time — even if the model was
-    downloaded (or deleted) after the module was first imported.
+    downloaded or deleted after the module was first imported.
     """
 
     def __getitem__(self, key: str) -> str:
@@ -177,6 +225,4 @@ class _LazyModelPaths:
         return key in MODEL_REGISTRY
 
 
-
 DEFAULT_PATHS: _LazyModelPaths = _LazyModelPaths()
-

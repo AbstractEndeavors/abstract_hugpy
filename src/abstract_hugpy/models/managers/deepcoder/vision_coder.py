@@ -11,8 +11,7 @@ from .imports import (
 
 from PIL import Image
 
-DEFAULT_VISION_PATH = DEFAULT_PATHS["qwen_vl"]
-input(DEFAULT_VISION_PATH)
+DEFAULT_VISION_PATH = DEFAULT_PATHS.get("qwen_vl")
 logger = get_logFile("vision_coder")
 
 

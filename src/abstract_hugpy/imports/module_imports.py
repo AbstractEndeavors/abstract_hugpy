@@ -102,6 +102,7 @@ def get_transformers(module=None):
         "LEDForConditionalGeneration",
         "T5TokenizerFast",
         "T5ForConditionalGeneration",
+        "AutoModelForVision2Seq"
     }
     if module not in allowed:
         raise KeyError(

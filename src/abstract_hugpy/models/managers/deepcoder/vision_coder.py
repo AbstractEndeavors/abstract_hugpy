@@ -11,8 +11,35 @@ from .imports import (
 
 from PIL import Image
 
-DEFAULT_VISION_PATH = DEFAULT_PATHS.get("qwen_vl")
 logger = get_logFile("vision_coder")
+
+
+def resolve_qwen_vl_path(module_path: Optional[str] = None) -> str:
+    """
+    Resolve Qwen-VL path at call time, not import time.
+
+    Priority:
+    1. Explicit module_path
+    2. MODEL_QWEN_VL env var / DEFAULT_PATHS resolver
+    3. Known installed local path fallback
+    """
+    if module_path:
+        return str(module_path)
+
+    resolved = DEFAULT_PATHS.get("qwen_vl")
+
+    if resolved and os.path.exists(str(resolved)):
+        return str(resolved)
+
+    fallback = "/var/www/hugging_face/modules/Qwen/Qwen2.5-VL-7B-Instruct"
+
+    if os.path.exists(fallback):
+        return fallback
+
+    raise FileNotFoundError(
+        "Could not resolve local Qwen2.5-VL model path. "
+        "Set MODEL_QWEN_VL=/var/www/hugging_face/modules/Qwen/Qwen2.5-VL-7B-Instruct"
+    )
 
 
 class VisionCoder(metaclass=SingletonMeta):
@@ -33,9 +60,11 @@ class VisionCoder(metaclass=SingletonMeta):
         require("transformers", reason="VisionCoder requires HuggingFace transformers")
 
         self.initialized = True
-        self.model_dir = model_dir or DEFAULT_VISION_PATH
+        self.model_dir = resolve_qwen_vl_path(model_dir)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.torch_dtype = torch_dtype or torch.float16
+
+        logger.info(f"VisionCoder loading local model from: {self.model_dir}")
 
         self.model = None
         self.processor = None
@@ -128,21 +157,28 @@ def get_vision_coder(
     module_path: Optional[str] = None,
     torch_dtype=None,
 ) -> VisionCoder:
+    model_path = resolve_qwen_vl_path(module_path)
+
+    logger.info(f"Resolved qwen_vl model path: {model_path}")
+
     return VisionCoder(
-        model_dir=module_path or DEFAULT_PATHS["qwen_vl"],
+        model_dir=model_path,
         torch_dtype=torch_dtype,
     )
+
+
 def deepcoder_image_analysis(
     image_path,
     prompt,
     module_path: Optional[str] = None,
-    torch_dtype=None
-    ):
-    vision = get_vision_coder(module_path=module_path,torch_dtype=torch_dtype)
+    torch_dtype=None,
+):
+    vision = get_vision_coder(
+        module_path=module_path,
+        torch_dtype=torch_dtype,
+    )
 
-    result = vision.analyze_image(
+    return vision.analyze_image(
         image_path=image_path,
         prompt=prompt,
     )
-
-    return result

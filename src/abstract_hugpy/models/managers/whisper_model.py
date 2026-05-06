@@ -20,6 +20,10 @@ def whisper_transcribe(
     task=None,
     whisper_model_path: str = None
 ):
+    if not os.path.isfile(audio_path):
+        raise ValueError(
+            f"Audio File doesnt exist {audio_path}"
+        )
     model = get_whisper_model(module_size=model_size, whisper_model_path=whisper_model_path)
     return model.transcribe(audio_path, language=language)
 
@@ -44,3 +48,22 @@ def extract_audio_from_video(video_path: str, audio_path: str = None):
     except Exception as e:
         logger.error(f"Error extracting audio from {video_path}: {e}")
         return None
+
+def transcribe_from_video(
+    video_path,
+    audio_path: str,
+    model_size: str = "small",
+    language: str = "english",
+    use_silence: bool = True,
+    task=None,
+    whisper_model_path: str = None):
+    audio_path = extract_audio_from_video(video_path)
+    return whisper_transcribe(
+        audio_path=audio_path,
+        model_size =model_size,
+        language= language,
+        use_silence= use_silence,
+        task=task,
+        whisper_model_path=whisper_model_path
+        )
+    

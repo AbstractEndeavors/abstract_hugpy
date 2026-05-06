@@ -1,5 +1,8 @@
 from .whisper_model import *
 from .imports import *
+import os
+import tempfile
+from pathlib import Path
 from abstract_webtools import requests,derive_approved_headers_user_agent_session_for_url
 def extension_from_content_type(content_type: str) -> str:
     content_type = (content_type or "").lower().split(";")[0].strip()
@@ -59,7 +62,7 @@ def stream_url_to_temp_file(
     try:
         with session.get(url, stream=True, timeout=timeout) as r:
             r.raise_for_status()
-
+            
             if suffix is None:
                 suffix = extension_from_content_type(
                     r.headers.get("content-type", "")

@@ -1,4 +1,6 @@
 from .imports import os,get_moviepy,get_whisper,get_logFile,SingletonMeta,DEFAULT_PATHS
+from abstract_utilities import derive_media_type
+
 logger = get_logFile(__name__)
 DEFAULT_WHISPER_MODEL_PATH = DEFAULT_PATHS["whisper"]
 class whisperManager(metaclass=SingletonMeta):
@@ -51,7 +53,7 @@ def extract_audio_from_video(video_path: str, audio_path: str = None):
 
 def transcribe_from_video(
     video_path,
-    audio_path: str,
+    audio_path: str = None,
     model_size: str = "small",
     language: str = "english",
     use_silence: bool = True,
@@ -67,3 +69,25 @@ def transcribe_from_video(
         whisper_model_path=whisper_model_path
         )
     
+def transcribe_file(
+    file_path,
+    model_size: str = "small",
+    language: str = "english",
+    use_silence: bool = True,
+    task=None,
+    whisper_model_path: str = None):
+    audio_path=None
+    media_type = derive_media_type(file_path)
+    if media_type == 'audio':
+        audio_path = file_path
+    if media_type == 'video':
+        audio_path = extract_audio_from_video(video_path)
+    if audio_path:
+        return whisper_transcribe(
+            audio_path=audio_path,
+            model_size =model_size,
+            language= language,
+            use_silence= use_silence,
+            task=task,
+            whisper_model_path=whisper_model_path
+            )

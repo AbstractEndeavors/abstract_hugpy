@@ -1,6 +1,5 @@
 from .whisper_model import *
 from .imports import *
-import requests
 from abstract_webtools import derive_approved_headers_user_agent_session_for_url
 def extension_from_content_type(content_type: str) -> str:
     content_type = (content_type or "").lower().split(";")[0].strip()
@@ -51,8 +50,9 @@ def stream_url_to_temp_file(
     """
 
     owns_session = session is None
-    user_agent,headers,session,source_code = derive_approved_headers_user_agent_session_for_url(url)
-    session.header.update(headers)
+    if not session:
+        user_agent,headers,session,source_code = derive_approved_headers_user_agent_session_for_url(url)
+        session.header.update(headers)
     downloaded = 0
     temp_path = None
 

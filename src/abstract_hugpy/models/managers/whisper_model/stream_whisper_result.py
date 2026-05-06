@@ -1,5 +1,6 @@
 from .whisper_model import *
 from .imports import *
+import requests
 from abstract_webtools import derive_approved_headers_user_agent_session_for_url
 def extension_from_content_type(content_type: str) -> str:
     content_type = (content_type or "").lower().split(";")[0].strip()

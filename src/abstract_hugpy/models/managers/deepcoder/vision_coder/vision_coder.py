@@ -80,6 +80,13 @@ class VisionCoder(metaclass=SingletonMeta):
             f"dtype={self.torch_dtype} token_budget=[{min_tokens},{max_tokens}]"
         )
 
+        logger.info(f"VisionCoder loading local model from: {self.model_dir}")
+
+        self.model = None
+        self.processor = None
+
+        self._load_model()
+        self._load_processor()
 
     def _load_model(self):
         Qwen2_5_VLForConditionalGeneration = get_transformers(

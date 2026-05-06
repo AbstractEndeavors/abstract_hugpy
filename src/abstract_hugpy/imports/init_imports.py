@@ -24,4 +24,4 @@ from urllib.parse import (
     parse_qs
     )
 from collections import Counter
-
+from typing import *

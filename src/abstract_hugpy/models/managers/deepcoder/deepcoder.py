@@ -261,7 +261,7 @@ def deep_coder_generate(
     use_chat_template: bool = False,
     messages: Optional[List[Dict[str, str]]] = None,
     do_sample: bool = False,
-    model_dir: str,
+    model_dir: str=None,
     device: Optional[str] = None,
     torch_dtype=None,
     use_quantization: bool = False,

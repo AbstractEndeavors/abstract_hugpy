@@ -3,7 +3,7 @@ import os.path as osp
 from typing import Optional, List, Dict, Union
 from .imports import get_torch, get_transformers, get_logFile, require, DEFAULT_PATHS
 from .config import DeepCoderConfig
-
+from typing import *
 logger = get_logFile("deepcoder")
 
 

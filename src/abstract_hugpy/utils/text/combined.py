@@ -115,7 +115,7 @@ def summarize_pdf_by_page(path: str) -> dict:
                 text,
                 scope=f"page:{page_num}",
                 summary_preset="brief",
-                keyword_preset="page_seo",
+                keyword_preset="long_tail",
             )
         )
     return report.to_dict()

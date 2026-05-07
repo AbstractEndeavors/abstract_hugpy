@@ -26,6 +26,7 @@ def build_deepcoder_config(
     use_flash_attention: bool = False,
     local_files_only: bool = True,
     max_new_tokens_cap: int = 512,
+    **kwargs
 ) -> DeepCoderConfig:
     torch = require("torch", reason="DeepCoder requires PyTorch")
     resolved_dir = model_dir or DEFAULT_PATHS.get("deepcoder")

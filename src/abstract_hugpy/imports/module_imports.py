@@ -104,7 +104,10 @@ def get_transformers(module=None):
         "T5TokenizerFast",
         "T5ForConditionalGeneration",
         "AutoModelForVision2Seq",
-        "Qwen2_5_VLForConditionalGeneration"
+        "Qwen2_5_VLForConditionalGeneration",
+        "TextIteratorStreamer",
+        "StoppingCriteriaList",
+        "BitsAndBytesConfig",
     }
     if module not in allowed:
         raise KeyError(

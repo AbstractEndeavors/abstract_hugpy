@@ -25,3 +25,4 @@ from urllib.parse import (
     )
 from collections import Counter
 from typing import *
+from PyPDF2 import PdfReader

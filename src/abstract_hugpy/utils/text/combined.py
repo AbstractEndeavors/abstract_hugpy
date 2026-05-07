@@ -5,7 +5,9 @@ from abstract_ocr.ocr_utils.text_utils import convert_image_to_text
 from abstract_webtools import *
 from ..seo.pdf_utils import _analyze, PDFSeoReport
 from .imports import *
-
+def get_num_pdf_pages(pdf_path):
+    reader = PdfReader(pdf_path)
+    return len(reader.pages)
 # ---- schemas ---------------------------------------------------------------
 
 @dataclass(frozen=True)

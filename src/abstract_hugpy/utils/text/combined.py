@@ -1,7 +1,7 @@
 import os.path as osp
 from dataclasses import dataclass, field, asdict
 from typing import Callable, Optional, List, Dict, Any
-from abstract_ocr.layout_ocr.ocr_utils.text_utils import convert_image_to_text
+from abstract_ocr.ocr_utils.text_utils import convert_image_to_text
 from abstract_webtools import *
 from ..seo.pdf_utils import _analyze, PDFSeoReport
 

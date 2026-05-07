@@ -60,10 +60,9 @@ class DeepCoder(metaclass=SingletonMeta):
 
         self.initialized = True
         self.model_dir = model_dir
-        self.device = requested_device
-        self.torch_dtype = requested_dtype
+        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        self.torch_dtype = torch_dtype or torch.float16
         self.use_quantization = use_quantization
-
         self.model = None
         self.tokenizer = None
         self.generation_config = None
@@ -75,32 +74,12 @@ class DeepCoder(metaclass=SingletonMeta):
             logger.info("DeepCoder module initialized successfully.")
         except Exception as e:
             logger.error(f"Failed to initialize DeepCoder: {str(e)}")
-            self.initialized = False
             raise
-
-    def unload_model(self):
-        """Release model/tokenizer references and clear CUDA cache when available."""
-        torch = get_torch()
-
-        for attr in ("model", "tokenizer", "generation_config"):
-            if hasattr(self, attr):
-                setattr(self, attr, None)
-
-        try:
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-                torch.cuda.ipc_collect()
-                logger.info("CUDA cache cleared after DeepCoder unload.")
-        except Exception as e:
-            logger.warning(f"CUDA cache cleanup failed: {repr(e)}")
 
     def _load_model(self):
         AutoModelForCausalLM = get_transformers("AutoModelForCausalLM")
 
-        kwargs = {
-            "torch_dtype": self.torch_dtype,
-            "trust_remote_code": True,
-        }
+        kwargs = {"torch_dtype": self.torch_dtype}
 
         if self.use_quantization and self.device == "cuda":
             try:
@@ -110,33 +89,25 @@ class DeepCoder(metaclass=SingletonMeta):
                 logger.warning("BitsAndBytesConfig unavailable — skipping quantization.")
                 self.use_quantization = False
 
-        logger.info(f"Loading DeepCoder model from {self.model_dir} on {self.device}...")
-
         self.model = AutoModelForCausalLM.from_pretrained(
-            self.model_dir,
-            **kwargs,
-        )
-
-        if not self.use_quantization:
-            self.model = self.model.to(self.device)
-
-        self.model.eval()
+            self.model_dir, **kwargs
+        ).to(self.device)
 
     def _load_tokenizer(self):
         AutoTokenizer = get_transformers("AutoTokenizer")
 
         logger.info(f"Loading tokenizer from {self.model_dir}...")
-
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_dir,
-            trust_remote_code=True,
-        )
-
-        if self.tokenizer.pad_token_id is None:
-            self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
-            logger.info("Set pad_token_id to eos_token_id.")
-
-        logger.info("Tokenizer loaded successfully.")
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_dir, trust_remote_code=True
+            )
+            if self.tokenizer.pad_token_id is None:
+                self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+                logger.info("Set pad_token_id to eos_token_id.")
+            logger.info("Tokenizer loaded successfully.")
+        except Exception as e:
+            logger.error(f"Failed to load tokenizer: {str(e)}")
+            raise
 
     def _load_generation_config(self):
         GenerationConfig = get_transformers("GenerationConfig")
@@ -145,20 +116,18 @@ class DeepCoder(metaclass=SingletonMeta):
             self.generation_config = GenerationConfig.from_pretrained(self.model_dir)
             logger.info("Generation configuration loaded successfully.")
         except Exception as e:
-            logger.warning(f"Failed to load generation config: {str(e)}")
-
+            logger.error(f"Failed to load generation config: {str(e)}")
             self.generation_config = GenerationConfig(
                 do_sample=True,
                 temperature=0.6,
                 top_p=0.95,
                 max_new_tokens=64000,
             )
-
             logger.info("Using default generation configuration.")
 
     def generate(
         self,
-        prompt: Union[str, List[Dict[str, str]]],
+        prompt: str,
         max_new_tokens: int = 1000,
         temperature: float = 0.6,
         top_p: float = 0.95,
@@ -170,37 +139,20 @@ class DeepCoder(metaclass=SingletonMeta):
     ) -> str:
         torch = get_torch()
 
-        if self.model is None or self.tokenizer is None:
-            raise RuntimeError("DeepCoder model/tokenizer is not loaded.")
-
         try:
-            if use_chat_template:
-                chat_messages = messages
-
-                if chat_messages is None:
-                    if isinstance(prompt, list):
-                        chat_messages = prompt
-                    else:
-                        chat_messages = [{"role": "user", "content": prompt}]
-
+            if use_chat_template and messages:
                 inputs = self.tokenizer.apply_chat_template(
-                    chat_messages,
+                    messages,
                     tokenize=True,
                     add_generation_prompt=True,
                     return_tensors="pt",
-                    return_dict=True,
                 )
             else:
-                inputs = self.tokenizer(
-                    str(prompt),
-                    return_tensors="pt",
-                    padding=True,
-                )
+                inputs = self.tokenizer(prompt, return_tensors="pt", padding=True)
 
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
-            config_max = getattr(self.generation_config, "max_new_tokens", None)
-
+            config_max = self.generation_config.max_new_tokens
             if not isinstance(config_max, int):
                 logger.warning(
                     "generation_config.max_new_tokens is not set or invalid. "
@@ -219,15 +171,11 @@ class DeepCoder(metaclass=SingletonMeta):
                     do_sample=do_sample,
                     pad_token_id=self.tokenizer.pad_token_id,
                     eos_token_id=self.tokenizer.eos_token_id,
-                    *args,
-                    **kwargs,
                 )
 
             generated_text = self.tokenizer.decode(
-                outputs[0],
-                skip_special_tokens=True,
+                outputs[0], skip_special_tokens=True
             )
-
             logger.info("Text generation completed successfully.")
             return generated_text
 
@@ -238,28 +186,79 @@ class DeepCoder(metaclass=SingletonMeta):
     def save_output(self, text: str, output_path: str):
         try:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(text)
-
             logger.info(f"Output saved to {output_path}.")
         except Exception as e:
             logger.error(f"Failed to save output: {str(e)}")
             raise
 
-    def get_model_info(self) -> Dict[str, Union[str, int, bool]]:
+    def get_model_info(self) -> Dict[str, Union[str, int]]:
         return {
             "model_name": "DeepCoder-14B-Preview",
             "architecture": "Qwen2ForCausalLM",
             "num_layers": 48,
             "hidden_size": 5120,
             "vocab_size": 152064,
-            "model_dir": self.model_dir,
             "device": self.device,
             "torch_dtype": str(self.torch_dtype),
             "quantized": self.use_quantization,
-            "loaded": self.model is not None,
         }
+
+
+def get_deep_coder(
+    module_path: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: Optional[bool] = None,
+) -> DeepCoder:
+    module_path = module_path or DEFAULT_PATH
+    if torch_dtype is None:
+        torch_dtype = get_torch().float16
+    if use_quantization is None:
+        use_quantization = True
+    return DeepCoder(
+        model_dir=module_path,
+        torch_dtype=torch_dtype,
+        use_quantization=use_quantization,
+    )
+
+
+def try_deep_coder(
+    module_path: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: Optional[bool] = None,
+):
+    try:
+        deepcoder = get_deep_coder(
+            module_path=module_path,
+            torch_dtype=torch_dtype,
+            use_quantization=use_quantization,
+        )
+        logger.info("DeepCoder logger initialized and active.")
+
+        prompt = "Write a Python function to calculate the factorial of a number."
+        generated_text = deepcoder.generate(
+            prompt=prompt, max_new_tokens=2, use_chat_template=False
+        )
+        print("Generated Text:", generated_text)
+
+        messages = [
+            {"role": "system", "content": "You are a helpful coding assistant."},
+            {
+                "role": "user",
+                "content": "Explain how to implement a binary search in Python.",
+            },
+        ]
+        chat_response = deepcoder.generate(
+            prompt=messages, max_new_tokens=1000, use_chat_template=True
+        )
+        print("Chat Response:", chat_response)
+
+        deepcoder.save_output(chat_response, "./output/binary_search_explanation.txt")
+        print("Model Info:", deepcoder.get_model_info())
+
+    except Exception as e:
+        logger.error(f"Example usage failed: {str(e)}")
 
 
 _deep_coder: Optional[DeepCoder] = None

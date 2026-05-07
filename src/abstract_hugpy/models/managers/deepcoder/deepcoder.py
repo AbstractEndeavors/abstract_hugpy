@@ -1,13 +1,15 @@
-import threading
-from typing import Dict, List, Optional, Union
-
 from .imports import (
+    os,
     get_torch,
     get_transformers,
     SingletonMeta,
     get_logFile,
     require,
     DEFAULT_PATHS,
+    Dict,
+    List,
+    Optional,
+    Union,
 )
 
 DEFAULT_PATH: str = DEFAULT_PATHS.get("deepcoder")
@@ -26,7 +28,6 @@ class DeepCoder(metaclass=SingletonMeta):
         refresh_model: bool = False,
         use_flash_attention: bool = False,
         local_files_only: bool = True,
-        server_max_new_tokens: int = 2048,
     ):
         model_dir = model_dir or DEFAULT_PATH
 
@@ -56,7 +57,6 @@ class DeepCoder(metaclass=SingletonMeta):
             and getattr(self, "use_quantization", None) == use_quantization
             and getattr(self, "use_flash_attention", None) == use_flash_attention
             and getattr(self, "local_files_only", None) == local_files_only
-            and getattr(self, "server_max_new_tokens", None) == server_max_new_tokens
         )
 
         if hasattr(self, "initialized") and same_config and not refresh_model:
@@ -74,24 +74,16 @@ class DeepCoder(metaclass=SingletonMeta):
         self.use_quantization = use_quantization
         self.use_flash_attention = use_flash_attention
         self.local_files_only = local_files_only
-        self.server_max_new_tokens = int(server_max_new_tokens or 2048)
 
         self.model = None
         self.tokenizer = None
         self.generation_config = None
-        self.generate_lock = threading.Lock()
 
         self._load_tokenizer()
         self._load_model()
         self._load_generation_config()
 
         logger.info("DeepCoder module initialized successfully.")
-
-    def _get_input_device(self):
-        try:
-            return next(self.model.parameters()).device
-        except Exception:
-            return self.device
 
     def unload_model(self):
         torch = get_torch()
@@ -121,7 +113,7 @@ class DeepCoder(metaclass=SingletonMeta):
         AutoModelForCausalLM = get_transformers("AutoModelForCausalLM")
 
         kwargs = {
-            "dtype": self.torch_dtype,  # newer transformers spelling
+            "torch_dtype": self.torch_dtype,
             "local_files_only": self.local_files_only,
             "low_cpu_mem_usage": True,
             "trust_remote_code": True,
@@ -157,6 +149,7 @@ class DeepCoder(metaclass=SingletonMeta):
             self.model = self.model.to(self.device)
 
         self.model.eval()
+
         logger.info("DeepCoder model loaded and set to eval mode.")
 
     def _load_tokenizer(self):
@@ -191,13 +184,17 @@ class DeepCoder(metaclass=SingletonMeta):
         self.generation_config.temperature = None
         self.generation_config.top_p = None
         self.generation_config.use_cache = True
+        self.generation_config.max_new_tokens = min(
+            int(getattr(self.generation_config, "max_new_tokens", 512) or 512),
+            512,
+        )
 
         logger.info("Generation config loaded.")
 
     def generate(
         self,
         prompt: Union[str, List[Dict[str, str]]],
-        max_new_tokens: int = 512,
+        max_new_tokens: int = 256,
         temperature: float = 0.0,
         top_p: float = 1.0,
         use_chat_template: bool = False,
@@ -209,8 +206,6 @@ class DeepCoder(metaclass=SingletonMeta):
     ) -> str:
         torch = get_torch()
 
-        input_device = self._get_input_device()
-
         if use_chat_template:
             final_messages = messages
 
@@ -220,14 +215,18 @@ class DeepCoder(metaclass=SingletonMeta):
             if not final_messages:
                 raise ValueError("use_chat_template=True requires messages or prompt as message list.")
 
-            input_ids = self.tokenizer.apply_chat_template(
+            inputs = self.tokenizer.apply_chat_template(
                 final_messages,
                 tokenize=True,
                 add_generation_prompt=True,
                 return_tensors="pt",
-            ).to(input_device)
+            )
 
-            model_inputs = {"input_ids": input_ids}
+            if hasattr(inputs, "to"):
+                input_ids = inputs.to(self.device)
+                model_inputs = {"input_ids": input_ids}
+            else:
+                model_inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         else:
             model_inputs = self.tokenizer(
@@ -236,13 +235,13 @@ class DeepCoder(metaclass=SingletonMeta):
                 padding=False,
                 truncation=True,
             )
-            model_inputs = {k: v.to(input_device) for k, v in model_inputs.items()}
+            model_inputs = {k: v.to(self.device) for k, v in model_inputs.items()}
 
         input_len = model_inputs["input_ids"].shape[-1]
 
         final_max = min(
-            max(1, int(max_new_tokens or 512)),
-            self.server_max_new_tokens,
+            int(max_new_tokens or 256),
+            int(getattr(self.generation_config, "max_new_tokens", 512) or 512),
         )
 
         generate_kwargs = {
@@ -255,24 +254,67 @@ class DeepCoder(metaclass=SingletonMeta):
         }
 
         if do_sample:
-            generate_kwargs["temperature"] = float(temperature or 0.7)
-            generate_kwargs["top_p"] = float(top_p or 0.95)
+            generate_kwargs["temperature"] = temperature
+            generate_kwargs["top_p"] = top_p
 
-        with self.generate_lock:
-            with torch.inference_mode():
-                outputs = self.model.generate(**generate_kwargs)
+        with torch.inference_mode():
+            outputs = self.model.generate(**generate_kwargs)
 
-        decoded_ids = outputs[0] if return_full_text else outputs[0][input_len:]
+        if return_full_text:
+            decoded_ids = outputs[0]
+        else:
+            decoded_ids = outputs[0][input_len:]
 
         return self.tokenizer.decode(
             decoded_ids,
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
         ).strip()
+
+    def get_model_info(self) -> Dict[str, Union[str, int, bool]]:
+        return {
+            "model_name": "DeepCoder-14B-Preview",
+            "architecture": "Qwen2ForCausalLM",
+            "num_layers": 48,
+            "hidden_size": 5120,
+            "vocab_size": 152064,
+            "device": self.device,
+            "torch_dtype": str(self.torch_dtype),
+            "quantized": self.use_quantization,
+            "flash_attention": self.use_flash_attention,
+        }
+
+
 _deep_coder: Optional[DeepCoder] = None
 
 
 def get_deep_coder(
+    module_path: Optional[str] = None,
+    model_dir: Optional[str] = None,
+    device: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: Optional[bool] = None,
+    refresh_model: bool = False,
+    use_flash_attention: bool = False,
+    local_files_only: bool = True,
+) -> DeepCoder:
+    resolved_model_dir = model_dir or module_path or DEFAULT_PATH
+
+    if use_quantization is None:
+        use_quantization = False
+
+    return DeepCoder(
+        model_dir=resolved_model_dir,
+        device=device,
+        torch_dtype=torch_dtype,
+        use_quantization=use_quantization,
+        refresh_model=refresh_model,
+        use_flash_attention=use_flash_attention,
+        local_files_only=local_files_only,
+    )
+
+
+def _get_model(
     model_dir: Optional[str] = None,
     device: Optional[str] = None,
     torch_dtype=None,
@@ -280,28 +322,55 @@ def get_deep_coder(
     refresh_model: bool = False,
     use_flash_attention: bool = False,
     local_files_only: bool = True,
-    server_max_new_tokens: int = 2048,
 ) -> DeepCoder:
     global _deep_coder
 
     resolved_model_dir = model_dir or DEFAULT_PATH
 
-    if _deep_coder is None or refresh_model:
-        _deep_coder = DeepCoder(
+    if _deep_coder is None:
+        _deep_coder = get_deep_coder(
             model_dir=resolved_model_dir,
             device=device,
             torch_dtype=torch_dtype,
             use_quantization=use_quantization,
-            refresh_model=refresh_model,
+            refresh_model=False,
             use_flash_attention=use_flash_attention,
             local_files_only=local_files_only,
-            server_max_new_tokens=server_max_new_tokens,
+        )
+        return _deep_coder
+
+    existing_config_changed = (
+        getattr(_deep_coder, "model_dir", None) != resolved_model_dir
+        or (
+            device is not None
+            and getattr(_deep_coder, "device", None) != device
+        )
+        or getattr(_deep_coder, "use_quantization", None) != use_quantization
+        or getattr(_deep_coder, "use_flash_attention", None) != use_flash_attention
+        or getattr(_deep_coder, "local_files_only", None) != local_files_only
+        or (
+            torch_dtype is not None
+            and getattr(_deep_coder, "torch_dtype", None) != torch_dtype
+        )
+    )
+
+    if refresh_model or existing_config_changed:
+        _deep_coder = get_deep_coder(
+            model_dir=resolved_model_dir,
+            device=device,
+            torch_dtype=torch_dtype,
+            use_quantization=use_quantization,
+            refresh_model=True,
+            use_flash_attention=use_flash_attention,
+            local_files_only=local_files_only,
         )
 
     return _deep_coder
+
+
 def deep_coder_generate(
     prompt: Union[str, List[Dict[str, str]]],
-    max_new_tokens: int = 512,
+    max_new_tokens: int = 256,
     temperature: float = 0.0,
     top_p: float = 1.0,
     use_chat_template: bool = False,
@@ -315,8 +384,10 @@ def deep_coder_generate(
     use_flash_attention: bool = False,
     local_files_only: bool = True,
     return_full_text: bool = False,
+    *args,
+    **kwargs,
 ) -> str:
-    model = get_deep_coder(
+    model = _get_model(
         model_dir=model_dir,
         device=device,
         torch_dtype=torch_dtype,
@@ -335,4 +406,21 @@ def deep_coder_generate(
         messages=messages,
         do_sample=do_sample,
         return_full_text=return_full_text,
+    )
+
+
+def refresh_deep_coder(
+    model_dir: Optional[str] = None,
+    device: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: bool = False,
+    use_flash_attention: bool = False,
+) -> DeepCoder:
+    return _get_model(
+        model_dir=model_dir,
+        device=device,
+        torch_dtype=torch_dtype,
+        use_quantization=use_quantization,
+        refresh_model=True,
+        use_flash_attention=use_flash_attention,
     )

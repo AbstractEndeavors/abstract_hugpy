@@ -1,7 +1,7 @@
 import os.path as osp
 from dataclasses import dataclass, field, asdict
 from typing import Callable, Optional, List, Dict, Any
-
+from abstract_ocr.layout_ocr.ocr_utils.text_utils import convert_image_to_text
 from abstract_webtools import *
 from ..seo.pdf_utils import _analyze, PDFSeoReport
 
@@ -158,8 +158,8 @@ def analyze_pdf(path=None, prompt="Please analyze the the pdf component", **kw):
     return analyze_pdf_by_page(path, prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
 
 def image_to_text(path):       return get_extractor("image")(path)
-def summarize_text(path):      return summarize(path, "image")  # legacy: was always image-backed
-def analyze_text(path=None, prompt="Please analyze the the text", **kw):
+def summarize_image(path):      return summarize(path, "image")  # legacy: was always image-backed
+def analyze_image(path=None, prompt="Please analyze the the text", **kw):
     return analyze(path, "image", prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
 
 def video_to_text(path):       return get_extractor("video")(path)

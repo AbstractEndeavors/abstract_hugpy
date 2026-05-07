@@ -25,8 +25,9 @@ class DeepCoder(metaclass=SingletonMeta):
         device: Optional[str] = None,
         torch_dtype=None,
         use_quantization: bool = False,
+        refresh_model=False
     ):
-        if hasattr(self, "initialized"):
+        if not refresh_model and hasattr(self, "initialized"):
             return
 
         # --- gate hard dependencies at init, not four calls later ---
@@ -234,3 +235,55 @@ def try_deep_coder(
 
     except Exception as e:
         logger.error(f"Example usage failed: {str(e)}")
+_deep_coder = None
+def _get_model(
+    model_dir: str,
+    device: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: bool = False,
+    refresh_model=False
+    ):
+    global _deep_coder
+    if _deep_coder is None or refresh_model:
+        _deep_coder = get_deep_coder(
+            model_dir=model_dir,
+            device=device,
+            torch_dtype=torch_dtype,
+            use_quantization=use_quantization,
+            refresh_model=refresh_model
+            )
+    return _deep_coder     
+def deep_coder_generate(
+    prompt: str,
+    max_new_tokens: int = 20,
+    temperature: float = 0.6,
+    top_p: float = 0.95,
+    use_chat_template: bool = False,
+    messages: Optional[List[Dict[str, str]]] = None,
+    do_sample: bool = False,
+    model_dir: str,
+    device: Optional[str] = None,
+    torch_dtype=None,
+    use_quantization: bool = False,
+    refresh_model=False,
+    *args,
+    **kwargs,
+):
+    
+    return _get_model(
+        model_dir=model_dir,
+        device=device,
+        torch_dtype=torch_dtype,
+        use_quantization=use_quantization,
+        refresh_model=refresh_model
+        ).generate(
+        prompt=prompt,
+        max_new_tokens=max_new_tokens,
+        temperature=temperature,
+        top_p=top_p,
+        use_chat_template=use_chat_template,
+        messages=messages,
+        do_sample=do_sample,
+        *args,
+        **kwargs,
+    )

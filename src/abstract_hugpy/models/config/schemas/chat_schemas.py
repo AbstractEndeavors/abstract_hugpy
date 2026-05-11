@@ -39,6 +39,7 @@ class ChatRequest(BaseModel):
     top_p: float = 1.0
     do_sample: bool = False
     unbounded: bool = False
+    max_chunks: Optional[int] = None
 
     @classmethod
     def coerce(cls, value: ChatInput, *, model_key: Optional[str] = None) -> "ChatRequest":

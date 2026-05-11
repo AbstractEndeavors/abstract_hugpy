@@ -453,7 +453,7 @@ def get_backend(key: str) -> SummarizerBackend:
     return _BACKENDS[key]()
 
 
-def summarize(
+def summarize_t5(
     text: str = None,
     backend: str = "t5",
     *,

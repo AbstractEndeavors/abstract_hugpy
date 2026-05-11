@@ -20,7 +20,7 @@ from .imports import (
     RefinedResult,
     KeywordPreset,
     register_preset as register_keyword_preset,
-    summarize,
+    summarize_t5,
     SummaryPreset,
     register_preset as register_summary_preset
 )
@@ -168,7 +168,7 @@ def _analyze(
 ) -> PDFSeoResult:
     """Run summary + keywords on a single block of text."""
     result = PDFSeoResult(scope=scope, text=text)
-    result.summary = summarize(text, preset=summary_preset)
+    result.summary = summarize_t5(text, preset=summary_preset)
     result.keywords = refine_keywords(text, preset=keyword_preset)
     return result
 

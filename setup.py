@@ -4,7 +4,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 setuptools.setup(
     name='abstract_hugpy',
-    version='0.1.224',
+    version='0.1.225',
     author='putkoff',
     author_email='partners@abstractendeavors.com',
     description='The `abstract_hugpy` module is designed to facilitate hugging face modules',

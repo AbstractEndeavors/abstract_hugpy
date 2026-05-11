@@ -87,8 +87,69 @@ def source_to_text(source: str, kind: str | None = None) -> str:
         return source
 
     return get_extractor(kind)(source)
-# ---- core operations -------------------------------------------------------
 
+# ---- core operations -------------------------------------------------------
+def normalize_incoming_source(source: Any, kind: str | None = None) -> tuple[str, str]:
+    """
+    Convert frontend route payloads into:
+      (plain_source_string, normalized_kind)
+
+    Handles:
+      - raw text string
+      - { text: "..." }
+      - { source: { text: "..." } }
+      - { source: { url: "..." } }
+      - { source: { files: [...] } }
+    """
+    resolved_kind = kind or "text"
+
+    if isinstance(source, str):
+        return source, resolved_kind
+
+    if isinstance(source, dict):
+        # Top-level frontend shape: { source: {...}, kind/media: ... }
+        if "kind" in source and not kind:
+            resolved_kind = source.get("kind") or resolved_kind
+        elif "media" in source and not kind:
+            resolved_kind = source.get("media") or resolved_kind
+
+        nested = source.get("source")
+        if isinstance(nested, dict):
+            return normalize_incoming_source(nested, resolved_kind)
+
+        # Nested source payload shape
+        if "kind" in source and not kind:
+            resolved_kind = source.get("kind") or resolved_kind
+        elif "media" in source and not kind:
+            resolved_kind = source.get("media") or resolved_kind
+
+        input_mode = source.get("inputMode")
+
+        if input_mode == "text" or resolved_kind == "text":
+            return str(source.get("text", "")), "text"
+
+        if input_mode == "url":
+            return str(source.get("url", "")), str(resolved_kind or "website")
+
+        if input_mode == "file":
+            files = source.get("files") or []
+            if files and isinstance(files, list):
+                first = files[0]
+                if isinstance(first, dict):
+                    return str(first.get("path", "")), str(resolved_kind)
+                return str(first), str(resolved_kind)
+
+        # Fallbacks for less structured payloads
+        if "text" in source:
+            return str(source.get("text", "")), "text"
+
+        if "url" in source:
+            return str(source.get("url", "")), str(resolved_kind or "website")
+
+        if "path" in source:
+            return str(source.get("path", "")), str(resolved_kind)
+
+    return str(source), resolved_kind
 def summarize(source: str | dict, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
     """Run the SEO analyzer over text extracted from `source`."""
     source, kind = normalize_incoming_source(source, kind)

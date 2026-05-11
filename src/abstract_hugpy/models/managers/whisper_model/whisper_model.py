@@ -15,19 +15,19 @@ def get_whisper_model(module_size: str = "base", whisper_model_path: str = None)
 
 
 def whisper_transcribe(
-    path: str,
+    audio_path: str,
     model_size: str = "small",
     language: str = "english",
     use_silence: bool = True,
     task=None,
     whisper_model_path: str = None
 ):
-    if not os.path.isfile(path):
+    if not os.path.isfile(audio_path):
         raise ValueError(
-            f"Audio File doesnt exist {path}"
+            f"Audio File doesnt exist {audio_path}"
         )
     model = get_whisper_model(module_size=model_size, whisper_model_path=whisper_model_path)
-    return model.transcribe(path, language=language)
+    return model.transcribe(audio_path, language=language)
 
 
     return metadata

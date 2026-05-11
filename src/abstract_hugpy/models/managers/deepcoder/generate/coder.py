@@ -366,6 +366,7 @@ class DeepCoder:
         do_sample: bool = False,
         use_chat_template: bool = False,
         return_full_text: bool = False,
+        **kwargs
     ) -> str:
         """
         Sync, non-streaming generation.

@@ -180,7 +180,6 @@ class LlamaCppRunner:
         self.llama_host: str = cfg["LLAMA_HOST"]
         self.port: int = cfg[model_key]
         self.base_url = f"{self.llama_host}:{self.port}"
-
     async def stream_chat(
         self,
         req: ChatRequest,
@@ -344,152 +343,6 @@ class LlamaCppRunner:
         if return_full_text:
             text = prompt + text
         return text
-    # in LlamaCppPythonRunner
-    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
-        max_tokens = _resolve_max_tokens(max_tokens)
-        with self.generate_lock:
-            out = self.llm.create_chat_completion(
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=0.0,
-                top_p=1.0,
-                stream=False,
-                stop=None,
-            )
-        choice = out["choices"][0]
-        return GenerationOutcome(
-            text=choice["message"]["content"] or "",
-            finish_reason=choice.get("finish_reason") or "stop",
-            usage=out.get("usage"),
-        )
-    # --- internals ---------------------------------------------------------
-
-    def _log_done(self, req: ChatRequest, finish: str, chunks: int, cap: int) -> None:
-        logger.info(
-            "stream_chat done: model=%s req=%s finish=%s chunks=%s cap=%s",
-            self.model_key, req.request_id, finish, chunks, cap,
-        )
-
-
-# ===========================================================================
-# In-process Python runner — loads a GGUF via llama_cpp directly
-# ===========================================================================
-
-class LlamaCppPythonRunner:
-    def __init__(
-        self,
-        model_key: str,
-        *,
-        n_ctx: int = DEFAULT_N_CTX,
-        n_threads: Optional[int] = None,
-    ):
-        from llama_cpp import Llama
-
-        self.model_key = model_key
-        self.cfg = get_model_config(model_key)
-
-        model_dir = ensure_model(model_key)
-        # No pathlib — get_gguf_file accepts strings via os.fspath internally
-        model_path = get_gguf_file(model_dir, self.cfg)
-
-        if not model_path:
-            raise FileNotFoundError(f"No GGUF file found for model_key={model_key}")
-
-        self.model_path = os.fspath(model_path)
-        self.n_ctx = n_ctx
-        self.n_threads = n_threads or max(1, (os.cpu_count() or 4) - 1)
-        self.generate_lock = threading.Lock()
-
-        self.llm = Llama(
-            model_path=self.model_path,
-            n_ctx=self.n_ctx,
-            n_threads=self.n_threads,
-            verbose=False,
-        )
-
-        logger.info(
-            "LlamaCppPythonRunner ready: model=%s n_ctx=%s n_threads=%s path=%s",
-            model_key, self.n_ctx, self.n_threads, self.model_path,
-        )
-
-    # --- streaming ---------------------------------------------------------
-
-    async def stream_chat(
-        self,
-        req: ChatRequest,
-        cancel_event: Optional[asyncio.Event] = None,
-    ) -> AsyncIterator[StreamEvent]:
-        """Stream via the GGUF's embedded chat template (create_chat_completion).
-
-        No hand-rolled prompt scaffolding, no User:/Assistant: stop strings.
-        Streaming chunks come back in OpenAI shape: choices[0].delta.content.
-        """
-        max_tokens = _resolve_max_tokens(req.max_new_tokens)
-        temp = _resolve_temperature(req.temperature, req.do_sample)
-        top_p = _resolve_top_p(req.top_p)
-
-        messages = [m.model_dump() for m in req.messages]
-        output_chunks = 0
-        last_finish: Optional[str] = None
-
-        try:
-            def run_stream():
-                with self.generate_lock:
-                    return self.llm.create_chat_completion(
-                        messages=messages,
-                        max_tokens=max_tokens,
-                        temperature=temp,
-                        top_p=top_p,
-                        stream=True,
-                        stop=None,  # let the chat template's EOS handle it
-                    )
-
-            stream = await asyncio.to_thread(run_stream)
-
-            for raw in stream:
-                if cancel_event is not None and cancel_event.is_set():
-                    self._log_done(req, "cancelled", output_chunks, max_tokens)
-                    yield DoneEvent(
-                        request_id=req.request_id,
-                        input_tokens=0,
-                        output_chunks=output_chunks,
-                        finish_reason="cancelled",
-                    )
-                    return
-
-                try:
-                    choice = raw["choices"][0]
-                    delta = choice.get("delta") or {}
-                    text = delta.get("content", "") or ""
-                    fr = choice.get("finish_reason")
-                except Exception:
-                    text, fr = "", None
-
-                if text:
-                    output_chunks += 1
-                    yield TokenEvent(request_id=req.request_id, text=text)
-
-                if fr is not None:
-                    last_finish = fr
-
-                await asyncio.sleep(0)
-
-            mapped = _map_finish_reason(last_finish)
-            self._log_done(req, mapped, output_chunks, max_tokens)
-            yield DoneEvent(
-                request_id=req.request_id,
-                input_tokens=0,
-                output_chunks=output_chunks,
-                finish_reason=mapped,
-            )
-
-        except Exception as exc:
-            logger.exception("stream_chat failed: model=%s req=%s", self.model_key, req.request_id)
-            yield ErrorEvent(
-                request_id=req.request_id,
-                message=f"{type(exc).__name__}: {exc}",
-            )
-
     async def stream_chat_unbounded(
         self,
         req: ChatRequest,
@@ -603,8 +456,7 @@ class LlamaCppPythonRunner:
                 request_id=req.request_id,
                 message=f"{type(exc).__name__}: {exc}",
             )
-
-
+    # in LlamaCppPythonRunner
     def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
         max_tokens = _resolve_max_tokens(max_tokens)
         with self.generate_lock:
@@ -622,6 +474,7 @@ class LlamaCppPythonRunner:
             finish_reason=choice.get("finish_reason") or "stop",
             usage=out.get("usage"),
         )
+
     # --- internals ---------------------------------------------------------
 
     def _log_done(self, req: ChatRequest, finish: str, chunks: int, cap: int) -> None:
@@ -629,6 +482,8 @@ class LlamaCppPythonRunner:
             "stream_chat done: model=%s req=%s finish=%s chunks=%s cap=%s",
             self.model_key, req.request_id, finish, chunks, cap,
         )
+
+
 
 
 # ---------------------------------------------------------------------------

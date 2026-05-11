@@ -1,4 +1,4 @@
-v"""DeepCoder chat runner.
+"""DeepCoder chat runner.
 
 Thin adapter that wraps the existing DeepCoder + REGISTRY + build_deepcoder_runtime
 machinery (in deepcoder/coder.py and deepcoder/config.py) and exposes them

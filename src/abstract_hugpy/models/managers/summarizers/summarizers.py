@@ -95,7 +95,7 @@ class SummaryRequest:
         Return a human-readable problem string if the input is suspect,
         or None if everything looks fine.
         """
-        word_count = len(self.text.split())
+        word_count = len(self.text.text.split())
         if word_count < self.min_input_words:
             return (
                 f"Input has {word_count} word(s); need at least "

@@ -19,7 +19,7 @@ import logging
 from typing import AsyncIterator, Optional
 
 from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
-
+from ..unbounded import *
 # Existing module — adjust dotted path to wherever this file lives.
 from .llama_runner import (
     LlamaCppPythonRunner,

@@ -23,7 +23,7 @@ from ..unbounded import run_unbounded, GenerationOutcome
 # Existing module — adjust dotted path to wherever this file lives.
 from .llama_runner import (
     _map_finish_reason,
-    LlamaCppPythonRunner,
+    LlamaCppRunner,
     get_llama_runner,
 )
 from .imports import *
@@ -50,7 +50,7 @@ class LlamaCppChatRunner:
         self._runtime_kwargs = runtime_kwargs
 
     @property
-    def runner(self) -> LlamaCppPythonRunner:
+    def runner(self) -> LlamaCppRunner:
         # Lazy resolution. First access triggers the GGUF load (which can
         # take seconds for a 14B model), subsequent accesses are dict lookups.
         return get_llama_runner(self.model_key)

@@ -9,14 +9,14 @@
         "name": "text_summarization"
 	    },
 
-    "Qwen2.5-Coder-1.5B-GGUF": {
+    "Qwen2.5-Coder-1.5B-Instruct-GGUF": {
         "include": "*Q4_K_M.gguf",
         "framework": "llama_cpp",
         "task": "code-generation",
         "filename": "Qwen2.5-Coder-1.5B-Instruct-Q4_K_M.gguf",
         "hub_id": "bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF",
         "folder": "Qwen/Qwen2.5-Coder-1.5B-GGUF",
-        "name": "Qwen2.5-Coder-1.5B-GGUF"
+        "name": "Qwen2.5-Coder-1.5B-Instruct-GGUF"
         },
     "DeepCoder-14B": {
         "include": null,
@@ -54,14 +54,14 @@
         "folder": "all_minilm_l6_v2",
         "name": "all_minilm_l6_v2"
         },
-    "Qwen2.5-Coder-3B-GGUF": {
+    "Qwen2.5-Coder-3B-Instruct-GGUF": {
         "include": "*q4_k_m.gguf",
         "framework": "llama_cpp",
         "task": "code-generation",
         "filename": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
         "hub_id": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
         "folder": "Qwen/Qwen2.5-Coder-3B-GGUF",
-        "name": "Qwen2.5-Coder-3B-GGUF"
+        "name": "Qwen2.5-Coder-3B-Instruct-GGUF"
         },
     "ZeroSearch_model": {
         "include": null,

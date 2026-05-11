@@ -66,10 +66,11 @@ DEFAULT_HTTP_TIMEOUT = 120.0   # non-streaming HTTP only; streaming uses None
 LLAMA_HOST_DEFAULT = "http://127.0.0.1"
 
 LLAMA_MODEL_PORTS: Dict[str, int] = {
-    "qwen25_coder_15b_gguf": 6008,
-    "qwen3_coder_next_gguf": 6009,
-    "dan_l3_r1_8b_i1_gguf": 6090,
-    "qwen25_coder_3b_gguf": 6091,
+    "Qwen2.5-Coder-1.5B-GGUF":6008,
+    "Qwen3-Coder-Next-Q4_K_M":6009,
+    "DAN-L3-R1-8B-i1-GGUF":6090,
+    "Qwen2.5-Coder-3B-GGUF":6091,
+
 }
 
 
@@ -78,9 +79,11 @@ def _load_llama_config(env_path: Optional[str] = None) -> Dict[str, str | int]:
 
     Env keys are the uppercased model_key:
         LLAMA_HOST=http://127.0.0.1
-        QWEN25_CODER_15B_GGUF=6008
-        QWEN3_CODER_NEXT_GGUF=6009
-        DAN_L3_R1_8B_I1_GGUF=6090
+        Qwen2.5-Coder-1.5B-GGUF=6008
+        Qwen3-Coder-Next-Q4_K_M=6009
+        DAN-L3-R1-8B-i1-GGUF=6090
+        Qwen2.5-Coder-3B-GGUF=6091
+
     """
     cfg: Dict[str, str | int] = {}
     cfg["LLAMA_HOST"] = get_env_value("LLAMA_HOST", path=env_path) or LLAMA_HOST_DEFAULT
@@ -167,7 +170,7 @@ def _resolve_top_p(requested: Optional[float]) -> float:
 
 class LlamaCppRunner:
     def __init__(self, model_key: str, *, env_path: Optional[str] = None):
-        model_key = model_key.replace('.','').replace('-','_').lower()
+
         if model_key not in LLAMA_MODEL_PORTS:
             raise KeyError(
                 f"Unknown model_key={model_key!r}; "

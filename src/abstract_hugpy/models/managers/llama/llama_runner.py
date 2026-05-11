@@ -494,10 +494,10 @@ _LLAMA_INSTANCES: Dict[str, "LlamaCppPythonRunner"] = {}
 _LLAMA_LOCK = threading.Lock()
 
 
-def get_llama_runner(model_key: str) -> LlamaCppPythonRunner:
+def get_llama_runner(model_key: str) -> LlamaCppRunner:
     with _LLAMA_LOCK:
         runner = _LLAMA_INSTANCES.get(model_key)
         if runner is None:
-            runner = LlamaCppPythonRunner(model_key)
+            runner = LlamaCppRunner(model_key)
             _LLAMA_INSTANCES[model_key] = runner
         return runner

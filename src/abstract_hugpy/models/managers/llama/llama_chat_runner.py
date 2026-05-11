@@ -87,7 +87,6 @@ class LlamaCppChatRunner:
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
-
     # --- streaming ---------------------------------------------------------
 
     async def stream(

@@ -71,7 +71,7 @@ LLAMA_MODEL_PORTS: Dict[str, int] = {
     "qwen25_coder_15b_gguf": 6008,
     "qwen3_coder_next_gguf": 6009,
     "dan_l3_r1_8b_i1_gguf": 6090,
-    "qwen25_coder_3b_gguf": 6091,
+    'qwen25_coder_3b_gguf': 6091,
 }
 
 
@@ -494,10 +494,10 @@ _LLAMA_INSTANCES: Dict[str, "LlamaCppPythonRunner"] = {}
 _LLAMA_LOCK = threading.Lock()
 
 
-def get_llama_runner(model_key: str) -> LlamaCppRunner:
+def get_llama_runner(model_key: str) -> LlamaCppPythonRunner:
     with _LLAMA_LOCK:
         runner = _LLAMA_INSTANCES.get(model_key)
         if runner is None:
-            runner = LlamaCppRunner(model_key)
+            runner = LlamaCppPythonRunner(model_key)
             _LLAMA_INSTANCES[model_key] = runner
         return runner

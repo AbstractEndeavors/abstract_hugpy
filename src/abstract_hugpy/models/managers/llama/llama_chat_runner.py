@@ -63,12 +63,12 @@ class LlamaCppChatRunner:
         def _do() -> GenerationOutcome:
             if req.unbounded:
                 return run_unbounded(
-                    self._inner_generate_once,
+                    self.generate_once,
                     messages,
                     chunk_tokens=req.max_new_tokens or 1024,
                     max_chunks=req.max_chunks or 8,
                 )
-            return self._inner_generate_once(messages, req.max_new_tokens)
+            return self.generate_once(messages, req.max_new_tokens)
 
         try:
             outcome = await asyncio.to_thread(_do)
@@ -85,7 +85,18 @@ class LlamaCppChatRunner:
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
-
+    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
+        with self.generate_lock:
+            out = self.llm.create_chat_completion(
+                messages=messages, max_tokens=max_tokens,
+                temperature=0.0, top_p=1.0, stream=False, stop=None,
+            )
+        choice = out["choices"][0]
+        return GenerationOutcome(
+            text=choice["message"]["content"] or "",
+            finish_reason=choice.get("finish_reason") or "stop",
+            usage=out.get("usage"),
+        )
     # --- streaming ---------------------------------------------------------
 
     async def stream(

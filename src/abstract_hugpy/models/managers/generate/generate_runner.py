@@ -69,12 +69,12 @@ class DeepCoderChatRunner:
         def _do() -> GenerationOutcome:
             if req.unbounded:
                 return run_unbounded(
-                    self._inner_generate_once,
+                    self.generate_once,
                     messages,
                     chunk_tokens=req.max_new_tokens or 1024,
                     max_chunks=req.max_chunks or 8,
                 )
-            return self._inner_generate_once(messages, req.max_new_tokens)
+            return self.generate_once(messages, req.max_new_tokens)
 
         try:
             outcome = await asyncio.to_thread(_do)
@@ -91,7 +91,39 @@ class DeepCoderChatRunner:
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
+    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
+        torch = get_torch()
+        requested = self._resolve_max_new_tokens(max_tokens)
 
+        template_out = self.tokenizer.apply_chat_template(
+            messages, tokenize=True, add_generation_prompt=True, return_tensors="pt",
+        )
+        # ... existing input-shaping ...
+        input_len = int(input_ids.shape[-1])
+
+        with torch.inference_mode():
+            outputs = self.model.generate(**gen_kwargs)
+
+        generated_ids = outputs[0][input_len:]
+        output_len = int(generated_ids.shape[-1])
+        text = self.tokenizer.decode(
+            generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True,
+        ).strip()
+
+        # The honest finish_reason: did we hit the cap, or did the model emit EOS?
+        last_token_id = int(generated_ids[-1]) if output_len else self.tokenizer.eos_token_id
+        if output_len >= requested:
+            finish = "length"
+        elif last_token_id == self.tokenizer.eos_token_id:
+            finish = "stop"
+        else:
+            finish = "stop"
+
+        return GenerationOutcome(
+            text=text,
+            finish_reason=finish,
+            usage={"input_tokens": input_len, "output_tokens": output_len},
+        )
     # --- streaming ---------------------------------------------------------
 
     async def stream(

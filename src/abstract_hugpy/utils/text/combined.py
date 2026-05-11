@@ -89,11 +89,16 @@ def source_to_text(source: str, kind: str | None = None) -> str:
     return get_extractor(kind)(source)
 # ---- core operations -------------------------------------------------------
 
-def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
+def summarize(source: str | dict, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
     """Run the SEO analyzer over text extracted from `source`."""
+    source, kind = normalize_incoming_source(source, kind)
+
     logger.info(kind)
 
-    text = source_to_text(source, kind)
+    if kind != "text":
+        text = get_extractor(kind)(source)
+    else:
+        text = source
 
     report = _analyze(
         text,
@@ -105,19 +110,22 @@ def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePr
     return report.to_dict()
 
 def analyze(
-    source: str,
+    source: str | dict,
     kind: str = "text",
     prompt: str = "Please analyze the following content",
     params: GenParams = GenParams(),
 ) -> Any:
     """Extract text when needed, prepend prompt, hand to deep_coder_generate."""
-    text = source_to_text(source, kind)
+    source, kind = normalize_incoming_source(source, kind)
+
+    if kind != "text":
+        text = get_extractor(kind)(source)
+    else:
+        text = source
+
     full_prompt = f"{prompt}\n\n{text}"
 
-    return deep_coder_generate(
-        prompt=full_prompt,
-        **params.to_kwargs(),
-    )
+    return deep_coder_generate(prompt=full_prompt, **params.to_kwargs())
 
 # ---- PDF: the one operation that's actually different ----------------------
 

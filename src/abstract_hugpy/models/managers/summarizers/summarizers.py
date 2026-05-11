@@ -543,4 +543,4 @@ def summarize(
             return f"[WARNING: {problem}] {raw}"
         # InputPolicy.ALLOW — run it, no questions asked
 
-    return get_backend(backend).summarize(req)
+    return get_backend(backend).summarize(req.text)

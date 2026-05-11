@@ -15,19 +15,19 @@ def get_whisper_model(module_size: str = "base", whisper_model_path: str = None)
 
 
 def whisper_transcribe(
-    audio_path: str,
+    path: str,
     model_size: str = "small",
     language: str = "english",
     use_silence: bool = True,
     task=None,
     whisper_model_path: str = None
 ):
-    if not os.path.isfile(audio_path):
+    if not os.path.isfile(path):
         raise ValueError(
-            f"Audio File doesnt exist {audio_path}"
+            f"Audio File doesnt exist {path}"
         )
     model = get_whisper_model(module_size=model_size, whisper_model_path=whisper_model_path)
-    return model.transcribe(audio_path, language=language)
+    return model.transcribe(path, language=language)
 
 
     return metadata
@@ -70,18 +70,18 @@ def transcribe_from_video(
         )
     
 def transcribe_file(
-    file_path,
+    path,
     model_size: str = "small",
     language: str = "english",
     use_silence: bool = True,
     task=None,
     whisper_model_path: str = None):
     audio_path=None
-    media_type = derive_media_type(file_path)
+    media_type = derive_media_type(path)
     if media_type == 'audio':
-        audio_path = file_path
+        audio_path = path
     if media_type == 'video':
-        audio_path = extract_audio_from_video(video_path)
+        audio_path = extract_audio_from_video(path)
     if audio_path:
         return whisper_transcribe(
             audio_path=audio_path,

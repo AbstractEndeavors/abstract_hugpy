@@ -59,38 +59,33 @@ class LlamaCppChatRunner:
     async def run(self, req: ChatInput) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
         messages = [m.model_dump() for m in req.messages]
-        try:
+
+        def _do() -> GenerationOutcome:
             if req.unbounded:
-                text = await asyncio.to_thread(
-                    self.runner.generate_text_unbounded,
+                return run_unbounded(
+                    self._inner_generate_once,
                     messages,
-                    temperature=req.temperature,
-                    top_p=req.top_p,
-                    do_sample=req.do_sample,
+                    chunk_tokens=req.max_new_tokens or 1024,
+                    max_chunks=req.max_chunks or 8,
                 )
-            else:
-                text = await asyncio.to_thread(
-                    self.runner.generate_text,
-                    messages,
-                    max_new_tokens=req.max_new_tokens,
-                    temperature=req.temperature,
-                    top_p=req.top_p,
-                    do_sample=req.do_sample,
-                    use_chat_template=True,
-                    return_full_text=False,
-                )
+            return self._inner_generate_once(messages, req.max_new_tokens)
+
+        try:
+            outcome = await asyncio.to_thread(_do)
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
-                ok=True, text=text, finish_reason="stop",
+                ok=True, text=outcome.text,
+                finish_reason=_map_finish_reason(outcome.finish_reason),
             )
         except Exception as exc:
-            logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",
+            logger.exception("run failed: model=%s req=%s",
                              self.model_key, req.request_id)
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
+
     # --- streaming ---------------------------------------------------------
 
     async def stream(

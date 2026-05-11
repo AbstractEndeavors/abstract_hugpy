@@ -342,7 +342,19 @@ class LlamaCppRunner:
         if return_full_text:
             text = prompt + text
         return text
-
+    # in LlamaCppPythonRunner
+    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
+        with self.generate_lock:
+            out = self.llm.create_chat_completion(
+                messages=messages, max_tokens=max_tokens,
+                temperature=0.0, top_p=1.0, stream=False, stop=None,
+            )
+        choice = out["choices"][0]
+        return GenerationOutcome(
+            text=choice["message"]["content"] or "",
+            finish_reason=choice.get("finish_reason") or "stop",
+            usage=out.get("usage"),
+        )
     # --- internals ---------------------------------------------------------
 
     def _log_done(self, req: ChatRequest, finish: str, chunks: int, cap: int) -> None:

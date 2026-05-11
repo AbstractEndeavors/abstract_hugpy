@@ -1,9 +1,9 @@
 MODELS = {
 	"text_summarization": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "summarization",
-        "filename": null,
+        "filename": None,
         "hub_id": "Falconsai/text_summarization",
         "folder": "text_summarization",
         "name": "text_summarization"
@@ -19,19 +19,19 @@ MODELS = {
         "name": "Qwen2.5-Coder-1.5B-GGUF"
         },
     "DeepCoder-14B": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "code-generation",
-        "filename": null,
+        "filename": None,
         "hub_id": "agentica-org/DeepCoder-14B-Preview",
         "folder": "DeepCoder-14B",
         "name": "DeepCoder-14B"
         },
     "led_large_16384": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "long-summarization",
-        "filename": null,
+        "filename": None,
         "hub_id": "allenai/led-large-16384",
         "folder": "led_large_16384",
         "name": "led_large_16384"
@@ -40,16 +40,16 @@ MODELS = {
         "include": "*.safetensors",
         "framework": "transformers",
         "task": "vision-language",
-        "filename": null,
+        "filename": None,
         "hub_id": "Qwen/Qwen3.6-35B-A3B",
         "folder": "Qwen/Qwen3.6-35B-A3B",
         "name": "Qwen3.6-35B-A3B"
         },
     "all_minilm_l6_v2": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "embeddings",
-        "filename": null,
+        "filename": None,
         "hub_id": "sentence-transformers/all-MiniLM-L6-v2",
         "folder": "all_minilm_l6_v2",
         "name": "all_minilm_l6_v2"
@@ -64,17 +64,17 @@ MODELS = {
         "name": "Qwen2.5-Coder-3B-GGUF"
         },
     "ZeroSearch_model": {
-        "include": null,
+        "include": None,
         "hub_id": "ZeroSearch_model",
         "folder": "ZeroSearch_model",
         "task": "code-generation",
         "name": "ZeroSearch_model",
         "framework": "transformers",
-        "filename": null
+        "filename": None
         },
 
     "Qwen3-Coder-Next-Q4_K_M": {
-        "include": null,
+        "include": None,
         "hub_id": "Qwen/Qwen3-Coder-Next-GGUF/Qwen3-Coder-Next-Q4_K_M",
         "folder": "Qwen/Qwen3-Coder-Next-GGUF/Qwen3-Coder-Next-Q4_K_M",
         "task": "code-generation",
@@ -83,47 +83,47 @@ MODELS = {
         "filename": "Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf"
         },
     "whisper-large-v3": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "speech-recognition",
-        "filename": null,
+        "filename": None,
         "hub_id": "openai/whisper-large-v3",
         "folder": "openai/whisper-large-v3",
         "name": "whisper-large-v3"
         },
     "ZeroSearch_dataset": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "dataset",
-        "filename": null,
+        "filename": None,
         "hub_id": "ZeroSearch/dataset",
         "folder": "ZeroSearch_dataset",
         "name": "ZeroSearch_dataset"
         },
 
     "whisper-large-v3-turbo": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "speech-recognition",
-        "filename": null,
+        "filename": None,
         "hub_id": "openai/whisper-large-v3-turbo",
         "folder": "openai/whisper-large-v3-turbo",
         "name": "whisper-large-v3-turbo"
         },
     "flan_t5_xl": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "text-generation",
-        "filename": null,
+        "filename": None,
         "hub_id": "google/flan-t5-xl",
         "folder": "flan_t5_xl",
         "name": "flan_t5_xl"
         },
     "Qwen2.5-VL-7B-Instruct": {
-        "include": null,
+        "include": None,
         "framework": "transformers",
         "task": "vision-language",
-        "filename": null,
+        "filename": None,
         "hub_id": "Qwen/Qwen2.5-VL-7B-Instruct",
         "folder": "Qwen/Qwen2.5-VL-7B-Instruct",
         "name": "Qwen2.5-VL-7B-Instruct"

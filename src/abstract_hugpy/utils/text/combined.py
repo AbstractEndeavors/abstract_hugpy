@@ -114,7 +114,7 @@ async def analyze(
     kind: SourceKind = "text",
     prompt: str = "Please analyze the following content.",
     params: GenParams | None = None,
-    model_key: str = 'DeepCoder-14B',
+    model_key: str = DEFAULT_CHAT_MODEL,
 ) -> ChatResult:
     params = params or GenParams()
     text = source_to_text(source, kind)

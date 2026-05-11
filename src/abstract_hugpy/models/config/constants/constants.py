@@ -1,4 +1,4 @@
-from .classes import *
+from ..classes import *
 from .models_dict import MODELS
 # ---------------------------------------------------------------------
 # Model registry

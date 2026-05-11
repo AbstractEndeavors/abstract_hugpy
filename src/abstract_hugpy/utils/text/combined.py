@@ -201,6 +201,12 @@ def image_analysis(path: str, prompt: str = "Please describe the following text"
 # Keep the old names working so nothing downstream breaks while you migrate.
 # Mark them deprecated; delete in a follow-up pass.
 
+
+def summarize_text(path=None, prompt="Please summarize the text",
+                model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze(path, "text", prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
+
 def get_pdf_text(path):
     return [
         {"page_num": i, "text": extract_single_pdf_page_text(pdf_path=path, page_index=i)}
@@ -208,7 +214,7 @@ def get_pdf_text(path):
     ]
 
 def summarize_pdf(path):       return summarize_pdf_by_page(path)
-def analyze_pdf(path=None, prompt="Please summarize the the pdf component",
+def analyze_pdf(path=None, prompt="Please summarize the pdf component",
                 model_key: str = DEFAULT_CHAT_MODEL, **kw):
     return analyze_pdf_by_page(path, prompt=prompt, model_key=model_key,
                    params=GenParams(**_filter_gen_kw(kw)))

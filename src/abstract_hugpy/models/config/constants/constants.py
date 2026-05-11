@@ -9,7 +9,7 @@ def get_models_dict():
     abs_dir = get_caller_dir()
     nudict = {}
     models_json_path = get_models_dict_path()
-    models_dict = safe_load_from_json(models_json_path)
+    models_dict = safe_load_from_json(models_json_path) or {}
     MODELS.update(models_dict)
     for key,values in MODELS.items():
         nudict[key] = ModelConfig(**values)

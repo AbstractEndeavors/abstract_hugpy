@@ -21,8 +21,7 @@ import asyncio
 import logging
 from typing import AsyncIterator, Optional
 
-from ..unbounded import run_unbounded, GenerationOutcome
-from .imports import ChatRequest, ChatResult, ChatInput, StreamEvent
+from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
 
 # These imports go through the existing module layout. Adjust the dotted
 # paths to match wherever you wire this file in — the runner doesn't care
@@ -63,75 +62,55 @@ class DeepCoderChatRunner:
 
     # --- non-streaming -----------------------------------------------------
 
-
-    async def run(self, req: ChatInput) -> ChatResult:
-        req = ChatRequest.coerce(req, model_key=self.model_key)
-        messages = [m.model_dump() for m in req.messages]
-
-        def _do() -> GenerationOutcome:
-            if req.unbounded:
-                return run_unbounded(
-                    self.coder.generate_once,
-                    messages,
-                    chunk_tokens=req.max_new_tokens or 1024,
-                    max_chunks=getattr(req, "max_chunks", None) or 8,
-                )
-            return self.coder.generate_once(messages, req.max_new_tokens)
-
+    async def run(self, req: ChatRequest) -> ChatResult:
         try:
-            outcome = await asyncio.to_thread(_do)
-            return ChatResult(
-                request_id=req.request_id, model_key=req.model_key,
-                ok=True, text=outcome.text,
-                finish_reason=_map_finish_reason(outcome.finish_reason),
+            # Convert pydantic ChatMessage -> dict for apply_chat_template
+            messages = [m.model_dump() for m in req.messages]
+
+            # generate_text is sync; offload so the event loop keeps running.
+            text = await asyncio.to_thread(
+                self.coder.generate_text,
+                messages,
+                max_new_tokens=req.max_new_tokens,
+                temperature=req.temperature,
+                top_p=req.top_p,
+                do_sample=req.do_sample,
+                use_chat_template=True,
+                return_full_text=False,
             )
+
+            return ChatResult(
+                request_id=req.request_id,
+                model_key=req.model_key,
+                ok=True,
+                text=text,
+                # generate_text doesn't currently surface a finish_reason.
+                # 'stop' is the honest default; if we hit max_new_tokens
+                # the caller can detect it from output length.
+                finish_reason="stop",
+            )
+
         except ValueError as exc:
+            # _resolve_max_new_tokens raises ValueError on cap violation.
+            # That's a request-side problem, not a model failure.
             logger.warning("DeepCoderChatRunner.run rejected: %s", exc)
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
-                ok=False, error=str(exc), text="", finish_reason="error",
+                ok=False, error=str(exc),
+                text="", finish_reason="error",
             )
+
         except Exception as exc:
-            logger.exception("DeepCoderChatRunner.run failed: model=%s req=%s",
-                             self.model_key, req.request_id)
+            logger.exception(
+                "DeepCoderChatRunner.run failed: model=%s req=%s",
+                self.model_key, req.request_id,
+            )
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
-    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
-        torch = get_torch()
-        requested = self._resolve_max_new_tokens(max_tokens)
 
-        template_out = self.tokenizer.apply_chat_template(
-            messages, tokenize=True, add_generation_prompt=True, return_tensors="pt",
-        )
-        # ... existing input-shaping ...
-        input_len = int(input_ids.shape[-1])
-
-        with torch.inference_mode():
-            outputs = self.model.generate(**gen_kwargs)
-
-        generated_ids = outputs[0][input_len:]
-        output_len = int(generated_ids.shape[-1])
-        text = self.tokenizer.decode(
-            generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True,
-        ).strip()
-
-        # The honest finish_reason: did we hit the cap, or did the model emit EOS?
-        last_token_id = int(generated_ids[-1]) if output_len else self.tokenizer.eos_token_id
-        if output_len >= requested:
-            finish = "length"
-        elif last_token_id == self.tokenizer.eos_token_id:
-            finish = "stop"
-        else:
-            finish = "stop"
-
-        return GenerationOutcome(
-            text=text,
-            finish_reason=finish,
-            usage={"input_tokens": input_len, "output_tokens": output_len},
-        )
     # --- streaming ---------------------------------------------------------
 
     async def stream(

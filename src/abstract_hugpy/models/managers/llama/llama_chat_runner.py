@@ -18,15 +18,14 @@ import asyncio
 import logging
 from typing import AsyncIterator, Optional
 
-# in LlamaCppChatRunner, in llama_chat_runner.py
-from ..unbounded import run_unbounded, GenerationOutcome
+from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
+
 # Existing module — adjust dotted path to wherever this file lives.
 from .llama_runner import (
-    _map_finish_reason,
-    LlamaCppRunner,
+    LlamaCppPythonRunner,
     get_llama_runner,
 )
-from .imports import *
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,34 +49,39 @@ class LlamaCppChatRunner:
         self._runtime_kwargs = runtime_kwargs
 
     @property
-    def runner(self) -> LlamaCppRunner:
+    def runner(self) -> LlamaCppPythonRunner:
         # Lazy resolution. First access triggers the GGUF load (which can
         # take seconds for a 14B model), subsequent accesses are dict lookups.
         return get_llama_runner(self.model_key)
 
     # --- non-streaming -----------------------------------------------------
 
-
     async def run(self, req: ChatInput) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
         messages = [m.model_dump() for m in req.messages]
-
-        def _do() -> GenerationOutcome:
-            if req.unbounded:
-                return run_unbounded(
-                    self.runner.generate_once,
-                    messages,
-                    chunk_tokens=req.max_new_tokens or 1024,
-                    max_chunks=getattr(req, "max_chunks", None) or 8,
-                )
-            return self.runner.generate_once(messages, req.max_new_tokens)
-
         try:
-            outcome = await asyncio.to_thread(_do)
+            if req.unbounded:
+                text = await asyncio.to_thread(
+                    self.runner.generate_text_unbounded,
+                    messages,
+                    temperature=req.temperature,
+                    top_p=req.top_p,
+                    do_sample=req.do_sample,
+                )
+            else:
+                text = await asyncio.to_thread(
+                    self.runner.generate_text,
+                    messages,
+                    max_new_tokens=req.max_new_tokens,
+                    temperature=req.temperature,
+                    top_p=req.top_p,
+                    do_sample=req.do_sample,
+                    use_chat_template=True,
+                    return_full_text=False,
+                )
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
-                ok=True, text=outcome.text,
-                finish_reason=_map_finish_reason(outcome.finish_reason),
+                ok=True, text=text, finish_reason="stop",
             )
         except Exception as exc:
             logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",

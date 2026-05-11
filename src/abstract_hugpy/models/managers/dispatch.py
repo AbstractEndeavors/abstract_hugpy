@@ -146,3 +146,4 @@ def clear() -> None:
 def supported_task_keys() -> list[Tuple[str, str]]:
     """List the (framework, task) pairs the dispatch table currently handles."""
     return sorted(_RUNNERS.keys())
+

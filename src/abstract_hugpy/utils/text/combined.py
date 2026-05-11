@@ -8,7 +8,7 @@ from .imports import *
 from typing import Literal
 from pydantic import BaseModel
 # at the top of the module, next to the registry
-DEFAULT_CHAT_MODEL = 'qwen25_coder_3b_gguf'
+DEFAULT_CHAT_MODEL = 'Qwen2.5-Coder-3B-GGUF'
 DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"  # whatever key resolve_qwen_vl_path expects
 SourceKind = Literal["text", "url", "file", "image"]
 def get_num_pdf_pages(pdf_path):

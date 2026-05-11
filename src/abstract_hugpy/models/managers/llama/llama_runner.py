@@ -167,6 +167,7 @@ def _resolve_top_p(requested: Optional[float]) -> float:
 
 class LlamaCppRunner:
     def __init__(self, model_key: str, *, env_path: Optional[str] = None):
+        model_key = model_key.replace('.','').replace('-','_').lower()
         if model_key not in LLAMA_MODEL_PORTS:
             raise KeyError(
                 f"Unknown model_key={model_key!r}; "

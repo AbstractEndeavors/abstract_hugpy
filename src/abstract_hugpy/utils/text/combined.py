@@ -25,6 +25,7 @@ class GenParams(BaseModel):
     use_chat_template: bool = False
     messages: Optional[List[Dict[str, str]]] = None
     do_sample: bool = False
+    unbounded:bool=True
 
     def to_kwargs(self) -> dict:
         return self.model_dump()

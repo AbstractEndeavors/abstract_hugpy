@@ -1,4 +1,4 @@
-"""DeepCoder chat runner.
+v"""DeepCoder chat runner.
 
 Thin adapter that wraps the existing DeepCoder + REGISTRY + build_deepcoder_runtime
 machinery (in deepcoder/coder.py and deepcoder/config.py) and exposes them
@@ -21,7 +21,8 @@ import asyncio
 import logging
 from typing import AsyncIterator, Optional
 
-from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
+from ..unbounded import run_unbounded, GenerationOutcome
+from .imports import ChatRequest, ChatResult, ChatInput, StreamEvent
 
 # These imports go through the existing module layout. Adjust the dotted
 # paths to match wherever you wire this file in — the runner doesn't care
@@ -62,6 +63,7 @@ class DeepCoderChatRunner:
 
     # --- non-streaming -----------------------------------------------------
 
+
     async def run(self, req: ChatInput) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
         messages = [m.model_dump() for m in req.messages]
@@ -69,12 +71,12 @@ class DeepCoderChatRunner:
         def _do() -> GenerationOutcome:
             if req.unbounded:
                 return run_unbounded(
-                    self.generate_once,
+                    self.coder.generate_once,
                     messages,
                     chunk_tokens=req.max_new_tokens or 1024,
-                    max_chunks=req.max_chunks or 8,
+                    max_chunks=getattr(req, "max_chunks", None) or 8,
                 )
-            return self.generate_once(messages, req.max_new_tokens)
+            return self.coder.generate_once(messages, req.max_new_tokens)
 
         try:
             outcome = await asyncio.to_thread(_do)
@@ -83,8 +85,14 @@ class DeepCoderChatRunner:
                 ok=True, text=outcome.text,
                 finish_reason=_map_finish_reason(outcome.finish_reason),
             )
+        except ValueError as exc:
+            logger.warning("DeepCoderChatRunner.run rejected: %s", exc)
+            return ChatResult(
+                request_id=req.request_id, model_key=req.model_key,
+                ok=False, error=str(exc), text="", finish_reason="error",
+            )
         except Exception as exc:
-            logger.exception("run failed: model=%s req=%s",
+            logger.exception("DeepCoderChatRunner.run failed: model=%s req=%s",
                              self.model_key, req.request_id)
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,

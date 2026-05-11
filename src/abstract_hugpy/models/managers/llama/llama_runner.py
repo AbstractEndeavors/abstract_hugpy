@@ -28,6 +28,8 @@ import logging
 import os
 import threading
 from typing import AsyncIterator, Dict, Optional
+from ..unbounded import GenerationOutcome  # adjust dotted path
+
 
 import httpx
 from abstract_security import *
@@ -344,10 +346,15 @@ class LlamaCppRunner:
         return text
     # in LlamaCppPythonRunner
     def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
+        max_tokens = _resolve_max_tokens(max_tokens)
         with self.generate_lock:
             out = self.llm.create_chat_completion(
-                messages=messages, max_tokens=max_tokens,
-                temperature=0.0, top_p=1.0, stream=False, stop=None,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=0.0,
+                top_p=1.0,
+                stream=False,
+                stop=None,
             )
         choice = out["choices"][0]
         return GenerationOutcome(

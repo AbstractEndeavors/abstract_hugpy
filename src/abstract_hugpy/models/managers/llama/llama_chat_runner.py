@@ -18,10 +18,11 @@ import asyncio
 import logging
 from typing import AsyncIterator, Optional
 
-from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
-from ..unbounded import *
+# in LlamaCppChatRunner, in llama_chat_runner.py
+from ..unbounded import run_unbounded, GenerationOutcome
 # Existing module — adjust dotted path to wherever this file lives.
 from .llama_runner import (
+    _map_finish_reason,
     LlamaCppPythonRunner,
     get_llama_runner,
 )
@@ -56,6 +57,7 @@ class LlamaCppChatRunner:
 
     # --- non-streaming -----------------------------------------------------
 
+
     async def run(self, req: ChatInput) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
         messages = [m.model_dump() for m in req.messages]
@@ -63,12 +65,12 @@ class LlamaCppChatRunner:
         def _do() -> GenerationOutcome:
             if req.unbounded:
                 return run_unbounded(
-                    self.generate_once,
+                    self.runner.generate_once,
                     messages,
                     chunk_tokens=req.max_new_tokens or 1024,
-                    max_chunks=req.max_chunks or 8,
+                    max_chunks=getattr(req, "max_chunks", None) or 8,
                 )
-            return self.generate_once(messages, req.max_new_tokens)
+            return self.runner.generate_once(messages, req.max_new_tokens)
 
         try:
             outcome = await asyncio.to_thread(_do)
@@ -78,25 +80,14 @@ class LlamaCppChatRunner:
                 finish_reason=_map_finish_reason(outcome.finish_reason),
             )
         except Exception as exc:
-            logger.exception("run failed: model=%s req=%s",
+            logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",
                              self.model_key, req.request_id)
             return ChatResult(
                 request_id=req.request_id, model_key=req.model_key,
                 ok=False, error=f"{type(exc).__name__}: {exc}",
                 text="", finish_reason="error",
             )
-    def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
-        with self.generate_lock:
-            out = self.llm.create_chat_completion(
-                messages=messages, max_tokens=max_tokens,
-                temperature=0.0, top_p=1.0, stream=False, stop=None,
-            )
-        choice = out["choices"][0]
-        return GenerationOutcome(
-            text=choice["message"]["content"] or "",
-            finish_reason=choice.get("finish_reason") or "stop",
-            usage=out.get("usage"),
-        )
+
     # --- streaming ---------------------------------------------------------
 
     async def stream(

@@ -11,7 +11,10 @@ class GenerationOutcome:
 
 # A unit-of-work: messages + cap -> outcome. Each runner exposes one of these.
 GenerateOnce = Callable[[list[dict], int], GenerationOutcome]
+_FINISH_REASON_MAP = {"length": "max_tokens", "stop": "stop", None: "stop"}
 
+def map_finish_reason(raw: Optional[str]) -> str:
+    return _FINISH_REASON_MAP.get(raw, "stop")
 
 def run_unbounded(
     generate_once: GenerateOnce,

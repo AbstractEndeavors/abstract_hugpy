@@ -29,7 +29,7 @@ from .config import (
     StreamEvent,
     _SENTINEL,
 )
-from ..unbounded import *
+
 logger = get_logFile("deepcoder")
 
 
@@ -439,7 +439,7 @@ class DeepCoder:
             skip_special_tokens=True,
             clean_up_tokenization_spaces=True,
         ).strip()
-    # in DeepCoder
+    # in DeepCoder, in coder.py
     def generate_once(self, messages: list[dict], max_tokens: int) -> GenerationOutcome:
         torch = get_torch()
         requested = self._resolve_max_new_tokens(max_tokens)
@@ -447,8 +447,26 @@ class DeepCoder:
         template_out = self.tokenizer.apply_chat_template(
             messages, tokenize=True, add_generation_prompt=True, return_tensors="pt",
         )
-        # ... existing input-shaping ...
+        if hasattr(template_out, "shape"):
+            input_ids = template_out.to(self.cfg.device)
+            model_inputs = {"input_ids": input_ids}
+        else:
+            model_inputs = {
+                k: v.to(self.cfg.device) if hasattr(v, "to") else v
+                for k, v in template_out.items()
+            }
+            input_ids = model_inputs["input_ids"]
+
         input_len = int(input_ids.shape[-1])
+
+        gen_kwargs = {
+            **model_inputs,
+            "max_new_tokens": requested,
+            "do_sample": False,
+            "use_cache": True,
+            "pad_token_id": self.tokenizer.pad_token_id,
+            "eos_token_id": self.tokenizer.eos_token_id,
+        }
 
         with torch.inference_mode():
             outputs = self.model.generate(**gen_kwargs)
@@ -459,14 +477,13 @@ class DeepCoder:
             generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True,
         ).strip()
 
-        # The honest finish_reason: did we hit the cap, or did the model emit EOS?
         last_token_id = int(generated_ids[-1]) if output_len else self.tokenizer.eos_token_id
         if output_len >= requested:
             finish = "length"
         elif last_token_id == self.tokenizer.eos_token_id:
             finish = "stop"
         else:
-            finish = "stop"
+            finish = "length"   # hit a stopping criterion that wasn't EOS — treat as truncated
 
         return GenerationOutcome(
             text=text,

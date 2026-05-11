@@ -76,32 +76,48 @@ def _pdf_full_text(path: str) -> str:
 
 register_extractor("pdf", _pdf_full_text)
 
+def source_to_text(source: str, kind: str | None = None) -> str:
+    """
+    Convert an incoming source into plain text.
 
+    For kind='text', the source is already text and should not be extracted.
+    For file/url-backed kinds, dispatch through the extractor registry.
+    """
+    if kind in (None, "", "text"):
+        return source
+
+    return get_extractor(kind)(source)
 # ---- core operations -------------------------------------------------------
 
-def summarize(source: str, kind: str, presets: AnalyzePresets = AnalyzePresets()) -> dict:
+def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
     """Run the SEO analyzer over text extracted from `source`."""
-    text = get_extractor(kind)(source)
+    logger.info(kind)
+
+    text = source_to_text(source, kind)
+
     report = _analyze(
         text,
         scope=presets.scope,
         summary_preset=presets.summary_preset,
         keyword_preset=presets.keyword_preset,
     )
-    return report.to_dict()
 
+    return report.to_dict()
 
 def analyze(
     source: str,
-    kind: str,
+    kind: str = "text",
     prompt: str = "Please analyze the following content",
     params: GenParams = GenParams(),
 ) -> Any:
-    """Extract text, prepend prompt, hand to deep_coder_generate."""
-    text = get_extractor(kind)(source)
+    """Extract text when needed, prepend prompt, hand to deep_coder_generate."""
+    text = source_to_text(source, kind)
     full_prompt = f"{prompt}\n\n{text}"
-    return deep_coder_generate(prompt=full_prompt, **params.to_kwargs())
 
+    return deep_coder_generate(
+        prompt=full_prompt,
+        **params.to_kwargs(),
+    )
 
 # ---- PDF: the one operation that's actually different ----------------------
 

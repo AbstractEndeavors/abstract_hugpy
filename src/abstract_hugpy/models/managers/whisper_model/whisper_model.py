@@ -70,18 +70,18 @@ def transcribe_from_video(
         )
     
 def transcribe_file(
-    path,
+    file_path,
     model_size: str = "small",
     language: str = "english",
     use_silence: bool = True,
     task=None,
     whisper_model_path: str = None):
     audio_path=None
-    media_type = derive_media_type(path)
+    media_type = derive_media_type(file_path)
     if media_type == 'audio':
-        audio_path = path
+        audio_path = file_path
     if media_type == 'video':
-        audio_path = extract_audio_from_video(path)
+        audio_path = extract_audio_from_video(file_path)
     if audio_path:
         return whisper_transcribe(
             audio_path=audio_path,

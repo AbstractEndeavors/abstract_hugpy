@@ -272,6 +272,7 @@ class LlamaCppRunner:
     def generate_text(
         self,
         messages: list[dict] | str,
+        prompt:str=None,
         *,
         max_new_tokens: int = 0,
         temperature: float = 0.0,
@@ -286,6 +287,7 @@ class LlamaCppRunner:
 
         sync method, sync HTTP. From async code call via asyncio.to_thread.
         """
+        messages = messages or get_messages(prompt)
         max_tokens = _resolve_max_tokens(max_new_tokens)
         temp = _resolve_temperature(temperature, do_sample)
         top_p_val = _resolve_top_p(top_p)

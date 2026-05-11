@@ -5,14 +5,20 @@ from abstract_ocr.ocr_utils.text_utils import convert_image_to_text
 from abstract_webtools import *
 from ..seo.pdf_utils import _analyze, PDFSeoReport
 from .imports import *
+from typing import Literal
+from pydantic import BaseModel
+# at the top of the module, next to the registry
+DEFAULT_CHAT_MODEL = 'Qwen2.5-Coder-3B-GGUF'
+DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"  # whatever key resolve_qwen_vl_path expects
+SourceKind = Literal["text", "url", "file", "image"]
 def get_num_pdf_pages(pdf_path):
     reader = PdfReader(pdf_path)
     return len(reader.pages)
 # ---- schemas ---------------------------------------------------------------
 
-@dataclass(frozen=True)
-class GenParams:
-    """Decode-time params for deep_coder_generate. One place, sane defaults."""
+
+class GenParams(BaseModel):
+    model_config = ConfigDict(frozen=True)
     max_new_tokens: int = 100
     temperature: float = 0.6
     top_p: float = 0.95
@@ -21,8 +27,7 @@ class GenParams:
     do_sample: bool = False
 
     def to_kwargs(self) -> dict:
-        return asdict(self)
-
+        return self.model_dump()
 
 @dataclass(frozen=True)
 class AnalyzePresets:
@@ -57,14 +62,14 @@ def get_extractor(kind: str) -> Extractor:
 register_extractor("image", convert_image_to_text)
 register_extractor("audio", transcribe_file)
 register_extractor("video", transcribe_file)
-
+register_extractor("website", get_soup_text)
 
 def _website_body_text(url: str) -> str:
     soup = BeautifulSoup(get_body_from_url(url), "html.parser")
     lines = [line for line in soup.text.split("\n") if line]
     return "\n".join(lines)
 
-register_extractor("website", _website_body_text)
+
 
 
 def _pdf_full_text(path: str) -> str:
@@ -87,79 +92,13 @@ def source_to_text(source: str, kind: str | None = None) -> str:
         return source
 
     return get_extractor(kind)(source)
-
 # ---- core operations -------------------------------------------------------
-def normalize_incoming_source(source: Any, kind: str | None = None) -> tuple[str, str]:
-    """
-    Convert frontend route payloads into:
-      (plain_source_string, normalized_kind)
 
-    Handles:
-      - raw text string
-      - { text: "..." }
-      - { source: { text: "..." } }
-      - { source: { url: "..." } }
-      - { source: { files: [...] } }
-    """
-    resolved_kind = kind or "text"
-
-    if isinstance(source, str):
-        return source, resolved_kind
-
-    if isinstance(source, dict):
-        # Top-level frontend shape: { source: {...}, kind/media: ... }
-        if "kind" in source and not kind:
-            resolved_kind = source.get("kind") or resolved_kind
-        elif "media" in source and not kind:
-            resolved_kind = source.get("media") or resolved_kind
-
-        nested = source.get("source")
-        if isinstance(nested, dict):
-            return normalize_incoming_source(nested, resolved_kind)
-
-        # Nested source payload shape
-        if "kind" in source and not kind:
-            resolved_kind = source.get("kind") or resolved_kind
-        elif "media" in source and not kind:
-            resolved_kind = source.get("media") or resolved_kind
-
-        input_mode = source.get("inputMode")
-
-        if input_mode == "text" or resolved_kind == "text":
-            return str(source.get("text", "")), "text"
-
-        if input_mode == "url":
-            return str(source.get("url", "")), str(resolved_kind or "website")
-
-        if input_mode == "file":
-            files = source.get("files") or []
-            if files and isinstance(files, list):
-                first = files[0]
-                if isinstance(first, dict):
-                    return str(first.get("path", "")), str(resolved_kind)
-                return str(first), str(resolved_kind)
-
-        # Fallbacks for less structured payloads
-        if "text" in source:
-            return str(source.get("text", "")), "text"
-
-        if "url" in source:
-            return str(source.get("url", "")), str(resolved_kind or "website")
-
-        if "path" in source:
-            return str(source.get("path", "")), str(resolved_kind)
-
-    return str(source), resolved_kind
-def summarize(source: str | dict, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
+def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
     """Run the SEO analyzer over text extracted from `source`."""
-    source, kind = normalize_incoming_source(source, kind)
-
     logger.info(kind)
 
-    if kind != "text":
-        text = get_extractor(kind)(source)
-    else:
-        text = source
+    text = source_to_text(source, kind)
 
     report = _analyze(
         text,
@@ -170,23 +109,26 @@ def summarize(source: str | dict, kind: str = None, presets: AnalyzePresets = An
 
     return report.to_dict()
 
-def analyze(
-    source: str | dict,
-    kind: str = "text",
-    prompt: str = "Please analyze the following content",
-    params: GenParams = GenParams(),
-) -> Any:
-    """Extract text when needed, prepend prompt, hand to deep_coder_generate."""
-    source, kind = normalize_incoming_source(source, kind)
+async def analyze(
+    source: str,
+    kind: SourceKind = "text",
+    prompt: str = "Please analyze the following content.",
+    params: GenParams | None = None,
+    model_key: str = 'DeepCoder-14B',
+) -> ChatResult:
+    params = params or GenParams()
+    text = source_to_text(source, kind)
+    params = params.model_copy(update={
+        "messages": [{"role": "user", "content": f"{prompt}\n\n{text}"}]
+    })
 
-    if kind != "text":
-        text = get_extractor(kind)(source)
-    else:
-        text = source
+    # GenParams carries some fields ChatRequest doesn't know about
+    # (use_chat_template is a runner-internal toggle). Strip them here.
+    payload = params.model_dump(exclude={"use_chat_template"})
 
-    full_prompt = f"{prompt}\n\n{text}"
-
-    return deep_coder_generate(prompt=full_prompt, **params.to_kwargs())
+    req = ChatRequest(model_key=model_key, **payload)
+    runner = runner_for(model_key)
+    return await runner.run(req)
 
 # ---- PDF: the one operation that's actually different ----------------------
 
@@ -206,23 +148,48 @@ def summarize_pdf_by_page(path: str) -> dict:
     return report.to_dict()
 
 
-def analyze_pdf_by_page(
+async def analyze_pdf_by_page(
     path: str,
     prompt: str = "Please analyze this PDF page",
-    params: GenParams = GenParams(),
+    params: GenParams | None = None,
+    model_key: str = 'DeepCoder-14B',
 ) -> List[Any]:
     """Generate one analysis per page. Returns a list, indexed by page number."""
     results: List[Any] = []
     for page_num in range(get_num_pdf_pages(path)):
         text = extract_single_pdf_page_text(pdf_path=path, page_index=page_num)
         page_prompt = f"{prompt} (page {page_num})\n\n{text}"
-        results.append(deep_coder_generate(prompt=page_prompt, **params.to_kwargs()))
-    return results
+        params = params.model_copy(update={
+            "messages": [{"role": "user", "content": page_prompt}]
+        })
+
+        # GenParams carries some fields ChatRequest doesn't know about
+        # (use_chat_template is a runner-internal toggle). Strip them here.
+        payload = params.model_dump(exclude={"use_chat_template"})
+
+        req = ChatRequest(model_key=model_key, **payload)
+        runner = runner_for(model_key) 
+        res = await runner.run(req)
+        results.append(res.text)
+    prompt = f"please provide a full analysis of the following sumaries:\n{results}"
+
+    params = params.model_copy(update={
+        "messages": [{"role": "user", "content": prompt}]
+    })
+
+    # GenParams carries some fields ChatRequest doesn't know about
+    # (use_chat_template is a runner-internal toggle). Strip them here.
+    payload = params.model_dump(exclude={"use_chat_template"})
+
+    req = ChatRequest(model_key=model_key, **payload)
+    res = await runner.run(req)
+    return res.text
+
 
 
 # ---- image analysis: doesn't go through text, separate path ----------------
 
-def image_analysis(path: str, prompt: str = "Please describe this image", max_new_tokens: int = 100):
+def image_analysis(path: str, prompt: str = "Please describe the following text", max_new_tokens: int = 100):
     return deepcoder_image_analysis(
         image_path=path,
         prompt=prompt,
@@ -241,29 +208,39 @@ def get_pdf_text(path):
     ]
 
 def summarize_pdf(path):       return summarize_pdf_by_page(path)
-def analyze_pdf(path=None, prompt="Please analyze the the pdf component", **kw):
-    return analyze_pdf_by_page(path, prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
+def analyze_pdf(path=None, prompt="Please summarize the the pdf component",
+                model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze_pdf_by_page(path, prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
 
 def image_to_text(path):       return get_extractor("image")(path)
-def summarize_image(path):      return summarize(path, "image")  # legacy: was always image-backed
-def analyze_image(path=None, prompt="Please analyze the the text", **kw):
-    return analyze(path, "image", prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
+##def summarize_image(path):      return summarize(path, "image")  # legacy: was always image-backed
+def summarize_image(path=None, prompt="Please summarize the following",
+                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze(path, "image", prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
 
 def video_to_text(path):       return get_extractor("video")(path)
-def summarize_video(path):     return summarize(path, "video")
-def analyze_video(path=None, prompt="Please analyze the the video transcription", **kw):
-    return analyze(path, "video", prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
+##def summarize_video(path):     return summarize(path, "video")
+def summarize_video(path=None, prompt="Please summarize the video transcription",
+                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze(path, "video", prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
 
 def audio_to_text(path):       return get_extractor("audio")(path)
-def summarize_audio(path):     return summarize(path, "audio")
-def analyze_audio(path=None, prompt="Please analyze the the audio transcription", **kw):
-    return analyze(path, "audio", prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
+##def summarize_audio(path):     return summarize(path, "audio")
+def summarize_audio(path=None, prompt="Please summarize the audio transcription",
+                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze(path, "audio", prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
 
 def website_to_text(url):           return get_soup_text(url)
 def website_body_to_text(url):      return get_extractor("website")(url)
-def summarize_website(url):         return summarize(url, "website")
-def analyze_website(url=None, prompt="Please analyze the the website", **kw):
-    return analyze(url, "website", prompt=prompt, params=GenParams(**_filter_gen_kw(kw)))
+##def summarize_website(url):         return summarize(url, "website")
+def summarize_website(url=None, prompt="Please summarize the website",
+                    model_key: str = DEFAULT_CHAT_MODEL, **kw):
+    return analyze(url, "website", prompt=prompt, model_key=model_key,
+                   params=GenParams(**_filter_gen_kw(kw)))
 
 
 _GEN_KEYS = {"max_new_tokens", "temperature", "top_p", "use_chat_template", "messages", "do_sample"}

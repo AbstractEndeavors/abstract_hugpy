@@ -33,12 +33,13 @@ import threading
 from typing import Dict, Tuple, Type
 
 from .protocol import Runner
-from .deepcoder_chat_runner import DeepCoderChatRunner
-from .llama_chat_runner import LlamaCppChatRunner
+from .generate import DeepCoderChatRunner
+from .llama import LlamaCppChatRunner
+from .vision import VisionRunner
 
 # Adjust this import to wherever your model registry actually lives.
 # Used only to look up (framework, task) for a given model_key.
-from ..imports import MODEL_REGISTRY  # type: ignore
+from .imports import MODEL_REGISTRY  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,8 @@ _RUNNERS: Dict[Tuple[str, str], Type[Runner]] = {
     ("transformers", "text-generation"): DeepCoderChatRunner,
     ("llama_cpp",    "code-generation"): LlamaCppChatRunner,
     ("llama_cpp",    "text-generation"): LlamaCppChatRunner,
+    ("transformers", "vision-language"): VisionRunner
+
 }
 
 

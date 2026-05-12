@@ -70,6 +70,7 @@ LLAMA_MODEL_PORTS: Dict[str, int] = {
     "Qwen3-Coder-Next-Q4_K_M":6009,
     "DAN-L3-R1-8B-i1-GGUF":6090,
     "Qwen2.5-Coder-3B-GGUF":6091,
+    "flux":6092,
 
 }
 

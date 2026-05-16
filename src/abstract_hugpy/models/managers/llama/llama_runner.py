@@ -28,7 +28,7 @@ import logging
 import os
 import threading
 from typing import AsyncIterator, Dict, Optional
-
+from ..message_utils import messages_to_dicts
 import httpx
 from abstract_security import *
 
@@ -126,8 +126,7 @@ def messages_to_prompt_from_dicts(messages: list[dict]) -> str:
 
 def messages_to_prompt(req: ChatRequest) -> str:
     """ChatRequest variant of the above. One definition, not two."""
-    return messages_to_prompt_from_dicts([m.model_dump() for m in req.messages])
-
+    return messages_to_prompt_from_dicts(messages_to_dicts(req.messages))
 
 # ---------------------------------------------------------------------------
 # Helpers — finish reason mapping, defaulted resolvers
@@ -198,10 +197,15 @@ class LlamaCppRunner:
         temp = _resolve_temperature(req.temperature, req.do_sample)
         top_p = _resolve_top_p(req.top_p)
 
-        messages = [
-            m.model_dump() if hasattr(m, "model_dump") else m
-            for m in req.messages
-        ]
+        messages = messages_to_dicts(req.messages)
+        logger.info(
+            "llama stream context: model=%s req=%s messages=%s roles=%s chars=%s",
+            self.model_key,
+            req.request_id,
+            len(messages),
+            [m.get("role") for m in messages],
+            sum(len(m.get("content", "")) for m in messages),
+        )
         payload = {
             "messages": messages,
             "max_tokens": max_tokens,
@@ -417,10 +421,7 @@ class LlamaCppPythonRunner:
         temp = _resolve_temperature(req.temperature, req.do_sample)
         top_p = _resolve_top_p(req.top_p)
 
-        messages = [
-            m.model_dump() if hasattr(m, "model_dump") else m
-            for m in req.messages
-        ]
+        messages = messages_to_dicts(req.messages)
         output_chunks = 0
         last_finish: Optional[str] = None
 
@@ -506,7 +507,15 @@ class LlamaCppPythonRunner:
         temp = _resolve_temperature(req.temperature, req.do_sample)
         top_p = _resolve_top_p(req.top_p)
 
-        convo: list[dict] = [m.model_dump() for m in req.messages]
+        convo: list[dict] = messages_to_dicts(req.messages)
+        logger.info(
+            "llama unbounded context: model=%s req=%s messages=%s roles=%s chars=%s",
+            self.model_key,
+            req.request_id,
+            len(convo),
+            [m.get("role") for m in convo],
+            sum(len(m.get("content", "")) for m in convo),
+        )
         output_chunks = 0
         last_finish_reason = "stop"
 

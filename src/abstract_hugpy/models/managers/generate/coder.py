@@ -30,7 +30,7 @@ from .config import (
     StreamEvent,
     _SENTINEL,
 )
-
+from ..message_utils import messages_to_dicts
 logger = get_logFile("deepcoder")
 
 
@@ -219,7 +219,7 @@ class DeepCoder:
         sem = self._semaphore_for_loop()
 
         async with sem:
-            messages = [message.model_dump() for message in request.messages]
+            messages = messages_to_dicts(request.messages)
 
             template_out = self.tokenizer.apply_chat_template(
                 messages,

@@ -34,7 +34,15 @@ def compact_chat_request(req):
     call m.model_dump().
     """
     max_context_tokens = default_context_tokens_for_model(req.model_key)
-    reserved_output_tokens = req.max_new_tokens or 2048
+
+    requested_output_tokens = req.max_new_tokens or 2048
+
+    # Do not let output reservation consume the whole context window.
+    # This keeps room for previous turns.
+    reserved_output_tokens = min(
+        requested_output_tokens,
+        max(512, max_context_tokens // 3),
+    )
 
     budget = ContextBudget(
         max_context_tokens=max_context_tokens,

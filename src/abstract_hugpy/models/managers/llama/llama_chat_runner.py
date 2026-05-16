@@ -22,7 +22,7 @@ from .imports import TaskRequest,ChatRequest, ChatResult,StreamEvent
 
 # Existing module — adjust dotted path to wherever this file lives.
 from .llama_runner import (
-    LlamaCppPythonRunner,
+    LlamaCppRunner,
     get_llama_runner,
 )
 

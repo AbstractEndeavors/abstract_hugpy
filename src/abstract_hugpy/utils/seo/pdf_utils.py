@@ -198,7 +198,7 @@ def analyze_page(pdf_dir: str, page_index: int) -> PDFSeoResult:
         text,
         scope=f"page:{page_index}",
         summary_preset="brief",         # one page ≠ article-length
-        keyword_preset="page_seo",      # density thresholds scaled for page length
+        keyword_preset="seo",      # density thresholds scaled for page length
     )
 
 

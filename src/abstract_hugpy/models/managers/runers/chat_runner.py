@@ -9,7 +9,10 @@ class DeepCoderChatRunner:
         self.coder = REGISTRY.get(cfg)
 
     async def run(self, req: ChatRequest) -> ChatResult:
-        messages = [m.model_dump() for m in req.messages]
+        messages = [
+            m.model_dump() if hasattr(m, "model_dump") else m
+            for m in req.messages
+        ]
         try:
             text = await asyncio.to_thread(
                 self.coder.generate_text,
@@ -45,7 +48,10 @@ class LlamaCppChatRunner:
         self.runner = get_llama_runner(model_key)  # your existing singleton
 
     async def run(self, req):
-        messages = [m.model_dump() for m in req.messages]
+        messages = [
+            m.model_dump() if hasattr(m, "model_dump") else m
+            for m in req.messages
+        ]
         text = await asyncio.to_thread(
             self.runner.generate_text, messages,
             max_new_tokens=req.max_new_tokens,

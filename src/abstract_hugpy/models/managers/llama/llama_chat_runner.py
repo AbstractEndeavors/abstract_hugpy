@@ -58,7 +58,10 @@ class LlamaCppChatRunner:
 
     async def run(self, req: ChatInput) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
-        messages = [m.model_dump() for m in req.messages]
+        messages = [
+            m.model_dump() if hasattr(m, "model_dump") else m
+            for m in req.messages
+        ]
         try:
             if req.unbounded:
                 text = await asyncio.to_thread(

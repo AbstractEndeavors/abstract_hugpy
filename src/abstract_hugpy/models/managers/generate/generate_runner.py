@@ -65,8 +65,10 @@ class DeepCoderChatRunner:
     async def run(self, req: ChatRequest) -> ChatResult:
         try:
             # Convert pydantic ChatMessage -> dict for apply_chat_template
-            messages = [m.model_dump() for m in req.messages]
-
+            messages = [
+                m.model_dump() if hasattr(m, "model_dump") else m
+                for m in req.messages
+            ]
             # generate_text is sync; offload so the event loop keeps running.
             text = await asyncio.to_thread(
                 self.coder.generate_text,

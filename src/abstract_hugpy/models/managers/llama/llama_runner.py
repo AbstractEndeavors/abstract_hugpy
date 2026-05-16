@@ -198,7 +198,10 @@ class LlamaCppRunner:
         temp = _resolve_temperature(req.temperature, req.do_sample)
         top_p = _resolve_top_p(req.top_p)
 
-        messages = [m.model_dump() for m in req.messages]
+        messages = [
+            m.model_dump() if hasattr(m, "model_dump") else m
+            for m in req.messages
+        ]
         payload = {
             "messages": messages,
             "max_tokens": max_tokens,
@@ -414,7 +417,10 @@ class LlamaCppPythonRunner:
         temp = _resolve_temperature(req.temperature, req.do_sample)
         top_p = _resolve_top_p(req.top_p)
 
-        messages = [m.model_dump() for m in req.messages]
+        messages = [
+            m.model_dump() if hasattr(m, "model_dump") else m
+            for m in req.messages
+        ]
         output_chunks = 0
         last_finish: Optional[str] = None
 

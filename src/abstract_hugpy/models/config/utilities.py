@@ -3,10 +3,10 @@ from .constants import *
 # Registry utilities
 # ---------------------------------------------------------------------
 def get_legacy(name):
-    names_js = {"bigbird":'led_large_16384',"summarizer":'text_summarization',"flan":'flan_t5_xl',"deepcoder":'DeepCoder-14B',"keybert":'all_minilm_l6_v2',"zerosearch":'ZeroSearch_model',"whisper":'whisper-large-v3'}
+    names_js = {"bigbird":'led-large-16384',"summarizer":'text_summarization',"flan":'flan_t5_xl',"deepcoder":'DeepCoder-14B-Preview',"keybert":'all-minilm-l6-v2',"whisper":'whisper-large-v3'}
     return names_js.get(name) or name
 def list_models():
-    names_js = {"bigbird":'led_large_16384',"summarizer":'text_summarization',"flan":'flan_t5_xl',"deepcoder":'DeepCoder-14B',"keybert":'all_minilm_l6_v2',"zerosearch":'ZeroSearch_model',"whisper":'whisper-large-v3'}
+    names_js = {"bigbird":'led-large-16384',"summarizer":'text_summarization',"flan":'flan_t5_xl',"deepcoder":'DeepCoder-14B-Preview',"keybert":'all-minilm-l6-v2',"whisper":'whisper-large-v3'}
     
     return list(MODEL_REGISTRY.keys())+list(names_js.keys())
 

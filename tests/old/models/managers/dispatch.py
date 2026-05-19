@@ -32,84 +32,14 @@ import logging
 import threading
 from typing import Dict, Tuple, Type
 
-from .imports import Runner,ChatRequest
+from .imports import Runner
 from .generate import DeepCoderChatRunner
 from .vision import VisionRunner
 from .llama import LlamaCppChatRunner
 # Adjust this import to wherever your model registry actually lives.
 # Used only to look up (framework, task) for a given model_key.
 from ..imports import MODEL_REGISTRY  # type: ignore
-import pydantic
-def infer_arg_name(arg: Any) -> str | None:
-    """
-    Makes an educated guess about what positional arg represents.
-    """
 
-    if isinstance(arg, str):
-        # Could be model_key or prompt.
-        # Prefer treating unknown strings as prompt/messages.
-        # Model keys usually look like known model identifiers.
-        if (
-            "/" in arg
-            or "_gguf" in arg
-            or "qwen" in arg.lower()
-            or "llama" in arg.lower()
-            or "mistral" in arg.lower()
-            or "gpt" in arg.lower()
-        ):
-            return "model_key"
-
-        return "messages"
-
-    if isinstance(arg, list):
-        return "messages"
-
-    if isinstance(arg, int):
-        return "max_new_tokens"
-
-    if isinstance(arg, float):
-        # First float usually means temperature.
-        return "temperature"
-
-    if isinstance(arg, bool):
-        # bool is also an int subclass, so this must be checked before int
-        return "do_sample"
-
-    if arg is None:
-        return None
-
-    return None
-
-
-def normalize_prompt_kwargs(*args: Any, **kwargs: Any) -> dict[str, Any]:
-    """
-    Converts flexible input into ChatRequest-compatible kwargs.
-
-    Explicit kwargs win over inferred positional args.
-    """
-
-    prompt_kwargs = dict(kwargs)
-
-    for arg in args:
-        guessed_key = infer_arg_name(arg)
-
-        if guessed_key is None:
-            raise TypeError(f"Could not infer argument type for positional arg: {arg!r}")
-
-        if guessed_key in prompt_kwargs:
-            continue
-
-        # Special handling for a second float:
-        # execute_prompt("hello", 0.7, 0.95)
-        # -> temperature=0.7, top_p=0.95
-        if guessed_key == "temperature" and "temperature" in prompt_kwargs:
-            if "top_p" not in prompt_kwargs:
-                prompt_kwargs["top_p"] = arg
-            continue
-
-        prompt_kwargs[guessed_key] = arg
-
-    return prompt_kwargs
 logger = logging.getLogger(__name__)
 
 
@@ -217,9 +147,3 @@ def supported_task_keys() -> list[Tuple[str, str]]:
     """List the (framework, task) pairs the dispatch table currently handles."""
     return sorted(_RUNNERS.keys())
 
-
-def execute_prompt(*args: Any, **kwargs: Any) -> ChatRequest:
-    prompt_kwargs = normalize_prompt_kwargs(*args, **kwargs)
-    req = ChatRequest(**prompt_kwargs)
-    runner = runner_for(req.model_key)
-    return runner.run(req=req)

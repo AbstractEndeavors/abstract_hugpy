@@ -34,7 +34,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     request_id: str = Field(default_factory=lambda: str(uuid4()))
-    model_key: str = "Qwen2.5-Coder-3B-GGUF"
+    model_key: str = "Qwen2.5-Coder-3B-Instruct-GGUF"
     messages: list[ChatMessage]
     max_new_tokens: int = DEFAULT_MAX_TOKENS
     temperature: float = 0.0

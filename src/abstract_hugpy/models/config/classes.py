@@ -43,7 +43,7 @@ class ModelConfig:
     framework: str = "transformers"
     filename: Optional[str] = None
     include: Optional[str] = None
-
+    model_max_length: Optional[int] = 32768
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 

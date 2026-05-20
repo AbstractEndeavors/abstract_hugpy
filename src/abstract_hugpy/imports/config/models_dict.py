@@ -1,4 +1,4 @@
-MODELS = {
+MODELS =  {
   "gte-large-en-v1.5": {
     "model_max_length": 32768,
     "include": None,
@@ -210,3 +210,4 @@ MODELS = {
     "port": 7004
   }
 }
+

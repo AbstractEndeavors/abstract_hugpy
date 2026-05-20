@@ -1,5 +1,4 @@
 import os,requests
-from pathlib import Path
 from dataclasses import dataclass
 from typing import Optional
 from huggingface_hub import HfApi, snapshot_download
@@ -27,11 +26,11 @@ def human_bytes(n: int) -> str:
 
 def get_huggingface_module_link(repo_id: str) -> str:
     repo_id = eatAll(repo_id, "/")
-    return f"{HUGGINGFACE_DOMAIN}/{repo_id}"
+    return f"{MODELS_HOME}/{repo_id}"
 
 
 def get_huggingface_module_dir(repo_id: str) -> str:
-    return os.path.join(HUGGINGFACE_DIR, repo_id)
+    return os.path.join(MODELS_HOME, repo_id)
 
 
 def audit_hf_snapshot(
@@ -40,7 +39,6 @@ def audit_hf_snapshot(
     repo_type: Optional[str] = None,
     revision: Optional[str] = None,
 ) -> list[HFAuditRow]:
-    repo_dir = Path(repo_dir)
     api = HfApi()
 
     incomplete: list[HFAuditRow] = []
@@ -181,7 +179,7 @@ def audit_hfs(download_missing=False, repo_type=None, revision=None):
             print(f"{name}: skipped, no hub_id")
             continue
 
-        repo_dir = os.path.join(HUGGINGFACE_DIR, repo_id)
+        repo_dir = os.path.join(MODELS_HOME, repo_id)
         os.makedirs(repo_dir, exist_ok=True)
 
         print()

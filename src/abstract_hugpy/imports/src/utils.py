@@ -2,6 +2,10 @@ from __future__ import annotations
 import uuid
 from pathlib import Path
 from typing import *
+import glob
+import os
+def get_glob(path,ext):
+    return sorted(glob.glob(os.path.join(path, ext)))
 def exists(obj):
     try:
         if obj and os.path.exists(str(obj)):
@@ -69,7 +73,11 @@ def get_messages(prompt:str=None,role:str=None,content:str=None) -> List[dict]:
     message = get_message(prompt=prompt,role=role,content=content)
     return [message]
 
-
+def config_exists(directory):
+    if directory and is_dir(directory):
+        json_path = os.path.join(directory,'config.json')
+        return is_file(json_path)
+    return False
 def get_request_id() -> str:
     return str(uuid.uuid1())
 

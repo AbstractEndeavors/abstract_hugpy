@@ -1,11 +1,9 @@
 from .imports import *
 from .models_config import *
 
-def config_exists(directory):
-    config_path = os.path.join(directory,"config.json")
-    return is_file(config_path)
 
-def resolve_hf_model_dir(base_dir: str | Path) -> Path:
+
+def resolve_hf_model_dir(base_dir: str) -> str:
 
     if config_exists(base_dir):
         return base_dir
@@ -56,34 +54,34 @@ def list_model_options():
 # Path resolution
 # ---------------------------------------------------------------------
 
-def get_model_path(key: str) -> Path:
-    env_override = os.environ.get(f"MODEL_{key.upper()}")
+def get_model_path(key: str):
+    env_override = get_env_value(f"MODEL_{key.upper()}")
 
     if env_override:
-        return Path(env_override)
+        return env_override
 
     cfg = get_model_config(key)
-    return MODELS_HOME / cfg.folder
+    return os.path.join(MODELS_HOME,cfg.folder)
 
 
-def get_gguf_file(path: Path, cfg: ModelConfig) -> Optional[Path]:
+def get_gguf_file(path: str, cfg: ModelConfig) -> Optional[str]:
     if cfg.filename:
-        candidate = path / cfg.filename
-        if candidate.exists():
+        candidate = os.path.join(path,cfg.filename)
+        if exists(candidate):
             return candidate
 
-    ggufs = sorted(path.glob("*.gguf"))
+    ggufs = get_glob(path,"*.gguf")
     if ggufs:
         return ggufs[0]
 
-    recursive_ggufs = sorted(path.rglob("*.gguf"))
+    recursive_ggufs = get_glob(path,"*.gguf")
     if recursive_ggufs:
         return recursive_ggufs[0]
 
     return None
 
 
-def model_looks_downloaded(path: Path, cfg: Optional[ModelConfig] = None) -> bool:
+def model_looks_downloaded(path: str, cfg: Optional[ModelConfig] = None) -> bool:
     """
     Lightweight check to avoid treating partial Hugging Face / Git-LFS
     pointer directories as usable model directories.
@@ -92,21 +90,21 @@ def model_looks_downloaded(path: Path, cfg: Optional[ModelConfig] = None) -> boo
       - transformers model dirs
       - GGUF model dirs for llama.cpp
     """
-    if not path.exists() or not path.is_dir():
+    if not exists(path) or not is_dir(path):
         return False
 
     if cfg and cfg.framework == "llama_cpp":
         gguf = get_gguf_file(path, cfg)
-        return bool(gguf and gguf.exists() and gguf.stat().st_size > 1024 * 1024)
+        return bool(gguf and exists(gguf) and st_size(gguf) > 1024 * 1024)
 
-    if not (path / "config.json").exists():
+    if not config_exists(path):
         return False
 
-    safetensor_files = list(path.glob("*.safetensors"))
+    safetensor_files = list(get_glob(path,"*.safetensors"))
 
     if safetensor_files:
         for file_path in safetensor_files:
-            if file_path.stat().st_size < 1024 * 1024:
+            if st_size(file_path) < 1024 * 1024:
                 return False
         return True
 
@@ -125,18 +123,18 @@ def model_looks_downloaded(path: Path, cfg: Optional[ModelConfig] = None) -> boo
 # Model download
 # ---------------------------------------------------------------------
 
-def ensure_model(key: str) -> Path:
+def ensure_model(key: str) -> str:
     cfg = get_model_config(key)
     path = get_model_path(key)
 
     if model_looks_downloaded(path, cfg):
         return path
 
-    path.mkdir(parents=True, exist_ok=True)
+    os.makedirs(path, exist_ok=True)
 
     download_kwargs = {
         "repo_id": cfg.hub_id,
-        "local_dir": path,
+        "local_dir": str,
         "local_dir_use_symlinks": False,
     }
 
@@ -151,9 +149,9 @@ def ensure_model(key: str) -> Path:
 def resolve_model_source(key: str) -> str:
     cfg = get_model_config(key)
     local = get_model_path(key)
-    env_override = os.environ.get(f"MODEL_{key.upper()}")
+    env_override = get_env_value(f"MODEL_{key.upper()}")
 
-    if env_override and not local.exists():
+    if env_override and not exists(local):
         raise FileNotFoundError(
             f"MODEL_{key.upper()}={env_override} was set but path does not exist"
         )

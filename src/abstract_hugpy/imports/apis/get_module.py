@@ -277,7 +277,7 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
             for item in files:
                 print(item)
     if save_variables:
-        safe_dump_to_json(data=ALLCONFIGS,file_path=VARIABLES_JSON_PATH,indent=2)        
+        safe_dump_to_json(data=ALLCONFIGS,file_path=MODELS_DICT_PATH,indent=2)        
     return ALLCONFIGS
 
 

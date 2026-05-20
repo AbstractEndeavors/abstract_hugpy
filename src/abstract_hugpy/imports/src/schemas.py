@@ -60,7 +60,7 @@ from .utils import (
     get_messages,
     get_message
     )
-from .init_imports import dataclass
+from .init_imports import dataclass, asdict
 # ---------------------------------------------------------------------------
 # Request / Result base shapes
 # ---------------------------------------------------------------------------

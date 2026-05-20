@@ -26,7 +26,7 @@ from urllib.parse import (
 from collections import Counter
 from typing import *
 from PyPDF2 import PdfReader
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from uuid import uuid1
 from pathlib import Path
 from abstract_utilities import *

@@ -1,7 +1,7 @@
-import os
-import os.path as osp
+# vision_coder.py
+
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, List
 
 from PIL import Image
@@ -12,17 +12,13 @@ from .imports import (
     get_logFile,
     require,
     DEFAULT_PATHS,
+    VISION_MODELS_REGISTRY,
 )
 
 logger = get_logFile("vision_coder")
 
-
-# Qwen2.5-VL: 14x14 ViT patches + 2x2 spatial merge -> each visual token = 28x28 px
 QWEN_PATCH = 28
 QWEN_PIXELS_PER_TOKEN = QWEN_PATCH * QWEN_PATCH  # 784
-
-
-# ---- bad-input sentinels (defense at the boundary) -------------------------
 
 _BAD_PATH_STRINGS = frozenset({
     "", "[object object]", "undefined", "null", "none",
@@ -30,27 +26,23 @@ _BAD_PATH_STRINGS = frozenset({
 
 
 def _coerce_image_path(value) -> str:
+    import os.path as osp
     if not isinstance(value, str):
-        raise TypeError(
-            f"image_path must be a string, got {type(value).__name__}: {value!r}"
-        )
+        raise TypeError(f"image_path must be a string, got {type(value).__name__}: {value!r}")
     cleaned = value.strip()
     if cleaned.lower() in _BAD_PATH_STRINGS:
-        raise ValueError(
-            f"image_path looks like a serialization artifact, not a real path: {value!r}"
-        )
+        raise ValueError(f"image_path looks like a serialization artifact: {value!r}")
     if not osp.exists(cleaned):
         raise FileNotFoundError(f"Image not found: {cleaned}")
     return cleaned
 
 
-# ---- config ----------------------------------------------------------------
-
 @dataclass(frozen=True)
 class VisionCoderConfig:
+    model_key: str                   # registry key, e.g. "Qwen2.5-VL-7B-Instruct"
     model_dir: str
     device: str
-    torch_dtype: object              # torch.dtype, but no torch import at module top
+    torch_dtype: object
     min_tokens: int = 64
     max_tokens: int = 384
     local_files_only: bool = True
@@ -64,36 +56,10 @@ class VisionCoderConfig:
         return self.max_tokens * QWEN_PIXELS_PER_TOKEN
 
 
-# ---- pure helpers ----------------------------------------------------------
-
-def resolve_qwen_vl_path(module_path: Optional[str] = None) -> str:
-    """Resolve the model directory. Pure: returns a string, raises on miss."""
-    candidates = []
-    if module_path:
-        candidates.append(str(module_path))
-
-    from_env = DEFAULT_PATHS.get("qwen_vl")
-    if from_env:
-        candidates.append(str(from_env))
-
-    candidates.append("/var/www/hugging_face/modules/Qwen/Qwen2.5-VL-7B-Instruct")
-
-    for c in candidates:
-        if osp.exists(c):
-            return c
-
-    raise FileNotFoundError(
-        "Could not resolve local Qwen2.5-VL model path. "
-        "Set MODEL_QWEN_VL=/var/www/hugging_face/modules/Qwen/Qwen2.5-VL-7B-Instruct"
-    )
-
-
 def _pick_device_and_dtype(torch, device: Optional[str], dtype) -> tuple[str, object]:
-    """Choose device and dtype safely. Never fp16 on CPU (no native kernel path)."""
     chosen_device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     if dtype is not None:
         return chosen_device, dtype
-
     if chosen_device == "cuda":
         return chosen_device, torch.float16
     if hasattr(torch.cpu, "is_bf16_supported") and torch.cpu.is_bf16_supported():
@@ -102,8 +68,6 @@ def _pick_device_and_dtype(torch, device: Optional[str], dtype) -> tuple[str, ob
 
 
 def fit_to_token_budget(image: Image.Image, max_tokens: int) -> Image.Image:
-    """Downscale (never upscale) so visual-token count <= max_tokens.
-    Snaps to multiples of QWEN_PATCH so the processor doesn't smart-resize again."""
     w, h = image.size
     pixel_budget = max_tokens * QWEN_PIXELS_PER_TOKEN
     if w * h <= pixel_budget:
@@ -114,8 +78,24 @@ def fit_to_token_budget(image: Image.Image, max_tokens: int) -> Image.Image:
     return image.resize((nw, nh), Image.LANCZOS)
 
 
+# ---- default model key -----------------------------------------------------
+
+DEFAULT_VISION_MODEL_KEY = "Qwen2.5-VL-7B-Instruct"
+
+def _resolve_vision_model_key(model_key: Optional[str]) -> str:
+    """Validate the key exists in VISION_MODELS_REGISTRY, fall back to default."""
+    key = model_key or DEFAULT_VISION_MODEL_KEY
+    if key not in VISION_MODELS_REGISTRY:
+        available = list(VISION_MODELS_REGISTRY.keys())
+        raise KeyError(
+            f"Unknown vision model key {key!r}. "
+            f"Available: {available}"
+        )
+    return key
+
+
 def build_config(
-    model_dir: Optional[str] = None,
+    model_key: Optional[str] = None,
     device: Optional[str] = None,
     torch_dtype=None,
     min_tokens: int = 64,
@@ -123,9 +103,14 @@ def build_config(
 ) -> VisionCoderConfig:
     torch = require("torch", reason="VisionCoder requires PyTorch")
     chosen_device, chosen_dtype = _pick_device_and_dtype(torch, device, torch_dtype)
-    resolved = resolve_qwen_vl_path(model_dir)
+
+    key = _resolve_vision_model_key(model_key)
+    # DEFAULT_PATHS is a _LazyModelPaths — resolves local path or hub_id at access time
+    model_dir = DEFAULT_PATHS[key]
+
     return VisionCoderConfig(
-        model_dir=resolved,
+        model_key=key,
+        model_dir=model_dir,
         device=chosen_device,
         torch_dtype=chosen_dtype,
         min_tokens=min_tokens,
@@ -136,20 +121,16 @@ def build_config(
 # ---- the loaded model object -----------------------------------------------
 
 class VisionCoder:
-    """Holds a loaded Qwen2.5-VL model + processor. Constructed once at boot."""
-
     def __init__(self, cfg: VisionCoderConfig):
         require("transformers", reason="VisionCoder requires HuggingFace transformers")
-
         self.cfg = cfg
         logger.info(
-            "VisionCoder loading model=%s device=%s dtype=%s token_budget=[%d,%d]",
-            cfg.model_dir, cfg.device, cfg.torch_dtype, cfg.min_tokens, cfg.max_tokens,
+            "VisionCoder loading key=%s model=%s device=%s dtype=%s token_budget=[%d,%d]",
+            cfg.model_key, cfg.model_dir, cfg.device, cfg.torch_dtype,
+            cfg.min_tokens, cfg.max_tokens,
         )
 
-        Qwen2_5_VLForConditionalGeneration = get_transformers(
-            "Qwen2_5_VLForConditionalGeneration"
-        )
+        Qwen2_5_VLForConditionalGeneration = get_transformers("Qwen2_5_VLForConditionalGeneration")
         AutoProcessor = get_transformers("AutoProcessor")
 
         self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
@@ -176,7 +157,6 @@ class VisionCoder:
         max_tokens: Optional[int] = None,
     ) -> str:
         torch = get_torch()
-
         path = _coerce_image_path(image_path)
         image = Image.open(path).convert("RGB")
         budget = max_tokens if max_tokens is not None else self.cfg.max_tokens
@@ -202,7 +182,7 @@ class VisionCoder:
             output_ids = self.model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                do_sample=False,            # deterministic; flip on for sampled outputs
+                do_sample=False,
             )
 
         prompt_len = inputs["input_ids"].shape[1]
@@ -218,36 +198,35 @@ class VisionCoder:
         max_new_tokens: int = 128,
         max_tokens: Optional[int] = None,
     ) -> List[str]:
-        """Sequential today; here so callers can pass a list without surprise."""
         return [
             self.analyze_image(p, prompt=prompt, max_new_tokens=max_new_tokens, max_tokens=max_tokens)
             for p in image_paths
         ]
 
 
-# ---- module-level registry (single instance per process) -------------------
+# ---- per-key instance cache ------------------------------------------------
 
-_INSTANCE: Optional[VisionCoder] = None
+_INSTANCES: dict[str, VisionCoder] = {}
 
 
 def get_vision_coder(
-    module_path: Optional[str] = None,
+    model_key: Optional[str] = None,
     torch_dtype=None,
     max_tokens: int = 384,
     min_tokens: int = 64,
 ) -> VisionCoder:
-    """Lazy boot. First call builds; later calls return the same instance.
-    If you need a different config, build a VisionCoder directly and hold the ref."""
-    global _INSTANCE
-    if _INSTANCE is None:
+    """Return a cached VisionCoder for the given registry key.
+    Different keys get different instances; same key is built once."""
+    key = _resolve_vision_model_key(model_key)
+    if key not in _INSTANCES:
         cfg = build_config(
-            model_dir=module_path,
+            model_key=key,
             torch_dtype=torch_dtype,
             min_tokens=min_tokens,
             max_tokens=max_tokens,
         )
-        _INSTANCE = VisionCoder(cfg)
-    return _INSTANCE
+        _INSTANCES[key] = VisionCoder(cfg)
+    return _INSTANCES[key]
 
 
 # ---- legacy entry point ----------------------------------------------------
@@ -256,11 +235,11 @@ def deepcoder_image_analysis(
     image_path,
     prompt: str = "please describe this image",
     max_new_tokens: int = 100,
-    module_path: Optional[str] = None,
+    model_key: Optional[str] = None,   # was: module_path
     torch_dtype=None,
     max_tokens: Optional[int] = None,
 ):
-    vision = get_vision_coder(module_path=module_path, torch_dtype=torch_dtype)
+    vision = get_vision_coder(model_key=model_key, torch_dtype=torch_dtype)
     return vision.analyze_image(
         image_path=image_path,
         prompt=prompt,

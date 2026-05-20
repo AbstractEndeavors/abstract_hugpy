@@ -1,10 +1,20 @@
+from imports import deepcoder_image_analysis
+IMAGE_PATH = "/home/op/Pictures/AE.png"
 
-from imports import *
+##
+##def deepcoder_image_analysis(image_path: str, prompt: str):
+##    vision = get_vision_coder()
+##
+##    return vision.analyze_image(
+##        image_path=image_path,
+##        prompt=prompt,
+##    )
+##if __name__ == "__main__":
+##    result = deepcoder_image_analysis(
+##        image_path=IMAGE_PATH,
+##        prompt="Please describe the image.",
+##    )
+##
+##    print(result)
 
-if __name__ == "__main__":
-    video_url = "https://www.youtube.com/watch?v=Kazx0cLoB6A&t"
-
-    # Example: pull your raw pipeline dict
-    info = get_pipeline_data(video_id="Kazx0cLoB6A", key="extractfields")
-    input(info)
-
+deepcoder_image_analysis(IMAGE_PATH)

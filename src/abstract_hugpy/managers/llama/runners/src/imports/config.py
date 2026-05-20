@@ -1,5 +1,5 @@
 from .constants import *
-def _load_llama_config(env_path: Optional[str] = None) -> Dict[str, str | int]:
+def load_llama_config(env_path: Optional[str] = None) -> Dict[str, str | int]:
     """Resolve host + per-model ports from env, with defaults as fallback.
 
 

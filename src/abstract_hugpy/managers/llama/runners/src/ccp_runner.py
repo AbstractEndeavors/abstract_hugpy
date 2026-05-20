@@ -14,7 +14,7 @@ class LlamaCppRunner(LlamaCppBaseRunner):
                 f"known: {sorted(LLAMA_MODEL_PORTS)}"
             )
 
-        cfg = _load_llama_config(env_path=env_path)
+        cfg = load_llama_config(env_path=env_path)
         self.model_key = model_key
         self.llama_host: str = cfg["LLAMA_HOST"]
         self.port: int = cfg[model_key]

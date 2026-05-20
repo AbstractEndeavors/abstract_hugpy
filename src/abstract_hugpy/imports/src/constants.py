@@ -7,8 +7,8 @@ from .init_imports import Path
 # ---------------------------------------------------------------------
 HUGGINGFACE_DOMAIN = "https://huggingface.co"
 
-MODEL_HOME = Path(
-    get_env_value("MODEL_HOME")
+MODELS_HOME = Path(
+    get_env_value("MODELS_HOME")
     or os.path.expanduser("~/.cache/abstract_models")
 )
 MODELS_DICT_PATH = Path(

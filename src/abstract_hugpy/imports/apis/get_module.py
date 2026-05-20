@@ -34,8 +34,7 @@ def exclude_dirs(directories):
 # ---------------------------------------------------------------------------
 # Path / name helpers
 # ---------------------------------------------------------------------------
-def get_modules_dir() -> str:
-    return os.path.join(MODEL_HOME, "models")
+
 
 
 
@@ -204,10 +203,10 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
     a hand-coded registry against new on-disk reality.
     """
     ALLCONFIGS: Dict[str, "ModelConfig"] = {}
-    modules_dir = get_modules_dir()
+
 
     dirs, files = get_files_and_dirs(
-        modules_dir, allowed_exts=[".json", ".GGUF", ".gguf"]
+        MODELS_HOME, allowed_exts=[".json", ".GGUF", ".gguf"]
     )
 
     # Folders that contain at least one config.json or gguf
@@ -219,9 +218,9 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
         or f.endswith(".GGUF")
     })
     directories = exclude_dirs(directories)
-    shortnames = [d.replace(modules_dir, "") for d in dirs]
+    shortnames = [d.replace(MODELS_HOME, "") for d in dirs]
     for directory in directories:
-        shortname = directory.replace(modules_dir, "")
+        shortname = directory.replace(MODELS_HOME, "")
         folder = eatAll(shortname, "/")
         max_model_length = get_max_model_length(folder) or DEFAULT_MAX_TOKENS
         response_dir = get_response_dir(folder)
@@ -284,8 +283,8 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
 
 def get_max_model_length(folder):
     all_max_values = []
-    modules_dir = get_modules_dir()
-    module_dir = os.path.join(modules_dir,folder)
+
+    module_dir = os.path.join(MODELS_HOME,folder)
     dirlist = os.listdir(module_dir)
     files = [os.path.join(module_dir,file) for file in dirlist if file.endswith('.json')]
     for file in files:

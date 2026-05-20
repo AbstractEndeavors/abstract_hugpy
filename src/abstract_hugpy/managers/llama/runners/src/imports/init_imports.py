@@ -41,6 +41,7 @@ from ...imports import (
     ErrorEvent,
     StreamEvent,
     TokenEvent,
+    messages_to_dicts
 )
 
 logger = logging.getLogger(__name__)

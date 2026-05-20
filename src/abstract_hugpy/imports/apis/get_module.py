@@ -223,7 +223,7 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
     for directory in directories:
         shortname = directory.replace(modules_dir, "")
         folder = eatAll(shortname, "/")
-        max_model_length = DEFAULT_MAX_TOKENS
+        max_model_length = get_max_model_length(folder) or DEFAULT_MAX_TOKENS
         response_dir = get_response_dir(folder)
         dirs,files = get_files_and_dirs(response_dir,allowed_exts=['.py'])
         if get_code:
@@ -246,7 +246,7 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
             "filename":  extract_gguf_filename(guffs, directory),
             "task":      None,    # disk can't tell us; let registry fill
             "include":   None,    # same — registry-only field
-            "model_max_length": max_model_length
+            "model_max_length": max_model_length,
             "port": get_port(name)
         }
 
@@ -296,6 +296,7 @@ def get_max_model_length(folder):
             if max_value[-1] == "model_max_length":
                 return get_any_value(data,"model_max_length")
         all_max_values+=max_values
+    return DEFAULT_MAX_TOKENS
 
 
            

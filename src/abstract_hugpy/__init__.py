@@ -1,3 +1,3 @@
 from .imports import *
-from .models import *
+from .managers import *
 from .utils import *

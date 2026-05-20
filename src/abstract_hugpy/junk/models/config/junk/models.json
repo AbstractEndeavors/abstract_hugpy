@@ -37,8 +37,7 @@
     "hub_id": "Qwen/Qwen3-Coder-Next-GGUF",
     "filename": "Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
     "folder": "Qwen/Qwen3-Coder-Next-GGUF",
-    "task": "code-generation",
-    "port":6009
+    "task": "code-generation"
   },
   "DAN-Qwen3-1.7B": {
     "model_max_length": 32768,
@@ -118,8 +117,7 @@
     "hub_id": "bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF",
     "filename": "Qwen2.5-Coder-1.5B-Instruct-Q4_K_M.gguf",
     "folder": "bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF",
-    "task": "code-generation",
-    "port":6008
+    "task": "code-generation"
   },
   "led-large-16384": {
     "model_max_length": 32768,
@@ -181,16 +179,7 @@
     "folder": "agentica-org/DeepCoder-14B-Preview",
     "task": "code-generation"
   },
-  "openai": {
-    "model_max_length": 32768,
-    "include": null,
-    "name": "openai",
-    "framework": "transformers",
-    "hub_id": "openai",
-    "filename": null,
-    "folder": "openai",
-    "task": "code-generation"
-  },
+
   "DAN-L3-R1-8B-i1-GGUF": {
     "model_max_length": 32768,
     "include": "*Q4_K_M.gguf",
@@ -199,7 +188,6 @@
     "hub_id": "mradermacher/DAN-L3-R1-8B-i1-GGUF",
     "filename": "DAN-L3-R1-8B.i1-IQ1_M.gguf",
     "folder": "mradermacher/DAN-L3-R1-8B-i1-GGUF",
-    "task": "text-generation",
-    "port": 6090
+    "task": "text-generation"
   }
 }

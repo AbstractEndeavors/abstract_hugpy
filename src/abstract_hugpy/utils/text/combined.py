@@ -1,16 +1,13 @@
 import os.path as osp
 from dataclasses import dataclass, field, asdict
 from typing import Callable, Optional, List, Dict, Any
-from abstract_ocr.ocr_utils.text_utils import convert_image_to_text
+from abstract_ocr import paddle_image
 from abstract_webtools import *
 from ..seo.pdf_utils import _analyze, PDFSeoReport
 from .imports import *
 from typing import Literal
 from pydantic import BaseModel
-# at the top of the module, next to the registry
-DEFAULT_CHAT_MODEL = 'Qwen2.5-Coder-3B-GGUF'
-DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"  # whatever key resolve_qwen_vl_path expects
-SourceKind = Literal["text", "url", "file", "image"]
+
 def get_num_pdf_pages(pdf_path):
     reader = PdfReader(pdf_path)
     return len(reader.pages)
@@ -60,7 +57,7 @@ def get_extractor(kind: str) -> Extractor:
 # Concrete extractors. Each one is the only thing that knows how its source
 # becomes text. If a new format shows up, add one extractor here, done.
 
-register_extractor("image", convert_image_to_text)
+register_extractor("image", paddle_image)
 register_extractor("audio", transcribe_file)
 register_extractor("video", transcribe_file)
 register_extractor("website", get_soup_text)
@@ -112,7 +109,7 @@ def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePr
 
 async def analyze(
     source: str,
-    kind: SourceKind = "text",
+    kind: SOURCEKIND = "text",
     prompt: str = "Please analyze the following content.",
     params: GenParams | None = None,
     model_key: str = DEFAULT_CHAT_MODEL,

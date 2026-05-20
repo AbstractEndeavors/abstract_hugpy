@@ -39,7 +39,7 @@ def get_model_path(key: str) -> Path:
         return Path(env_override)
 
     cfg = get_model_config(key)
-    return MODEL_HOME / cfg.folder
+    return MODELS_HOME / cfg.folder
 
 
 def get_gguf_file(path: Path, cfg: ModelConfig) -> Optional[Path]:

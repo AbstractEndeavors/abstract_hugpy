@@ -138,7 +138,7 @@ def download_repo(url):
     parsed = parse_url(url)
     repo_id=parsed.get('path')
     repo = repo_id.split('/')[0]
-    repo_dir = os.path.join(MODEL_HOME,repo)
+    repo_dir = os.path.join(MODELS_HOME,repo)
     os.makedirs(repo_dir,exist_ok=True)
     snapshot_download(
         repo_id=repo_id,

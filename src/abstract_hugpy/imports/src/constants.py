@@ -13,7 +13,7 @@ MODELS_HOME = Path(
 )
 MODELS_DICT_PATH = Path(
     get_env_value("MODELS_DICT_PATH")
-    or os.path.join(MODEL_HOME,'variables.json')
+    or os.path.join(MODELS_HOME,'variables.json')
 )
 
 EXCLUDE_DIR_NAMES = frozenset({

@@ -7,14 +7,14 @@ from .init_imports import Path
 # ---------------------------------------------------------------------
 HUGGINGFACE_DOMAIN = "https://huggingface.co"
 
-MODELS_HOME = Path(
+MODELS_HOME = 
     get_env_value("MODELS_HOME")
     or os.path.expanduser("~/.cache/abstract_models")
-)
-MODELS_DICT_PATH = Path(
+
+MODELS_DICT_PATH = 
     get_env_value("MODELS_DICT_PATH")
     or os.path.join(MODELS_HOME,'variables.json')
-)
+
 
 EXCLUDE_DIR_NAMES = frozenset({
     ".cache", ".git", ".locks",

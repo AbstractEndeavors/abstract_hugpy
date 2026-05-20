@@ -14,7 +14,7 @@ def _load_llama_config(env_path: Optional[str] = None) -> Dict[str, str | int]:
     cfg["LLAMA_HOST"] = get_env_value("LLAMA_HOST", path=env_path) or LLAMA_HOST_DEFAULT
 
     for model_key, default_port in LLAMA_MODEL_PORTS.items():
-        raw = get_env_value(model_key.upper(), path=env_path)
+        raw = get_env_value(model_key, path=env_path)
         cfg[model_key] = int(raw) if raw else default_port
 
     return cfg

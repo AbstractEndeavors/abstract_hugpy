@@ -25,7 +25,7 @@ EXCLUDE_DIR_NAMES = frozenset({
 EXCLUDE_DIR_PREFIXES = ("models--",)  # HF cache root naming
 
 DEFAULT_MAX_TOKENS=32768
-DEFAULT_CHAT_MODEL = DEFAULT_MODEL"Qwen2.5-Coder-3B-Instruct-GGUF"
+DEFAULT_CHAT_MODEL = DEFAULT_MODEL = "Qwen2.5-Coder-3B-Instruct-GGUF"
 DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"  # whatever key resolve_qwen_vl_path expects
 SOURCEKIND = Literal["text", "url", "file", "image"]
 DEFAULT_TEMPERATURE = 0.1

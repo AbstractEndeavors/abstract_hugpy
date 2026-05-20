@@ -190,7 +190,10 @@ def _merge_disk_over_registry(
     return merged, prov
 def get_port(name):
     key = f"{name}_PORT"
-    return get_env_value(key)
+    port = get_env_value(key)
+    if port and is_number(port):
+        port = int(port)
+    return port
     
 # ---------------------------------------------------------------------------
 # Main discovery walk

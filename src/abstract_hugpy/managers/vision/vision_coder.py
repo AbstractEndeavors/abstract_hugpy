@@ -13,6 +13,7 @@ from .imports import (
     require,
     DEFAULT_PATHS,
     VISION_MODELS_REGISTRY,
+    get_model_path
 )
 
 logger = get_logFile("vision_coder")
@@ -106,8 +107,8 @@ def build_config(
     chosen_device, chosen_dtype = _pick_device_and_dtype(torch, device, torch_dtype)
 
     key = _resolve_vision_model_key(model_key)
-    model_dir = DEFAULT_PATHS[key]
-
+    model_dir = get_model_path(key)
+    
     # Catch the hub-id fallback before transformers tries to go online
     if not osp.isdir(model_dir):
         raise FileNotFoundError(

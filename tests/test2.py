@@ -1,4 +1,6 @@
-from imports import deepcoder_image_analysis
+from imports import *
+from abstract_utilities import *
+input(get_env_path())
 IMAGE_PATH = "/home/op/Pictures/AE.png"
 
 ##
@@ -16,5 +18,9 @@ IMAGE_PATH = "/home/op/Pictures/AE.png"
 ##    )
 ##
 ##    print(result)
-
-deepcoder_image_analysis(IMAGE_PATH)
+IMAGE_PATH = "/home/op/Pictures/chandra_bad.jpg"
+mime_type = derive_media_type(IMAGE_PATH)
+get_all_configs(verbose=True)
+result = asyncio.run(execute_prompt(prompt='hi',file=IMAGE_PATH))
+ 
+input(result)

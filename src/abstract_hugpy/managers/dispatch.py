@@ -27,51 +27,35 @@ Why a per-process cache instead of recreating runners every call:
     get_llama_runner for llama.cpp) handle further deduplication.
 """
 from __future__ import annotations
-import logging,threading,pydantic
+import logging,threading,pydantic,os
 from typing import Dict, Tuple, Type
 from .imports import Runner,ChatRequest,MODEL_REGISTRY
 from .generate import DeepCoderChatRunner
 from .vision import VisionRunner
 from .llama import LlamaCppChatRunner
-
+from .whisper_model import WhisperRunner
+from .model_resolver import resolve_model_key,_REQUEST_BUILDERS
 def infer_arg_name(arg: Any) -> str | None:
-    """
-    Makes an educated guess about what positional arg represents.
-    """
-
-    if isinstance(arg, str):
-        # Could be model_key or prompt.
-        # Prefer treating unknown strings as prompt/messages.
-        # Model keys usually look like known model identifiers.
-        if (
-            "/" in arg
-            or "_gguf" in arg
-            or "qwen" in arg.lower()
-            or "llama" in arg.lower()
-            or "mistral" in arg.lower()
-            or "gpt" in arg.lower()
-        ):
-            return "model_key"
-
-        return "messages"
-
-    if isinstance(arg, list):
-        return "messages"
-
-    if isinstance(arg, int):
-        return "max_new_tokens"
-
-    if isinstance(arg, float):
-        # First float usually means temperature.
-        return "temperature"
-
-    if isinstance(arg, bool):
-        # bool is also an int subclass, so this must be checked before int
-        return "do_sample"
-
     if arg is None:
         return None
-
+    if isinstance(arg, bool):
+        return "do_sample"
+    if isinstance(arg, int):
+        return "max_new_tokens"
+    if isinstance(arg, float):
+        return "temperature"
+    if isinstance(arg, list):
+        return "messages"
+    if isinstance(arg, str):
+        if os.path.exists(arg):
+            return "file"
+        lowered = arg.lower()
+        looks_like_model = (
+            "/" in arg
+            or "_gguf" in lowered
+            or any(tag in lowered for tag in ("qwen", "llama", "mistral", "gpt"))
+        )
+        return "model_key" if looks_like_model else "messages"
     return None
 
 
@@ -137,20 +121,11 @@ _INSTANCES_LOCK = threading.Lock()
 
 
 def runner_for(model_key: str) -> Runner:
-    """Return the cached Runner for `model_key`, building it on first call.
-
-    Raises KeyError if the model isn't in MODEL_REGISTRY, or if no runner
-    class is registered for its (framework, task) pair. Both errors carry
-    enough info for the caller to surface a useful 4xx.
-    """
-    # Fast path: already built.
     cached = _INSTANCES.get(model_key)
     if cached is not None:
         return cached
 
     with _INSTANCES_LOCK:
-        # Re-check after acquiring the lock — another thread may have
-        # built it while we were waiting.
         cached = _INSTANCES.get(model_key)
         if cached is not None:
             return cached
@@ -175,7 +150,7 @@ def runner_for(model_key: str) -> Runner:
             "instantiating runner: model=%s class=%s framework=%s task=%s",
             model_key, cls.__name__, cfg.framework, cfg.task,
         )
-        instance = cls(model_key)
+        instance = cls(cfg)
         _INSTANCES[model_key] = instance
         return instance
 
@@ -212,8 +187,26 @@ def supported_task_keys() -> list[Tuple[str, str]]:
     return sorted(_RUNNERS.keys())
 
 
-def execute_prompt(*args: Any, **kwargs: Any) -> ChatRequest:
+def execute_prompt(*args: Any, **kwargs: Any):
     prompt_kwargs = normalize_prompt_kwargs(*args, **kwargs)
-    req = ChatRequest(**prompt_kwargs)
-    runner = runner_for(req.model_key)
+
+    model_key = resolve_model_key(
+        model_key=prompt_kwargs.get("model_key"),
+        file=prompt_kwargs.get("file"),
+        media_type=prompt_kwargs.get("media_type"),
+    )
+
+    cfg = MODEL_REGISTRY[model_key]
+    task_key = (cfg.framework, cfg.task)
+
+    builder = _REQUEST_BUILDERS.get(task_key)
+    if builder is None:
+        raise KeyError(
+            f"No request builder registered for {model_key!r} "
+            f"(framework={cfg.framework!r}, task={cfg.task!r}); "
+            f"known builder keys: {sorted(_REQUEST_BUILDERS)}"
+        )
+
+    req = builder(prompt_kwargs, model_key)
+    runner = runner_for(model_key)
     return runner.run(req=req)

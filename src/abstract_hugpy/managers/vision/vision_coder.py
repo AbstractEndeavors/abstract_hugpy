@@ -13,6 +13,7 @@ from .imports import (
     require,
     DEFAULT_PATHS,
     VISION_MODELS_REGISTRY,
+    DEFAULT_VISION_MODEL,
     get_model_path
 )
 
@@ -81,11 +82,10 @@ def fit_to_token_budget(image: Image.Image, max_tokens: int) -> Image.Image:
 
 # ---- default model key -----------------------------------------------------
 
-DEFAULT_VISION_MODEL_KEY = "Qwen2.5-VL-7B-Instruct"
 
 def _resolve_vision_model_key(model_key: Optional[str]) -> str:
     """Validate the key exists in VISION_MODELS_REGISTRY, fall back to default."""
-    key = model_key or DEFAULT_VISION_MODEL_KEY
+    key = model_key or DEFAULT_VISION_MODEL
     if key not in VISION_MODELS_REGISTRY:
         available = list(VISION_MODELS_REGISTRY.keys())
         raise KeyError(
@@ -107,7 +107,8 @@ def build_config(
     chosen_device, chosen_dtype = _pick_device_and_dtype(torch, device, torch_dtype)
 
     key = _resolve_vision_model_key(model_key)
-    model_dir = get_model_path(key)
+    model_dir = get_model_path(model_key)
+
     
     # Catch the hub-id fallback before transformers tries to go online
     if not osp.isdir(model_dir):

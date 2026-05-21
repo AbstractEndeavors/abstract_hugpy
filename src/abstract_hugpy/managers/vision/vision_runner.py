@@ -1,29 +1,22 @@
 # vision_runner.py
-
-import asyncio
-from .vision_coder import get_vision_coder
-from .schemas import VisionRequest, VisionResult
+# vision_runner.py
+from .schemas import VisionRequest, VisionResult, VisionBackendConfig
+from .vision_backends import build_backend
 
 
 class VisionRunner:
     request_type = VisionRequest
     result_type = VisionResult
 
-    def __init__(self, model_key: str):
-        self.model_key = model_key
-        # passes the key through so the right model is loaded/cached
-        self.vision = get_vision_coder(model_key=model_key)
+    def __init__(self, cfg: VisionBackendConfig):
+        self.cfg = cfg
+        input(cfg)
+        self.backend = build_backend(self.cfg)
 
     async def run(self, req: VisionRequest) -> VisionResult:
-        text = await asyncio.to_thread(
-            self.vision.analyze_image,
-            image_path=req.image_path,
-            prompt=req.prompt,
-            max_new_tokens=req.max_new_tokens,
-            max_tokens=req.max_tokens,
-        )
-        return VisionResult(
-            request_id=req.request_id,
-            model_key=req.model_key,
-            text=text,
-        )
+        if req.model_key != self.cfg.model_key:
+            raise ValueError(
+                f"VisionRunner bound to {self.cfg.model_key!r}, "
+                f"got request for {req.model_key!r}"
+            )
+        return await self.backend.run(req)

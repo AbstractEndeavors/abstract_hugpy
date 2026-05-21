@@ -49,7 +49,6 @@ from pydantic import  (
     )
 from .constants import (
     DEFAULT_MAX_TOKENS,
-    DEFAULT_MODEL,
     DEFAULT_TEMPERATURE,
     DEFAULT_TOP_P,
     FINISH_REASONS,
@@ -60,7 +59,8 @@ from .utils import (
     get_messages,
     get_message
     )
-from .init_imports import dataclass, asdict
+
+from .init_imports import dataclass, asdict,read_from_file
 # ---------------------------------------------------------------------------
 # Request / Result base shapes
 # ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     request_id: str = Field(default_factory=lambda: get_request_id())
-    model_key: str = DEFAULT_MODEL
+    model_key: str = None
     messages: list[ChatMessage]
     max_new_tokens: int = DEFAULT_MAX_TOKENS
     temperature: float = DEFAULT_TEMPERATURE
@@ -109,7 +109,7 @@ class ChatRequest(BaseModel):
     do_sample: bool = False
     unbounded: bool = False
     max_chunks: Optional[int] = None
-
+    file: Optional[str] = None
     @field_validator("messages", mode="before")
     @classmethod
     def normalize_messages(cls, value: Any) -> Any:
@@ -125,8 +125,13 @@ class ChatRequest(BaseModel):
             return cls(model_key=model_key, messages=value)  # validator handles it
         if isinstance(value, Mapping):
             data = dict(value)
+            
             if "messages" not in data and "prompt" in data:
                 prompt = data.pop("prompt")
+                file = data.pop("file")
+                if file:
+                    content = read_from_file(file)
+                    prompt = f"{prompt}\n------{file}------\n{content}"
                 system = data.pop("system", None)
                 msgs = []
                 if system:
@@ -172,17 +177,81 @@ class ErrorEvent(BaseModel):
 # ---------------------------------------------------------------------
 
 
+
+class TranscribeWord(BaseModel):
+    word: str
+    start: Optional[float] = None
+    end: Optional[float] = None
+    probability: Optional[float] = None
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+class TranscribeSegment(BaseModel):
+    id: int
+    start: float
+    end: float
+    text: str
+
+    seek: Optional[int] = None
+    tokens: list[int] = Field(default_factory=list)
+    temperature: Optional[float] = None
+    avg_logprob: Optional[float] = None
+    compression_ratio: Optional[float] = None
+    no_speech_prob: Optional[float] = None
+
+    words: list[TranscribeWord] = Field(default_factory=list)
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+class TranscribeResult(BaseModel):
+    ok: bool = True
+
+    file_path: str
+    media_type: Literal["audio", "video"]
+    audio_path: Optional[str] = None
+
+    model_size: str
+    task: Literal["transcribe", "translate"] = "transcribe"
+
+    text: str = ""
+    language: Optional[str] = None
+    duration: Optional[float] = None
+
+    segments: list[TranscribeSegment] = Field(default_factory=list)
+
+    error: Optional[str] = None
+
+    raw: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Original Whisper result for debugging or future fields.",
+    )
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+class TranscribeRequest(BaseModel):
+    file_path: str = Field(..., description="Path to an audio or video file.")
+    model_size: str = "small"
+    language: Optional[str] = "english"
+    task: Literal["transcribe", "translate"] = "transcribe"
+    whisper_model_path: Optional[str] = None
+    output_audio_path: Optional[str] = None
+    cleanup_extracted_audio: bool = False
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 @dataclass(frozen=True)
 class ModelConfig:
     name: str
     hub_id: str
     folder: str
     task: str
+    model_key:str
     framework: str = "transformers"
     filename: Optional[str] = None
     include: Optional[str] = None
     model_max_length: Optional[str] = DEFAULT_MAX_TOKENS
     port: Optional[int] = None
+    host: Optional[int] = None
+    timeout_s: Optional[int] = 3600
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 

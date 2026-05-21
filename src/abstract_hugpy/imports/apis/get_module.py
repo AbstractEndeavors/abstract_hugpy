@@ -194,7 +194,10 @@ def get_port(name):
     if port and is_number(port):
         port = int(port)
     return port
-    
+def get_host(name):
+    key = f"{name}_HOST"
+    host = get_env_value(key)
+    return host    
 # ---------------------------------------------------------------------------
 # Main discovery walk
 # ---------------------------------------------------------------------------
@@ -249,7 +252,8 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
             "task":      None,    # disk can't tell us; let registry fill
             "include":   None,    # same — registry-only field
             "model_max_length": max_model_length,
-            "port": get_port(name)
+            "port": get_port(name),
+            "host":get_host(name)
         }
 
         merged, provenance = _merge_disk_over_registry(discovered, registry_cfg)
@@ -280,6 +284,8 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
             for item in files:
                 print(item)
     if save_variables:
+        if verbose:     
+            print(f"SAVING VARIABLES:\n{MODELS_DICT_PATH}")
         safe_dump_to_json(data=ALLCONFIGS,file_path=MODELS_DICT_PATH,indent=2)        
     return ALLCONFIGS
 

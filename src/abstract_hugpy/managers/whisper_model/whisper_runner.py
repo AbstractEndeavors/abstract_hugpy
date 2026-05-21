@@ -1,4 +1,4 @@
-
+from .imports import *
 # runners/transcribe_runner.py
 class WhisperRunner:
     request_type = TranscribeRequest

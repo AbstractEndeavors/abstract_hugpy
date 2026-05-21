@@ -21,7 +21,7 @@ IMAGE_PATH = "/home/op/Pictures/AE.png"
 IMAGE_PATH = "/home/op/Pictures/chandra_bad.jpg"
 cfg = VisionBackendConfig(
     model_key="Qwen2.5-VL-7B-Instruct",
-    host="192.168.1.100",
+    host="127.0.0.1",
     port=7005,
     max_tokens=4096,
 )

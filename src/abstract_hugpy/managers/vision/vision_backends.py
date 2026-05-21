@@ -35,7 +35,7 @@ class HttpBackend:
         self.model_key = model_key
         self.host = host
         self.url = f"http://{self.host}:{port}/analyze"
-        input(self.url)
+
         self.timeout_s = timeout_s
 
     async def run(self, req: VisionRequest) -> VisionResult:

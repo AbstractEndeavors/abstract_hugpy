@@ -7,9 +7,14 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .imports import VISION_HOST, DEFAULT_TIMEOUT, DEFAULT_MAX_TOKENS
 
-
-_BAD_PATH_STRINGS = frozenset({
-    "", "[object object]", "undefined", "null", "none",
+QWEN_PATCH = 28
+QWEN_PIXELS_PER_TOKEN = QWEN_PATCH * QWEN_PATCH
+BAD_PATH_STRINGS = frozenset({
+    "",
+    "[object object]",
+    "undefined",
+    "null",
+    "none",
 })
 
 
@@ -47,7 +52,7 @@ class VisionRequest(BaseModel):
             )
         if self.image_path is not None:
             cleaned = self.image_path.strip()
-            if cleaned.lower() in _BAD_PATH_STRINGS:
+            if cleaned.lower() in BAD_PATH_STRINGS:
                 raise ValueError(
                     f"image_path looks like a serialization artifact: {self.image_path!r}"
                 )
@@ -68,3 +73,28 @@ class VisionResult(BaseModel):
     model_key: str = Field(min_length=1)
     text: str
     error: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class VisionCoderConfig:
+    model_key: str
+    model_dir: str
+    device: str
+    torch_dtype: object
+    min_tokens: int = 16
+    max_tokens: int = 128
+    local_files_only: bool = True
+
+    # New options
+    device_map: Optional[str] = "auto"
+    gpu_max_memory: str = "5GiB"
+    cpu_max_memory: str = "24GiB"
+    use_cache: bool = False
+
+    @property
+    def min_pixels(self) -> int:
+        return self.min_tokens * QWEN_PIXELS_PER_TOKEN
+
+    @property
+    def max_pixels(self) -> int:
+        return self.max_tokens * QWEN_PIXELS_PER_TOKEN

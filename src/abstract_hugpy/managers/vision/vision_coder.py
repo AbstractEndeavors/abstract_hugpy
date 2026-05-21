@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 
 from PIL import Image
-
+from .schemas import *
 from .imports import (
     get_torch,
     get_transformers,
@@ -26,7 +26,26 @@ _BAD_PATH_STRINGS = frozenset({
     "", "[object object]", "undefined", "null", "none",
 })
 
+import io, base64
+from PIL import Image
+# vision_coder.py
 
+
+
+def open_image_from_request(req: "VisionRequest") -> Image.Image:
+    if req.image_path is not None:
+        return Image.open(req.image_path).convert("RGB")
+    if req.image_b64 is not None:
+        raw = base64.b64decode(req.image_b64)
+        return Image.open(io.BytesIO(raw)).convert("RGB")
+    raise ValueError(
+        f"VisionRequest {req.request_id!r} has neither image_path nor image_b64; "
+        "schema validation should have caught this earlier"
+    )
+def _open_image(req: VisionRequest) -> Image.Image:
+    if req.image_path is not None:
+        return Image.open(req.image_path).convert("RGB")
+    return Image.open(io.BytesIO(base64.b64decode(req.image_b64))).convert("RGB")
 def _coerce_image_path(value) -> str:
     import os.path as osp
     if not isinstance(value, str):
@@ -204,17 +223,51 @@ class VisionCoder:
             generated, skip_special_tokens=True, clean_up_tokenization_spaces=False,
         )[0]
 
-    def analyze_images(
+    def analyze_pil(
         self,
-        image_paths: List[str],
+        image: Image.Image,
         prompt: str = "Analyze this image.",
         max_new_tokens: int = 128,
         max_tokens: Optional[int] = None,
-    ) -> List[str]:
-        return [
-            self.analyze_image(p, prompt=prompt, max_new_tokens=max_new_tokens, max_tokens=max_tokens)
-            for p in image_paths
-        ]
+    ) -> str:
+        torch = get_torch()
+        budget = max_tokens if max_tokens is not None else self.cfg.max_tokens
+        image = fit_to_token_budget(image, budget)
+
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "image", "image": image},
+                {"type": "text", "text": prompt},
+            ],
+        }]
+        text = self.processor.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True,
+        )
+        inputs = self.processor(
+            text=[text], images=[image], return_tensors="pt", padding=True,
+        )
+        inputs = {k: v.to(self.cfg.device) for k, v in inputs.items()}
+        with torch.no_grad():
+            output_ids = self.model.generate(
+                **inputs, max_new_tokens=max_new_tokens, do_sample=False,
+            )
+        prompt_len = inputs["input_ids"].shape[1]
+        generated = output_ids[:, prompt_len:]
+        return self.processor.batch_decode(
+            generated, skip_special_tokens=True, clean_up_tokenization_spaces=False,
+        )[0]
+
+    def analyze_image(
+        self,
+        image_path: str,
+        prompt: str = "Analyze this image.",
+        max_new_tokens: int = 128,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        path = _coerce_image_path(image_path)
+        image = Image.open(path).convert("RGB")
+        return self.analyze_pil(image, prompt, max_new_tokens, max_tokens)
 
 
 # ---- per-key instance cache ------------------------------------------------

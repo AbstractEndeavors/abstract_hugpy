@@ -19,8 +19,18 @@ IMAGE_PATH = "/home/op/Pictures/AE.png"
 ##
 ##    print(result)
 IMAGE_PATH = "/home/op/Pictures/chandra_bad.jpg"
-mime_type = derive_media_type(IMAGE_PATH)
-get_all_configs(verbose=True)
-result = asyncio.run(execute_prompt(prompt='hi',file=IMAGE_PATH))
- 
-input(result)
+import base64
+
+with open(IMAGE_PATH, "rb") as f:
+    image_b64 = base64.b64encode(f.read()).decode("ascii")
+
+req = VisionRequest(
+    request_id="req-abc123",
+    model_key="Qwen2.5-VL-7B-Instruct",
+    prompt="describe this image",
+    image_b64=image_b64,
+)
+result = asyncio.run(backend.run(req))
+if result.error:
+    raise RuntimeError(f"server error: {result.error}")
+print(result.text)

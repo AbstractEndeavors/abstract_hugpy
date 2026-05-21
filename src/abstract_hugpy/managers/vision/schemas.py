@@ -15,7 +15,7 @@ _BAD_PATH_STRINGS = frozenset({
 
 class VisionBackendConfig(BaseModel):
     """Where vision work goes. Built once at startup, reused for every request."""
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True)
 
     model_key: str = Field(min_length=1)
     port: Optional[int] = Field(default=None, gt=0, le=65535)
@@ -25,12 +25,12 @@ class VisionBackendConfig(BaseModel):
 
 class VisionRequest(BaseModel):
     """One unit of vision work. Built per call."""
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = ConfigDict(frozen=True)
 
     request_id: str = Field(min_length=1)
     model_key: str = Field(min_length=1)
     prompt: str = "Analyze this image."
-    max_new_tokens: int = Field(default=DEFAULT_MAX_TOKENS, gt=0, le=4096)
+    max_new_tokens: int = Field(default=DEFAULT_MAX_TOKENS, gt=0, le=32768)
     max_tokens: Optional[int] = Field(default=None, gt=0)
 
     image_path: Optional[str] = None

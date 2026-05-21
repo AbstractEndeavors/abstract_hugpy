@@ -145,7 +145,7 @@ def build_config(
         device=chosen_device,
         torch_dtype=chosen_dtype,
         min_tokens=min_tokens,
-        max_tokens=max_tokens,
+        max_tokens=4096,
     )
 
 

@@ -19,6 +19,13 @@ IMAGE_PATH = "/home/op/Pictures/AE.png"
 ##
 ##    print(result)
 IMAGE_PATH = "/home/op/Pictures/chandra_bad.jpg"
+cfg = VisionBackendConfig(
+    model_key="Qwen2.5-VL-7B-Instruct",
+    host="192.168.1.100",
+    port=7005,
+    max_tokens=4096,
+)
+backend = build_backend(cfg)
 import base64
 
 with open(IMAGE_PATH, "rb") as f:

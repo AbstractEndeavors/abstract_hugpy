@@ -42,8 +42,12 @@ class HttpBackend:
         timeout = self._aiohttp.ClientTimeout(total=self.timeout_s)
         async with self._aiohttp.ClientSession(timeout=timeout) as s:
             async with s.post(self.url, json=req.model_dump()) as r:
-                r.raise_for_status()
-                payload = await r.json()
+                body = await r.text()
+                if r.status >= 400:
+                    raise RuntimeError(
+                        f"vision server returned {r.status} from {self.url}: {body}"
+                    )
+                payload = await r.json() if body else {}
         return VisionResult.model_validate(payload)
 
 

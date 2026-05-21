@@ -128,6 +128,7 @@ def build_config(
     )
 
 
+
 # ---- the loaded model object -----------------------------------------------
 
 class VisionCoder:

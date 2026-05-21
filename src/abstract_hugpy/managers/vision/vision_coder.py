@@ -101,12 +101,22 @@ def build_config(
     min_tokens: int = 64,
     max_tokens: int = 384,
 ) -> VisionCoderConfig:
+    import os.path as osp
     torch = require("torch", reason="VisionCoder requires PyTorch")
     chosen_device, chosen_dtype = _pick_device_and_dtype(torch, device, torch_dtype)
 
     key = _resolve_vision_model_key(model_key)
-    # DEFAULT_PATHS is a _LazyModelPaths — resolves local path or hub_id at access time
     model_dir = DEFAULT_PATHS[key]
+
+    # Catch the hub-id fallback before transformers tries to go online
+    if not osp.isdir(model_dir):
+        raise FileNotFoundError(
+            f"Vision model {key!r} does not appear to be downloaded locally.\n"
+            f"  Expected a directory at: {model_dir}\n"
+            f"  DEFAULT_PATHS resolved to: {model_dir!r}\n"
+            f"  Run ensure_model({key!r}) or set MODELS_HOME / MODEL_{key.upper().replace('-','_')} "
+            f"to point at the correct local path."
+        )
 
     return VisionCoderConfig(
         model_key=key,

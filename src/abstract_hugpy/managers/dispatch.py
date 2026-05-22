@@ -34,7 +34,7 @@ from .generate import DeepCoderChatRunner
 from .vision import VisionRunner
 from .llama import LlamaCppChatRunner
 from .whisper_model import WhisperRunner
-from .model_resolver import resolve_model_key,_REQUEST_BUILDERS
+from .model_resolver import resolve_model_key,_REQUEST_BUILDERS,_RUNNERS
 def infer_arg_name(arg: Any) -> str | None:
     if arg is None:
         return None
@@ -102,14 +102,6 @@ logger = logging.getLogger(__name__)
 #   ("transformers", "embeddings")         -> KeywordRunner / EmbeddingRunner
 # ---------------------------------------------------------------------------
 
-_RUNNERS: Dict[Tuple[str, str], Type[Runner]] = {
-    ("transformers", "code-generation"): DeepCoderChatRunner,
-    ("transformers", "text-generation"): DeepCoderChatRunner,
-    ("llama_cpp",    "code-generation"): LlamaCppChatRunner,
-    ("llama_cpp",    "text-generation"): LlamaCppChatRunner,
-    ("transformers", "vision-language"): VisionRunner
-
-}
 
 
 # ---------------------------------------------------------------------------

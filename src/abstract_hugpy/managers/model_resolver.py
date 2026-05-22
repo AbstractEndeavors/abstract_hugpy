@@ -16,7 +16,7 @@ from .whisper_model import WhisperRunner
 logger = logging.getLogger(__name__)
 import uuid
 from .vision.schemas import VisionRequest
-
+from .whisper_model import TranscribeRequest
 
 def _make_request_id() -> str:
     return f"req-{uuid.uuid4().hex[:12]}"
@@ -63,15 +63,17 @@ def _build_vision_request(kwargs: Dict[str, Any], model_key: str) -> VisionReque
 
 
 def _build_whisper_request(kwargs: Dict[str, Any], model_key: str) -> TranscribeRequest:
-    audio_path = kwargs.get("audio_path") or kwargs.get("file")
-    if audio_path is None:
+    file_path = kwargs.get("audio_path") or kwargs.get("file")
+    capture_frames = kwargs.get("capture_frames",False)
+    if file_path is None:
         raise ValueError(
             "whisper request needs 'audio_path' or 'file'; "
             f"got keys: {sorted(kwargs)}"
         )
     return TranscribeRequest(
         model_key=model_key,
-        audio_path=audio_path,
+        file_path=file_path,
+        capture_frames=capture_frames,
         request_id=kwargs.get("request_id", _make_request_id()),
     )
 

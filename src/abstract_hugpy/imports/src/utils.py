@@ -4,6 +4,10 @@ from pathlib import Path
 from typing import *
 import glob
 import os
+import re,os
+from .init_imports import get_logFile
+logger = get_logFile(__name__)
+
 def get_glob(path,ext):
     return sorted(glob.glob(os.path.join(path, ext)))
 def exists(obj):
@@ -130,3 +134,28 @@ def message_to_dict(message: Any) -> dict:
 
 def messages_to_dicts(messages: list[Any]) -> list[dict]:
     return [message_to_dict(message) for message in messages]
+
+
+def slugify(value: str, fallback: str = "media") -> str:
+    value = value.strip()
+    value = re.sub(r"[^\w.\- ]+", "_", value)
+    value = re.sub(r"\s+", "_", value)
+    value = value.strip("._-")
+    return value or fallback
+
+
+def unique_path(path) -> str:
+    if not os.path.exists(path):
+        return path
+    parent = os.path.dirname(path)
+    basename = os.path.basename(path)
+    stem,suffix = os.path.splitext(basename)
+
+    for index in range(1, 10_000):
+        basename = f"{stem}_{index}{suffix}"
+        candidate = os.path.join(parent,basename)
+        if not os.path.exists(candidate):
+            return candidate
+
+    raise RuntimeError(f"Could not create unique path for: {path}")
+

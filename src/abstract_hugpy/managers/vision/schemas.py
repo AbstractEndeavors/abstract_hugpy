@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .imports import VISION_HOST, DEFAULT_TIMEOUT, DEFAULT_MAX_TOKENS
+from .imports import VISION_HOST, DEFAULT_TIMEOUT, DEFAULT_MAX_TOKENS,dataclass, asdict,read_from_file
 
 QWEN_PATCH = 28
 QWEN_PIXELS_PER_TOKEN = QWEN_PATCH * QWEN_PATCH

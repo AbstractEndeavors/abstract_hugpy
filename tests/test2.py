@@ -1,6 +1,6 @@
 from imports import *
 from abstract_utilities import *
-input(get_env_path())
+
 IMAGE_PATH = "/home/op/Pictures/AE.png"
 
 ##
@@ -21,7 +21,7 @@ IMAGE_PATH = "/home/op/Pictures/AE.png"
 IMAGE_PATH = "/home/op/Pictures/chandra_bad.jpg"
 cfg = VisionBackendConfig(
     model_key="Qwen2.5-VL-7B-Instruct",
-    host="127.0.0.1",
+    host="192.168.1.100",
     port=7005,
     max_tokens=4096,
 )

@@ -9,7 +9,7 @@ input(extract)
 
 
 # 2) wire vision once, at the edge
-runner = VisionRunner(VisionBackendConfig(model_key="Qwen2.5-VL-7B-Instruct"))
+runner = runner_for(model_key="Qwen2.5-VL-7B-Instruct")
 
 # 3) configure the run
 cfg = VideoAnalysisConfig(prompt="please provide analysis of this video frame")

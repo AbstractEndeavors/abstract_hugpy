@@ -1,11 +1,4 @@
-from __future__ import annotations
-import uuid
-from pathlib import Path
-from typing import *
-import glob
-import os
-import re,os
-from .init_imports import get_logFile
+from .init_imports import *
 logger = get_logFile(__name__)
 
 def get_glob(path,ext):
@@ -168,3 +161,8 @@ def require_file(path, label: str=None) -> str:
         label = label or os.path.basename(path)
         raise FileNotFoundError(f"{label}: not found at {path}")
     return path
+
+def get_base_64_image(path):
+    with open(path, "rb") as f:
+        image_b64 = base64.b64encode(f.read()).decode("ascii")
+        return image_b64

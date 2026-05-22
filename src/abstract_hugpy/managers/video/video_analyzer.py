@@ -1,6 +1,7 @@
 from .imports import *
 from ..vision.schemas import VisionRequest
 from ..vision.vision_runner import VisionRunner
+import os
 
 def _resolve_manifest_path(source: Union[str, Any]) -> str:
     if isinstance(source, str):
@@ -27,6 +28,7 @@ async def analyze_video(
     runner: VisionRunner,
     config: VideoAnalysisConfig,
 ) -> VideoAnalysisSummary:
+    input(_resolve_manifest_path(source))
     manifest_path = require_file(_resolve_manifest_path(source), "manifest_path")
     manifest_data = safe_load_from_json(manifest_path)
     if not isinstance(manifest_data, dict):

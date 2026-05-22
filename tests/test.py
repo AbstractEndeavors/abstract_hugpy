@@ -1,9 +1,12 @@
 from imports import *
+url = "http://192.168.1.100:7005/analyze"
 
 VIDEO_PATH = "/home/op/Videos/Aaron Smith - Dancin (KRONO Remix).mp4"
-
-# 1) frames
+##response = postRequest(url)
 extract = asyncio.run(execute_prompt(file=VIDEO_PATH, capture_frames=True))
+input(extract)
+# 1) frames
+
 
 # 2) wire vision once, at the edge
 runner = VisionRunner(VisionBackendConfig(model_key="Qwen2.5-VL-7B-Instruct"))

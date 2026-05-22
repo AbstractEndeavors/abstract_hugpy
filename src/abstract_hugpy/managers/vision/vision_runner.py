@@ -10,7 +10,6 @@ class VisionRunner:
 
     def __init__(self, cfg: VisionBackendConfig):
         self.cfg = cfg
-        input(cfg)
         self.backend = build_backend(self.cfg)
 
     async def run(self, req: VisionRequest) -> VisionResult:

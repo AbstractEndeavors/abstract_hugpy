@@ -1,4 +1,4 @@
-from ..init_imports import *
+from .imports import *
 class TranscribeWord(BaseModel):
     word: str
     start: Optional[float] = None
@@ -111,7 +111,7 @@ class MediaArtifactManifest:
     files: dict[str, str] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
-    def set_file(self, key: str, path: str | Path | None) -> None:
+    def set_file(self, key: str, path: str | None) -> None:
         if path is not None:
             self.files[key] = str(path)
 

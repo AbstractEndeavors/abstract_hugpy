@@ -3,6 +3,7 @@ from .keywords import *
 from .whisper_model import *
 from .generate import *
 from .vision import *
+from .video import *
 from .summarizers import *
 from .llama import *
 from .dispatch import *

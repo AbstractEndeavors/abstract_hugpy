@@ -61,3 +61,5 @@ DEFAULT_WHISPER_MODEL = "whisper-large-v3"
 WHISPER_MODELS_REGISTRY: Dict[str, ModelConfig] = get_models_dict_by_names(names="whisper")
 if not WHISPER_MODELS_REGISTRY.get(DEFAULT_WHISPER_MODEL) and WHISPER_MODELS_REGISTRY:
     DEFAULT_WHISPER_MODEL = list(WHISPER_MODELS_REGISTRY.keys())[0]
+
+

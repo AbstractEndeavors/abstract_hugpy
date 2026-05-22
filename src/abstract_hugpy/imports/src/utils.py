@@ -159,3 +159,12 @@ def unique_path(path) -> str:
 
     raise RuntimeError(f"Could not create unique path for: {path}")
 
+
+def require_file(path, label: str=None) -> str:
+    if not path or not isinstance(path, str):
+        label = label or os.path.basename(path)
+        raise ValueError(f"{label}: missing or not a string ({path!r})")
+    if not osp.isfile(path):
+        label = label or os.path.basename(path)
+        raise FileNotFoundError(f"{label}: not found at {path}")
+    return path

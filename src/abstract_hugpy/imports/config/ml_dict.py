@@ -1,0 +1,58 @@
+{
+  "gte-large-en-v1.5": {
+    "hub_id": "Alibaba-NLP/gte-large-en-v1.5",
+    "folder": "Alibaba-NLP/gte-large-en-v1.5",
+    "task": "feature-extraction",
+    "runner": "embedding",
+    "model_max_length": 8192,
+  },
+  "all-minilm-l6-v2": {
+    "hub_id": "sentence-transformers/all-minilm-l6-v2",
+    "folder": "sentence-transformers/all-minilm-l6-v2",
+    "task": "sentence-similarity",
+    "runner": "embedding",
+    "model_max_length": 512,
+  },
+  "flan-t5-xl": {
+    "hub_id": "google/flan-t5-xl",
+    "folder": "google/flan-t5-xl",
+    "task": "text2text-generation",
+    "runner": "seq2seq",
+    "model_max_length": 1024,
+  },
+  "led-large-16384": {
+    "hub_id": "allenai/led-large-16384",
+    "folder": "allenai/led-large-16384",
+    "task": "summarization",
+    "runner": "seq2seq",
+    "model_max_length": 16384,
+  },
+  "text_summarization": {
+    "hub_id": "Falconsai/text_summarization",
+    "folder": "Falconsai/text_summarization",
+    "task": "summarization",
+    "runner": "seq2seq",
+    "model_max_length": 512,
+  },
+  "whisper-large-v3": {
+    "hub_id": "openai/whisper-large-v3",
+    "folder": "openai/whisper-large-v3",
+    "task": "automatic-speech-recognition",
+    "runner": "asr",
+    "model_max_length": 448,
+  },
+  "whisper-large-v3-turbo": {
+    "hub_id": "openai/whisper-large-v3-turbo",
+    "folder": "openai/whisper-large-v3-turbo",
+    "task": "automatic-speech-recognition",
+    "runner": "asr",
+    "model_max_length": 448,
+  },
+  "MiniCPM-V-4.6": {
+    "hub_id": "openbmb/MiniCPM-V-4.6",
+    "folder": "openbmb/MiniCPM-V-4.6",
+    "task": "image-text-to-text",
+    "runner": "vision",
+    "model_max_length": 32768,
+  },
+}

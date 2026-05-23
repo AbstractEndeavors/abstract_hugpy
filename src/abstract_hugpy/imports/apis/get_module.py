@@ -214,7 +214,11 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
     dirs, files = get_files_and_dirs(
         MODELS_HOME, allowed_exts=[".json", ".GGUF", ".gguf"]
     )
-
+    tasks_path = os.path.join(MODELS_HOME,"tasks.json")
+    tasks_data={}
+    if os.path.isfile(tasks_path):
+        tasks_data = safe_load_from_json(tasks_path)
+    
     # Folders that contain at least one config.json or gguf
     directories = list({
         os.path.dirname(f)
@@ -243,13 +247,19 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
         config_json=None
         disk_config_path = configs[0] if configs else None
         name = get_target_name(shortname, shortnames)
+
+        tasks = tasks_data.get(name)
+        primary_task = None
+        if tasks:
+            primary_task=tasks[0]
         discovered = {
             "name":      name,
             "hub_id":    folder,
             "folder":    folder,
             "framework": infer_framework(directory),
             "filename":  extract_gguf_filename(guffs, directory),
-            "task":      None,    # disk can't tell us; let registry fill
+            "tasks":      tasks,    # disk can't tell us; let registry fill
+            "primary_task": primary_task,
             "include":   None,    # same — registry-only field
             "model_max_length": max_model_length,
             "port": get_port(name),
@@ -259,9 +269,10 @@ def get_all_configs(verbose: bool = False,get_code: bool =False,get_files: bool 
         merged, provenance = _merge_disk_over_registry(discovered, registry_cfg)
         
         # --- conservative defaults for anything still None -----------------
-        if merged.get("task") is None:
-            merged["task"] = "code-generation"
-            provenance["task"] = "default"
+        if merged.get("tasks") is None:
+            merged["tasks"] = ["text-generation"]
+            merged["primary_task"] = "text-generation"
+            provenance["primary_task"] = "text-generation"
         if configs:
             config_json = configs[0]
         if verbose:

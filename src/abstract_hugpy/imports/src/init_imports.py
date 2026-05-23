@@ -35,5 +35,5 @@ from pathlib import Path
 from abstract_utilities import *
 from abstract_webtools import requests,derive_approved_headers_user_agent_session_for_url
 from datetime import datetime, timezone
-
+from enum import Enum
 

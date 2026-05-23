@@ -8,7 +8,8 @@ MODELS =  {
     "hub_id": "bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF",
     "filename": "Qwen2.5-Coder-1.5B-Instruct-Q4_K_M.gguf",
     "folder": "bartowski/Qwen2.5-Coder-1.5B-Instruct-GGUF",
-    "task": "code-generation",
+    "tasks": ["code-generation", "text-generation"],
+    "primary_task": "code-generation",
     "port": 7000
   },
   "Qwen2.5-VL-3B-Instruct": {
@@ -19,7 +20,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen2.5-VL-3B-Instruct",
     "filename": None,
     "folder": "Qwen/Qwen2.5-VL-3B-Instruct",
-    "task": "code-generation",
+    "tasks": ["image-text-to-text", "text-generation"],
+    "primary_task": "image-text-to-text",
     "port": None
   },
   "Qwen2.5-Coder-3B-Instruct-GGUF": {
@@ -30,7 +32,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
     "filename": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
     "folder": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
-    "task": "code-generation",
+    "tasks": ["code-generation", "text-generation"],
+    "primary_task": "code-generation",
     "port":7001
   },
   "Qwen2.5-VL-7B-Instruct": {
@@ -41,7 +44,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen2.5-VL-7B-Instruct",
     "filename": None,
     "folder": "Qwen/Qwen2.5-VL-7B-Instruct",
-    "task": "vision-language",
+    "tasks": ["image-text-to-text", "text-generation"],
+    "primary_task": "image-text-to-text",
     "port": 7005
   },
   "DAN-Qwen3-1.7B": {
@@ -52,7 +56,8 @@ MODELS =  {
     "hub_id": "UnfilteredAI/DAN-Qwen3-1.7B",
     "filename": None,
     "folder": "UnfilteredAI/DAN-Qwen3-1.7B",
-    "task": "text-generation",
+    "tasks": ["text-generation"],
+    "primary_task": "text-generation",
     "port": None
   },
   "Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128": {
@@ -63,7 +68,8 @@ MODELS =  {
     "hub_id": "groxaxo/Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128",
     "filename": None,
     "folder": "groxaxo/Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128",
-    "task": "code-generation",
+    "tasks": ["code-generation"],
+    "primary_task": "code-generation",
     "port": None
   },
   "Qwen3.6-35B-A3B": {
@@ -74,7 +80,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen3.6-35B-A3B",
     "filename": None,
     "folder": "Qwen/Qwen3.6-35B-A3B",
-    "task": "vision-language",
+    "tasks":  ["image-text-to-text", "text-generation"],
+    "primary_task": "image-text-to-text",
     "port": None
   },
   "Qwen3-Coder-Next-GGUF": {
@@ -85,7 +92,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen3-Coder-Next-GGUF",
     "filename": "Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
     "folder": "Qwen/Qwen3-Coder-Next-GGUF",
-    "task": "code-generation",
+    "tasks": ["image-text-to-text", "text-generation"],
+    "primary_task": "image-text-to-text",
     "port": 7002
   },
   "flux2-klein-9b-uncensored-text-encoder": {
@@ -96,7 +104,8 @@ MODELS =  {
     "hub_id": "ponpoke/flux2-klein-9b-uncensored-text-encoder",
     "filename": "flux2-klein-9b-uncensored-f16.gguf",
     "folder": "ponpoke/flux2-klein-9b-uncensored-text-encoder",
-    "task": "code-generation",
+    "tasks": ["code-generation"],
+    "primary_task": "code-generation",
     "port": 7003
   },
   "DeepCoder-14B-Preview": {
@@ -107,7 +116,8 @@ MODELS =  {
     "hub_id": "agentica-org/DeepCoder-14B-Preview",
     "filename": None,
     "folder": "agentica-org/DeepCoder-14B-Preview",
-    "task": "code-generation",
+    "tasks": ["image-text-to-text", "text-generation"],
+    "primary_task": "image-text-to-text",
     "port": None
   },
 
@@ -119,8 +129,80 @@ MODELS =  {
     "hub_id": "mradermacher/DAN-L3-R1-8B-i1-GGUF",
     "filename": "DAN-L3-R1-8B.i1-IQ1_M.gguf",
     "folder": "mradermacher/DAN-L3-R1-8B-i1-GGUF",
-    "task": "text-generation",
+    "tasks": ["text-generation"],
+    "primary_task": "text-generation",
     "port": 7004
-  }
+  },
+  "Falconsai-text-summarization": {
+        "model_max_length": 512,
+        "include": None,
+        "name": "Falconsai-text-summarization",
+        "framework": "transformers",
+        "hub_id": "Falconsai/text_summarization",
+        "filename": None,
+        "folder": "Falconsai/text_summarization",
+        "tasks": ["summarization"],
+        "primary_task": "summarization",
+        "port": None,
+    },
+    "led-large-16384": {
+        "model_max_length": 16384,
+        "include": None,
+        "name": "led-large-16384",
+        "framework": "transformers",
+        "hub_id": "allenai/led-large-16384",
+        "filename": None,
+        "folder": "allenai/led-large-16384",
+        "tasks": ["summarization"],
+        "primary_task": "summarization",
+        "port": None,
+    },
+    "flan-t5-xl": {
+        "model_max_length": 1024,
+        "include": None,
+        "name": "flan-t5-xl",
+        "framework": "transformers",
+        "hub_id": "google/flan-t5-xl",
+        "filename": None,
+        "folder": "google/flan-t5-xl",
+        "tasks": ["summarization", "text2text-generation"],
+        "primary_task": "summarization",
+        "port": None,
+    },
+    "all-minilm-l6-v2": {
+        "model_max_length": 512,
+        "include": None,
+        "name": "all-minilm-l6-v2",
+        "framework": "transformers",
+        "hub_id": "sentence-transformers/all-minilm-l6-v2",
+        "filename": None,
+        "folder": "sentence-transformers/all-minilm-l6-v2",
+        "tasks": ["feature-extraction", "sentence-similarity"],
+        "primary_task": "feature-extraction",
+        "port": None,
+    },
+    "gte-large-en-v1.5": {
+        "model_max_length": 8192,
+        "include": None,
+        "name": "gte-large-en-v1.5",
+        "framework": "transformers",
+        "hub_id": "Alibaba-NLP/gte-large-en-v1.5",
+        "filename": None,
+        "folder": "Alibaba-NLP/gte-large-en-v1.5",
+        "tasks": ["feature-extraction", "sentence-similarity"],
+        "primary_task": "feature-extraction",
+        "port": None,
+    },
+    "whisper-large-v3": {
+        "model_max_length": 448,
+        "include": None,
+        "name": "whisper-large-v3",
+        "framework": "transformers",
+        "hub_id": "openai/whisper-large-v3",
+        "filename": None,
+        "folder": "openai/whisper-large-v3",
+        "tasks": ["automatic-speech-recognition"],
+        "primary_task": "automatic-speech-recognition",
+        "port": None,
+    },
 }
-

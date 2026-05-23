@@ -24,7 +24,7 @@ EXCLUDE_DIR_PREFIXES = ("models--",)  # HF cache root naming
 
 DEFAULT_TIMEOUT=3600.0
 DEFAULT_MAX_TOKENS=32768
-
+MIN_INPUT_WORDS_DEFAULT = 10
   # whatever key resolve_qwen_vl_path expects
 SOURCEKIND = Literal["text", "url", "file", "image"]
 DEFAULT_TEMPERATURE = 0.1

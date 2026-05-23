@@ -9,6 +9,7 @@ _LLAMA_LOCK = threading.Lock()
 
 def get_llama_runner(model_key: str) -> LlamaCppBaseRunner:
     with _LLAMA_LOCK:
+        model_key = model_key.name
         runner = _LLAMA_INSTANCES.get(model_key)
         if runner is None:
             runner = _build_runner(model_key)

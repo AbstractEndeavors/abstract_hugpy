@@ -52,7 +52,8 @@ from ..constants import (
     DEFAULT_TEMPERATURE,
     DEFAULT_TOP_P,
     FINISH_REASONS,
-    ROLES
+    ROLES,
+    MIN_INPUT_WORDS_DEFAULT
     )
 from ..utils import (
     get_request_id,

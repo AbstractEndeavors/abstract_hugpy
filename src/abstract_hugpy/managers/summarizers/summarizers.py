@@ -17,35 +17,15 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Literal, Optional, Protocol, Tuple, runtime_checkable
 
-from .imports import (
-    DEFAULT_PATHS,
-    SingletonMeta,
-    get_torch,
-    get_transformers,
-    recursive_chunk,
-    safe_read_from_json,
-)
-
+from .imports import *
 # ---------------------------------------------------------------------------
 # Schema
 # ---------------------------------------------------------------------------
 
-class InputPolicy(Enum):
-    """
-    Controls what happens when input text is too short to summarize
-    meaningfully.
-
-    STRICT  — raise ValueError.  The safe default.
-    WARN    — return a prefixed warning + whatever the model produces.
-    ALLOW   — pass it straight through.  You asked for fiction, you get fiction.
-    """
-
-    STRICT = "strict"
-    WARN = "warn"
-    ALLOW = "allow"
 
 
-MIN_INPUT_WORDS_DEFAULT = 10
+
+
 def summarize_from_json(json_str: str, backend: str = "t5") -> str:
     """
     Deserialize JSON and call summarize.
@@ -71,61 +51,7 @@ def summarize_from_json(json_str: str, backend: str = "t5") -> str:
     
     return summarize(text, backend=backend, **data)
 
-@dataclass(frozen=True)
-class SummaryRequest:
-    """Immutable bag of parameters every back-end understands."""
 
-    text: str
-    max_chunk_tokens: int = 450
-    min_length: int = 100
-    max_length: int = 512
-    do_sample: bool = False
-    summary_mode: Literal["short", "medium", "long", "auto"] = "medium"
-    input_policy: InputPolicy = InputPolicy.STRICT
-    min_input_words: int = MIN_INPUT_WORDS_DEFAULT
-
-    # Consolidation pass (T5Backend merges chunk summaries into one).
-    # These were hardcoded as (80, 160) — now the caller/preset decides.
-    consolidation_min_length: int = 80
-    consolidation_max_length: int = 160
-    max_output_words: int = 150
-
-    def check_input(self) -> Optional[str]:
-        """
-        Return a human-readable problem string if the input is suspect,
-        or None if everything looks fine.
-        """
-        word_count = len(self.text.split())
-        if word_count < self.min_input_words:
-            return (
-                f"Input has {word_count} word(s); need at least "
-                f"{self.min_input_words} for a meaningful summary."
-            )
-        return None
-
-
-# ---------------------------------------------------------------------------
-# Presets — named parameter bundles
-# ---------------------------------------------------------------------------
-
-@dataclass(frozen=True)
-class SummaryPreset:
-    """
-    A frozen bag of defaults that a preset name resolves to.
-    Every field here maps 1:1 to a SummaryRequest field.
-    Only non-None values override the caller's explicit kwargs.
-    """
-
-    max_chunk_tokens: Optional[int] = None
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    do_sample: Optional[bool] = None
-    summary_mode: Optional[Literal["short", "medium", "long", "auto"]] = None
-    input_policy: Optional[InputPolicy] = None
-    min_input_words: Optional[int] = None
-    consolidation_min_length: Optional[int] = None
-    consolidation_max_length: Optional[int] = None
-    max_output_words: Optional[int] = None
 
 
 _PRESETS: Dict[str, SummaryPreset] = {}
@@ -316,18 +242,16 @@ class FlanBackend(metaclass=SingletonMeta):
 # Back-end: Local T5 (chunked → merged → consolidated)
 # ---------------------------------------------------------------------------
 
-@register_backend("t5")
-class T5Backend(metaclass=SingletonMeta):
-
-    def __init__(self):
+@register_backend("seq2seq_chunked")        # was "t5"
+class Seq2SeqChunkedBackend(metaclass=SingletonMeta):
+    """Chunk → summarize → consolidate. Works for any seq2seq summarizer."""
+    def __init__(self, model_key: str):
         if not hasattr(self, "_ready"):
-            model_dir = DEFAULT_PATHS["summarizer"]
-            tf = get_transformers()
-            self._tokenizer = get_transformers("T5TokenizerFast").from_pretrained(model_dir)
-            self._model = get_transformers("T5ForConditionalGeneration").from_pretrained(model_dir)
-            self._gen_config_raw = safe_read_from_json(
-                os.path.join(model_dir, "generation_config.json")
-            ) or {}
+            entry = resolve(model_key)       # validates it's a registered model
+            model_dir = os.path.join(MODELS_ROOT, entry.folder)
+            self._tokenizer = get_transformers("AutoTokenizer").from_pretrained(model_dir)
+            self._model = get_transformers("AutoModelForSeq2SeqLM").from_pretrained(model_dir)
+            self._model_key = model_key
             self._ready = True
 
     # -- internals ---------------------------------------------------------
@@ -407,17 +331,16 @@ class T5Backend(metaclass=SingletonMeta):
 # Back-end: Falconsai  (Falconsai/text_summarization)
 # ---------------------------------------------------------------------------
 
-@register_backend("falconsai")
-class FalconsaiBackend(metaclass=SingletonMeta):
-
-    def __init__(self):
+@register_backend("pipeline_chunked")       # was "falconsai"
+class PipelineChunkedBackend(metaclass=SingletonMeta):
+    """Sentence-split → HF pipeline → join. Cheaper, no consolidation pass."""
+    def __init__(self, model_key: str):
         if not hasattr(self, "_ready"):
-            tf = get_transformers()
+            entry = resolve(model_key)
+            model_dir = os.path.join(MODELS_ROOT, entry.folder)
             device = 0 if get_torch().cuda.is_available() else -1
             self._pipeline = get_transformers("pipeline")(
-                "summarization",
-                model="Falconsai/text_summarization",
-                device=device,
+                "summarization", model=model_dir, device=device,
             )
             self._ready = True
 

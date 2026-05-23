@@ -4,20 +4,16 @@ import logging
 import threading
 from pydantic import BaseModel
 
-from .imports import (
-    Runner, ChatRequest, MODEL_REGISTRY,TranscribeRequest,
-    DEFAULT_CHAT_MODEL, DEFAULT_VISION_MODEL, DEFAULT_WHISPER_MODEL,derive_media_type
-)
+from .imports import *
 from .generate import DeepCoderChatRunner
 from .vision import VisionRunner
 from .llama import LlamaCppChatRunner
-from .whisper_model import WhisperRunner
+from .whisper_model import WhisperRunner,TranscribeRequest
 
 logger = logging.getLogger(__name__)
 import uuid
 from .vision.schemas import VisionRequest
-from .whisper_model import TranscribeRequest
-
+from .summarizers import SummarizeRunner
 def _make_request_id() -> str:
     return f"req-{uuid.uuid4().hex[:12]}"
 
@@ -77,25 +73,50 @@ def _build_whisper_request(kwargs: Dict[str, Any], model_key: str) -> Transcribe
         request_id=kwargs.get("request_id", _make_request_id()),
     )
 
+def _build_summarize_request(kwargs: Dict[str, Any], model_key: str) -> "SummarizeRequest":
+    text = kwargs.get("text") or kwargs.get("prompt")
+    if text is None and kwargs.get("file"):
+        text = read_from_file(kwargs["file"])
+    if text is None:
+        raise ValueError(
+            "summarize request needs 'text', 'prompt', or 'file'; "
+            f"got keys: {sorted(kwargs)}"
+        )
 
+    out: Dict[str, Any] = {
+        "model_key": model_key,
+        "text": text,
+        "request_id": kwargs.get("request_id", _make_request_id()),
+    }
+    for k in (
+        "preset", "summary_mode", "input_policy",
+        "max_chunk_tokens", "min_length", "max_length",
+        "do_sample", "min_input_words",
+        "consolidation_min_length", "consolidation_max_length",
+        "max_output_words",
+    ):
+        if k in kwargs:
+            out[k] = kwargs[k]
+    return SummarizeRequest(**out)
 _REQUEST_BUILDERS: Dict[Tuple[str, str], Callable[[Dict[str, Any], str], BaseModel]] = {
     ("transformers", "code-generation"):    _build_chat_request,
     ("transformers", "text-generation"):    _build_chat_request,
     ("llama_cpp",    "code-generation"):    _build_chat_request,
     ("llama_cpp",    "text-generation"):    _build_chat_request,
-    ("transformers", "vision-language"):    _build_vision_request,
+    ("transformers", "image-text-to-text"):    _build_vision_request,
     ("transformers", "speech-recognition"): _build_whisper_request,
 }
 
 _RUNNERS: Dict[Tuple[str, str], Type[Runner]] = {
-    ("transformers", "code-generation"): DeepCoderChatRunner,
-    ("transformers", "text-generation"): DeepCoderChatRunner,
-    ("llama_cpp",    "code-generation"): LlamaCppChatRunner,
-    ("llama_cpp",    "text-generation"): LlamaCppChatRunner,
-    ("transformers", "vision-language"): VisionRunner,
-    ("transformers", "speech-recognition"): WhisperRunner,
+    ("transformers", "code-generation"):              DeepCoderChatRunner,
+    ("transformers", "text-generation"):              DeepCoderChatRunner,
+    ("llama_cpp",    "code-generation"):              LlamaCppChatRunner,
+    ("llama_cpp",    "text-generation"):              LlamaCppChatRunner,
+    ("transformers", "image-text-to-text"):              VisionRunner,
+    ("transformers", "automatic-speech-recognition"): WhisperRunner,
+    ("transformers", "summarization"):                SummarizeRunner,
+    ("transformers", "text2text-generation"):         SummarizeRunner
 }
-
 
 _MEDIA_DEFAULTS: Dict[str, str] = {
     "document": DEFAULT_CHAT_MODEL,
@@ -112,6 +133,7 @@ def resolve_model_key(
     model_key: Optional[str] = None,
     file: Optional[str] = None,
     media_type: Optional[str] = None,
+    task_key: Optional[str] = None,
 ) -> str:
     """Pick a model_key via explicit resolution chain.
 

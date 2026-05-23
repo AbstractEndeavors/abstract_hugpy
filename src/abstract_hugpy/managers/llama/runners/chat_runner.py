@@ -59,36 +59,36 @@ class LlamaCppChatRunner:
             m.model_dump() if hasattr(m, "model_dump") else m
             for m in req.messages
         ]
-        try:
-            if req.unbounded:
-                text = await self.runner.generate_text_async(
-                    messages,
-                    temperature=req.temperature,
-                    top_p=req.top_p,
-                    do_sample=req.do_sample,
-                )
-            else:
-                text = await self.runner.generate_text_async(
-                    messages,
-                    max_new_tokens=req.max_new_tokens,
-                    temperature=req.temperature,
-                    top_p=req.top_p,
-                    do_sample=req.do_sample,
-                    use_chat_template=True,
-                    return_full_text=False,
-                )
-            return ChatResult(
-                request_id=req.request_id, model_key=req.model_key,
-                ok=True, text=text, finish_reason="stop",
+##        try:
+        if req.unbounded:
+            text = await self.runner.generate_text_async(
+                messages,
+                temperature=req.temperature,
+                top_p=req.top_p,
+                do_sample=req.do_sample,
             )
-        except Exception as exc:
-            logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",
-                             self.model_key, req.request_id)
-            return ChatResult(
-                request_id=req.request_id, model_key=req.model_key,
-                ok=False, error=f"{type(exc).__name__}: {exc}",
-                text="", finish_reason="error",
+        else:
+            text = await self.runner.generate_text_async(
+                messages,
+                max_new_tokens=req.max_new_tokens,
+                temperature=req.temperature,
+                top_p=req.top_p,
+                do_sample=req.do_sample,
+                use_chat_template=True,
+                return_full_text=False,
             )
+        return ChatResult(
+            request_id=req.request_id, model_key=req.model_key,
+            ok=True, text=text, finish_reason="stop",
+        )
+##        except Exception as exc:
+##            logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",
+##                             self.model_key, req.request_id)
+##            return ChatResult(
+##                request_id=req.request_id, model_key=req.model_key,
+##                ok=False, error=f"{type(exc).__name__}: {exc}",
+##                text="", finish_reason="error",
+##            )
     # --- streaming ---------------------------------------------------------
 
     async def stream(

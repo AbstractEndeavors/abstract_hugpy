@@ -129,22 +129,25 @@ def runner_for(model_key: str) -> Runner:
                 f"known: {sorted(MODEL_REGISTRY.keys())}"
             )
 
-        key = (cfg.framework, cfg.task)
+        key = (cfg.framework, cfg.primary_task)
         cls = _RUNNERS.get(key)
         if cls is None:
             raise KeyError(
                 f"No runner registered for {model_key!r} "
-                f"(framework={cfg.framework!r}, task={cfg.task!r}); "
+                f"(framework={cfg.framework!r}, tasks={list(cfg.tasks)!r}, "
+                f"primary={cfg.primary_task!r}); "
                 f"known runner keys: {sorted(_RUNNERS.keys())}"
             )
 
         logger.info(
-            "instantiating runner: model=%s class=%s framework=%s task=%s",
-            model_key, cls.__name__, cfg.framework, cfg.task,
+            "instantiating runner: model=%s class=%s framework=%s primary_task=%s",
+            model_key, cls.__name__, cfg.framework, cfg.primary_task,
         )
         instance = cls(cfg)
         _INSTANCES[model_key] = instance
         return instance
+
+
 
 
 # ---------------------------------------------------------------------------
@@ -189,16 +192,18 @@ def execute_prompt(*args: Any, **kwargs: Any):
     )
 
     cfg = MODEL_REGISTRY[model_key]
-    task_key = (cfg.framework, cfg.task)
+    task_key = (cfg.framework, cfg.primary_task)
 
     builder = _REQUEST_BUILDERS.get(task_key)
     if builder is None:
         raise KeyError(
             f"No request builder registered for {model_key!r} "
-            f"(framework={cfg.framework!r}, task={cfg.task!r}); "
+            f"(framework={cfg.framework!r}, tasks={list(cfg.tasks)!r}, "
+            f"primary={cfg.primary_task!r}); "
             f"known builder keys: {sorted(_REQUEST_BUILDERS)}"
         )
 
     req = builder(prompt_kwargs, model_key)
     runner = runner_for(model_key)
     return runner.run(req=req)
+

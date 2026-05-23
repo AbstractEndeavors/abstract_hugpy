@@ -4,7 +4,8 @@ class ModelConfig:
     name: str
     hub_id: str
     folder: str
-    task: str
+    tasks: list
+    primary_task: str
     model_key:str
     framework: str = "transformers"
     filename: Optional[str] = None

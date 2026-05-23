@@ -32,8 +32,9 @@ def default_context_tokens_for_model(model_key: str) -> int:
 def get_models_dict_by_tasks(tasks=None):
     tasks = make_list(tasks or [])
     models = {}
-    for module_key,values in MODEL_REGISTRY.items():
-        if values.task in tasks:
+    for module_key, values in MODEL_REGISTRY.items():
+        # was: if values.task in tasks
+        if any(t in tasks for t in values.tasks):
             models[module_key] = values
     return models
 def get_models_dict_by_names(names=None):
@@ -53,7 +54,7 @@ if not CHAT_MODELS_REGISTRY.get(DEFAULT_CHAT_MODEL) and CHAT_MODELS_REGISTRY:
 DEFAULT_MODEL = DEFAULT_CHAT_MODEL
 
 DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"
-VISION_MODELS_REGISTRY: Dict[str, ModelConfig] = get_models_dict_by_tasks(tasks="vision-language")
+VISION_MODELS_REGISTRY: Dict[str, ModelConfig] = get_models_dict_by_tasks(tasks="image-text-to-text")
 if not VISION_MODELS_REGISTRY.get(DEFAULT_VISION_MODEL) and VISION_MODELS_REGISTRY:
     DEFAULT_VISION_MODEL = list(VISION_MODELS_REGISTRY.keys())[0]
 

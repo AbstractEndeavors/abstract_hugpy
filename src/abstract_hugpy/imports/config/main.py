@@ -40,7 +40,7 @@ def list_model_options():
             "name": cfg.name,
             "hub_id": cfg.hub_id,
             "folder": cfg.folder,
-            "task": cfg.task,
+            "task": cfg.tasks,
             "framework": cfg.framework,
             "filename": cfg.filename,
             "max_new_tokens": cfg.max_new_tokens,

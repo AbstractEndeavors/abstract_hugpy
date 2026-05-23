@@ -1,3 +1,4 @@
+from .imports import *
 # runners/summarize_runner.py
 class SummarizeRunner:
     request_type = SummarizeRequest
@@ -17,3 +18,4 @@ class SummarizeRunner:
 
     async def stream(self, req, cancel_event):
         raise NotImplementedError("summarization is one-shot")
+

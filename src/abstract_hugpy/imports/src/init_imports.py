@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os,re,unicodedata,bs4,urllib,tempfile,copy
 import os.path as osp
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field,model_validator
 from dataclasses import dataclass, asdict, field
 from abstract_utilities import (
     SingletonMeta,

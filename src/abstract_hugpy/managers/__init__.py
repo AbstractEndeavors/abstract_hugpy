@@ -1,3 +1,4 @@
+from .embed import *
 from .falconsai import *
 from .keywords import *
 from .whisper_model import *

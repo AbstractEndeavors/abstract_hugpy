@@ -5,15 +5,32 @@ from .imports import MODELS_DICT_PATH,ModelConfig,safe_load_from_json,Dict,make_
 # Model registry
 # ---------------------------------------------------------------------
 
+# Option A: code is the source of truth, disk can add new models only
+# Option B: disk wins, but only on a whitelisted set of fields
+_OVERLAY_ALLOWED = {"port", "host", "timeout_s", "include"}  # ops knobs only
+
 def get_models_dict():
     nudict = {}
-    models_dict = safe_load_from_json(MODELS_DICT_PATH) or {}
-    MODELS.update(models_dict)
-    for key,values in MODELS.items():
-        values["model_key"]=key
-        nudict[key] = ModelConfig(**values)
+    overlay = safe_load_from_json(MODELS_DICT_PATH) or {}
+    for key, defaults in MODELS.items():
+        merged = dict(defaults)
+        if key in overlay:
+            for k, v in overlay[key].items():
+                if k in _OVERLAY_ALLOWED:
+                    merged[k] = v
+                else:
+                    logger.warning(
+                        "ignoring overlay field %r for model %s "
+                        "(not in _OVERLAY_ALLOWED=%s)", k, key, sorted(_OVERLAY_ALLOWED)
+                    )
+        merged["model_key"] = key
+        nudict[key] = ModelConfig(**merged)
+    # disk-only models (not in code) — allow only if you want that
+    for key, values in overlay.items():
+        if key not in MODELS:
+            values["model_key"] = key
+            nudict[key] = ModelConfig(**values)
     return nudict
-
 MODEL_REGISTRY: Dict[str, ModelConfig] = get_models_dict()
 
     
@@ -63,4 +80,10 @@ WHISPER_MODELS_REGISTRY: Dict[str, ModelConfig] = get_models_dict_by_names(names
 if not WHISPER_MODELS_REGISTRY.get(DEFAULT_WHISPER_MODEL) and WHISPER_MODELS_REGISTRY:
     DEFAULT_WHISPER_MODEL = list(WHISPER_MODELS_REGISTRY.keys())[0]
 
+DEFAULT_EMBED_MODEL = "all-minilm-l6-v2"
+EMBED_MODELS_REGISTRY: Dict[str, ModelConfig] = get_models_dict_by_tasks(
+    tasks=["feature-extraction", "sentence-similarity"]
+)
+if not EMBED_MODELS_REGISTRY.get(DEFAULT_EMBED_MODEL) and EMBED_MODELS_REGISTRY:
+    DEFAULT_EMBED_MODEL = list(EMBED_MODELS_REGISTRY.keys())[0]
 

@@ -1,4 +1,6 @@
 from imports import *
+
+
 VIDEO_PATH = "/home/op/Videos/Aaron Smith - Dancin (KRONO Remix).mp4"
 IMAGE_PATH="/home/op/Pictures/chandra_bad.jpg"
 def test_video_analyzer():
@@ -14,8 +16,6 @@ def test_video_analyzer():
     # 4) execute
     summary = asyncio.run(analyze_video(extract, runner, cfg))
     print(summary.model_dump_json(indent=2))
+result = asyncio.run(execute_prompt(model_key="Qwen3-Coder-Next-GGUF", task="text-generation", prompt="hihihi"))
+input(result)
 
-for model_key,values in MODEL_REGISTRY.items():
-
-    result = asyncio.run(execute_prompt(model_key=model_key,prompt="hihihi",image_path=IMAGE_PATH,video_path=VIDEO_PATH))
-    input(result)

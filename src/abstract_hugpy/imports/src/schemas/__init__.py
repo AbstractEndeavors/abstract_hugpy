@@ -6,3 +6,4 @@ from .task_schemas import *
 from .video_schemas import *
 from .whisper_schemas import *
 from .summarizer_schemas import *
+from .embeded_schemas import *

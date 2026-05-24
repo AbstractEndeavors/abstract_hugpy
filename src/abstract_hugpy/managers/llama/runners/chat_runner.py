@@ -1,17 +1,18 @@
 """Llama.cpp chat runner.
 
-Adapter over the existing LlamaCppPythonRunner (in llama/llama_runner.py).
-That class already does all the real work — chat-template handling,
-streaming, finish_reason mapping, the unbounded continue loop. This file
-just bolts the Runner protocol onto it.
+Adapter over the existing LlamaCppPythonRunner / LlamaCppRunner (HTTP).
+Both are kept in their per-process singleton cache (get_llama_runner),
+so the heavy GGUF load happens once per model_key regardless of how
+many adapter wrappers exist.
 
-Why two runners (deepcoder + llama.cpp) instead of one with a switch:
-    They genuinely have different lifecycles (DeepCoder is built from a
-    DeepCoderConfig and cached by cache_key; LlamaCppPythonRunner is keyed
-    by model_key and built directly). Keeping them as separate classes
-    means the dispatch table reads as a 1:1 mapping of (framework, task)
-    -> class, and neither runner has to know about the other's loader.
+Constructor signature is uniform with the other runners in _RUNNERS:
+    __init__(self, cfg: ModelConfig, **runtime_kwargs)
+
+This matches what dispatch._get_or_build_runner expects, so the
+dispatch table can stay a flat (framework, task) -> class mapping
+without any per-runner adapter logic.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,46 +21,48 @@ from typing import AsyncIterator, Optional
 
 from .src import *
 from .imports import *
-# Existing module — adjust dotted path to wherever this file lives.
 from .get import get_llama_runner
 
 logger = logging.getLogger(__name__)
 
 
 class LlamaCppChatRunner:
-    """Runner for GGUF models loaded in-process via llama_cpp.
+    """Runner for GGUF models loaded in-process via llama_cpp or via HTTP.
 
-    Uses the existing get_llama_runner() singleton cache so multiple
-    runners for the same model_key share a single LlamaCppPythonRunner
+    Uses the get_llama_runner() singleton cache so multiple adapter
+    wrappers for the same model_key share a single underlying runner
     (which itself holds the loaded GGUF + KV cache + generate_lock).
     """
 
     request_type = ChatRequest
     result_type = ChatResult
 
-    def __init__(self, model_key: str, **runtime_kwargs):
-        self.model_key = model_key
+    def __init__(self, cfg, **runtime_kwargs):
+        self.cfg = cfg
+        # model_key is whatever the registry uses as its key; ModelConfig
+        # exposes it as model_key (set by get_models_dict in models_config).
+        self.model_key = cfg.model_key
         # runtime_kwargs (n_ctx override, n_threads, ...) are forwarded
         # only on first construction; subsequent runners with the same
-        # model_key get the cached instance regardless. This matches the
-        # existing singleton behavior of get_llama_runner().
+        # model_key get the cached instance regardless. Singleton behavior
+        # is intentional — we don't want two GGUF loads for one model.
         self._runtime_kwargs = runtime_kwargs
 
     @property
-    def runner(self) -> LlamaCppRunner:
+    def runner(self):
         # Lazy resolution. First access triggers the GGUF load (which can
-        # take seconds for a 14B model), subsequent accesses are dict lookups.
+        # take seconds for a 14B model); subsequent accesses are dict lookups.
         return get_llama_runner(self.model_key)
 
     # --- non-streaming -----------------------------------------------------
 
-    async def run(self, req: ChatInput) -> ChatResult:
+    async def run(self, req) -> ChatResult:
         req = ChatRequest.coerce(req, model_key=self.model_key)
         messages = [
             m.model_dump() if hasattr(m, "model_dump") else m
             for m in req.messages
         ]
-##        try:
+
         if req.unbounded:
             text = await self.runner.generate_text_async(
                 messages,
@@ -77,18 +80,15 @@ class LlamaCppChatRunner:
                 use_chat_template=True,
                 return_full_text=False,
             )
+
         return ChatResult(
-            request_id=req.request_id, model_key=req.model_key,
-            ok=True, text=text, finish_reason="stop",
+            request_id=req.request_id,
+            model_key=req.model_key,
+            ok=True,
+            text=text,
+            finish_reason="stop",
         )
-##        except Exception as exc:
-##            logger.exception("LlamaCppChatRunner.run failed: model=%s req=%s",
-##                             self.model_key, req.request_id)
-##            return ChatResult(
-##                request_id=req.request_id, model_key=req.model_key,
-##                ok=False, error=f"{type(exc).__name__}: {exc}",
-##                text="", finish_reason="error",
-##            )
+
     # --- streaming ---------------------------------------------------------
 
     async def stream(

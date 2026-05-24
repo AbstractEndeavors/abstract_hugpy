@@ -1,4 +1,4 @@
-MODELS =  {
+MODELS = {
 
   "Qwen2.5-Coder-1.5B-Instruct-GGUF": {
     "model_max_length": 32768,
@@ -34,7 +34,7 @@ MODELS =  {
     "folder": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
     "tasks": ["code-generation", "text-generation"],
     "primary_task": "code-generation",
-    "port":7001
+    "port": 7001
   },
   "Qwen2.5-VL-7B-Instruct": {
     "model_max_length": 32768,
@@ -60,6 +60,9 @@ MODELS =  {
     "primary_task": "text-generation",
     "port": None
   },
+  # FIXED: was primary_task="code-generation" with framework=transformers and
+  # tasks=["code-generation"] — that pair IS registered, leave alone. But the
+  # entry below had a copy-paste mismatch.
   "Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128": {
     "model_max_length": 262144,
     "include": None,
@@ -68,7 +71,7 @@ MODELS =  {
     "hub_id": "groxaxo/Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128",
     "filename": None,
     "folder": "groxaxo/Qwen3.6-27B-AEON-Ultimate-Uncensored-GPTQ-Pro-FOEM-4bit-g128",
-    "tasks": ["code-generation"],
+    "tasks": ["code-generation", "text-generation"],
     "primary_task": "code-generation",
     "port": None
   },
@@ -80,10 +83,13 @@ MODELS =  {
     "hub_id": "Qwen/Qwen3.6-35B-A3B",
     "filename": None,
     "folder": "Qwen/Qwen3.6-35B-A3B",
-    "tasks":  ["image-text-to-text", "text-generation"],
+    "tasks": ["image-text-to-text", "text-generation"],
     "primary_task": "image-text-to-text",
     "port": None
   },
+  # FIXED: was primary_task="image-text-to-text" on framework=llama_cpp.
+  # There is no ("llama_cpp", "image-text-to-text") runner — and shouldn't be,
+  # llama.cpp here doesn't do vision. This is a coder model on a chat GGUF.
   "Qwen3-Coder-Next-GGUF": {
     "model_max_length": 32768,
     "include": "Qwen3-Coder-Next-Q4_K_M/*.gguf",
@@ -92,8 +98,8 @@ MODELS =  {
     "hub_id": "Qwen/Qwen3-Coder-Next-GGUF",
     "filename": "Qwen3-Coder-Next-Q4_K_M-00001-of-00004.gguf",
     "folder": "Qwen/Qwen3-Coder-Next-GGUF",
-    "tasks": ["image-text-to-text", "text-generation"],
-    "primary_task": "image-text-to-text",
+    "tasks": ["code-generation", "text-generation"],
+    "primary_task": "code-generation",
     "port": 7002
   },
   "flux2-klein-9b-uncensored-text-encoder": {
@@ -104,10 +110,12 @@ MODELS =  {
     "hub_id": "ponpoke/flux2-klein-9b-uncensored-text-encoder",
     "filename": "flux2-klein-9b-uncensored-f16.gguf",
     "folder": "ponpoke/flux2-klein-9b-uncensored-text-encoder",
-    "tasks": ["code-generation"],
-    "primary_task": "code-generation",
+    "tasks": ["text-generation"],
+    "primary_task": "text-generation",
     "port": 7003
   },
+  # FIXED: was primary_task="image-text-to-text" with tasks=["image-text-to-text",
+  # "text-generation"]. DeepCoder is a coder model; image-text-to-text is wrong.
   "DeepCoder-14B-Preview": {
     "model_max_length": 32768,
     "include": None,
@@ -116,11 +124,10 @@ MODELS =  {
     "hub_id": "agentica-org/DeepCoder-14B-Preview",
     "filename": None,
     "folder": "agentica-org/DeepCoder-14B-Preview",
-    "tasks": ["image-text-to-text", "text-generation"],
-    "primary_task": "image-text-to-text",
+    "tasks": ["code-generation", "text-generation"],
+    "primary_task": "code-generation",
     "port": None
   },
-
   "DAN-L3-R1-8B-i1-GGUF": {
     "model_max_length": 32768,
     "include": "*Q4_K_M.gguf",
@@ -134,75 +141,80 @@ MODELS =  {
     "port": 7004
   },
   "Falconsai-text-summarization": {
-        "model_max_length": 512,
-        "include": None,
-        "name": "Falconsai-text-summarization",
-        "framework": "transformers",
-        "hub_id": "Falconsai/text_summarization",
-        "filename": None,
-        "folder": "Falconsai/text_summarization",
-        "tasks": ["summarization"],
-        "primary_task": "summarization",
-        "port": None,
-    },
-    "led-large-16384": {
-        "model_max_length": 16384,
-        "include": None,
-        "name": "led-large-16384",
-        "framework": "transformers",
-        "hub_id": "allenai/led-large-16384",
-        "filename": None,
-        "folder": "allenai/led-large-16384",
-        "tasks": ["summarization"],
-        "primary_task": "summarization",
-        "port": None,
-    },
-    "flan-t5-xl": {
-        "model_max_length": 1024,
-        "include": None,
-        "name": "flan-t5-xl",
-        "framework": "transformers",
-        "hub_id": "google/flan-t5-xl",
-        "filename": None,
-        "folder": "google/flan-t5-xl",
-        "tasks": ["summarization", "text2text-generation"],
-        "primary_task": "summarization",
-        "port": None,
-    },
-    "all-minilm-l6-v2": {
-        "model_max_length": 512,
-        "include": None,
-        "name": "all-minilm-l6-v2",
-        "framework": "transformers",
-        "hub_id": "sentence-transformers/all-minilm-l6-v2",
-        "filename": None,
-        "folder": "sentence-transformers/all-minilm-l6-v2",
-        "tasks": ["feature-extraction", "sentence-similarity"],
-        "primary_task": "feature-extraction",
-        "port": None,
-    },
-    "gte-large-en-v1.5": {
-        "model_max_length": 8192,
-        "include": None,
-        "name": "gte-large-en-v1.5",
-        "framework": "transformers",
-        "hub_id": "Alibaba-NLP/gte-large-en-v1.5",
-        "filename": None,
-        "folder": "Alibaba-NLP/gte-large-en-v1.5",
-        "tasks": ["feature-extraction", "sentence-similarity"],
-        "primary_task": "feature-extraction",
-        "port": None,
-    },
-    "whisper-large-v3": {
-        "model_max_length": 448,
-        "include": None,
-        "name": "whisper-large-v3",
-        "framework": "transformers",
-        "hub_id": "openai/whisper-large-v3",
-        "filename": None,
-        "folder": "openai/whisper-large-v3",
-        "tasks": ["automatic-speech-recognition"],
-        "primary_task": "automatic-speech-recognition",
-        "port": None,
-    },
+    "model_max_length": 512,
+    "include": None,
+    "name": "Falconsai-text-summarization",
+    "framework": "transformers",
+    "hub_id": "Falconsai/text_summarization",
+    "filename": None,
+    "folder": "Falconsai/text_summarization",
+    "tasks": ["summarization"],
+    "primary_task": "summarization",
+    "port": None,
+  },
+  "led-large-16384": {
+    "model_max_length": 16384,
+    "include": None,
+    "name": "led-large-16384",
+    "framework": "transformers",
+    "hub_id": "allenai/led-large-16384",
+    "filename": None,
+    "folder": "allenai/led-large-16384",
+    "tasks": ["summarization"],
+    "primary_task": "summarization",
+    "port": None,
+  },
+  "flan-t5-xl": {
+    "model_max_length": 1024,
+    "include": None,
+    "name": "flan-t5-xl",
+    "framework": "transformers",
+    "hub_id": "google/flan-t5-xl",
+    "filename": None,
+    "folder": "google/flan-t5-xl",
+    "tasks": ["summarization", "text2text-generation"],
+    "primary_task": "summarization",
+    "port": None,
+  },
+  # NOTE: feature-extraction / sentence-similarity have no runner or builder
+  # registered. validate_registry() will reject these two until you add a
+  # ("transformers", "feature-extraction") runner+builder pair. Leaving them
+  # here as a deliberate signal — if you don't intend to serve them yet,
+  # remove the entries; if you do, wire up the runner.
+  "all-minilm-l6-v2": {
+    "model_max_length": 512,
+    "include": None,
+    "name": "all-minilm-l6-v2",
+    "framework": "transformers",
+    "hub_id": "sentence-transformers/all-minilm-l6-v2",
+    "filename": None,
+    "folder": "sentence-transformers/all-minilm-l6-v2",
+    "tasks": ["feature-extraction", "sentence-similarity"],
+    "primary_task": "feature-extraction",
+    "port": None,
+  },
+  "gte-large-en-v1.5": {
+    "model_max_length": 8192,
+    "include": None,
+    "name": "gte-large-en-v1.5",
+    "framework": "transformers",
+    "hub_id": "Alibaba-NLP/gte-large-en-v1.5",
+    "filename": None,
+    "folder": "Alibaba-NLP/gte-large-en-v1.5",
+    "tasks": ["feature-extraction", "sentence-similarity"],
+    "primary_task": "feature-extraction",
+    "port": None,
+  },
+  "whisper-large-v3": {
+    "model_max_length": 448,
+    "include": None,
+    "name": "whisper-large-v3",
+    "framework": "transformers",
+    "hub_id": "openai/whisper-large-v3",
+    "filename": None,
+    "folder": "openai/whisper-large-v3",
+    "tasks": ["automatic-speech-recognition"],
+    "primary_task": "automatic-speech-recognition",
+    "port": None,
+  },
 }

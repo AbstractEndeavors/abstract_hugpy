@@ -18,6 +18,16 @@ class ModelConfig:
         return asdict(self)
 
 
+
+    @model_validator(mode="after")
+    def _check_primary_in_tasks(self):
+        if self.primary_task not in self.tasks:
+            raise ValueError(
+                f"{self.model_key}: primary_task={self.primary_task!r} "
+                f"not in tasks={sorted(self.tasks)!r}"
+            )
+        return self
+
 @dataclass(frozen=True)
 class DeepCoderRuntime:
     model_dir: str

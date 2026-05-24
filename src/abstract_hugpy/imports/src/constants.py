@@ -36,3 +36,4 @@ ROLES = Literal["system", "user", "assistant"]
 DEFAULT_CHAT_MODEL = "Qwen2.5-Coder-3B-Instruct-GGUF"
 DEFAULT_VISION_MODEL = "Qwen2.5-VL-7B-Instruct"
 DEFAULT_WHISPER_MODEL = "whisper-large-v3"
+DEFAULT_SUMMARIZE_MODEL = "text_summarization"

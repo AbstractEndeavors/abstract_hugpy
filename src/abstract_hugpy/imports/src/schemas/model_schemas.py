@@ -1,32 +1,36 @@
 from .imports import *
-@dataclass(frozen=True)
-class ModelConfig:
+
+
+class ModelConfig(BaseModel):
+    """Registry entry for one model. Immutable after construction."""
+    model_config = ConfigDict(frozen=True)
+
     name: str
     hub_id: str
     folder: str
-    tasks: list
+    tasks: List[str]
     primary_task: str
-    model_key:str
+    model_key: str
     framework: str = "transformers"
     filename: Optional[str] = None
     include: Optional[str] = None
-    model_max_length: Optional[str] = DEFAULT_MAX_TOKENS
+    model_max_length: Optional[int] = DEFAULT_MAX_TOKENS
     port: Optional[int] = None
-    host: Optional[int] = None
+    host: Optional[str] = None
     timeout_s: Optional[int] = 3600
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
 
-
+    def to_dict(self) -> dict:
+        return self.model_dump()
 
     @model_validator(mode="after")
-    def _check_primary_in_tasks(self):
+    def _check_primary_in_tasks(self) -> "ModelConfig":
         if self.primary_task not in self.tasks:
             raise ValueError(
                 f"{self.model_key}: primary_task={self.primary_task!r} "
                 f"not in tasks={sorted(self.tasks)!r}"
             )
         return self
+
 
 @dataclass(frozen=True)
 class DeepCoderRuntime:
@@ -51,7 +55,7 @@ class DeepCoderRuntime:
             self.max_concurrent_generations,
         )
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict:
         return {
             "model_dir": self.model_dir,
             "device": self.device,

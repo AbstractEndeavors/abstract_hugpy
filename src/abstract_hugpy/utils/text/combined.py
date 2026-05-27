@@ -1,17 +1,52 @@
+"""High-level text / media analysis utilities.
+
+These functions sit on top of the runner dispatch layer and optionally
+require third-party packages (abstract_ocr, abstract_webtools) that may
+not be installed in every environment. All such imports are guarded so
+that importing this module never raises ImportError.
+"""
+from __future__ import annotations
+
+import logging
 import os.path as osp
 from dataclasses import dataclass, field, asdict
-from typing import Callable, Optional, List, Dict, Any
-from abstract_ocr import paddle_image
-from abstract_webtools import *
-from ..seo.pdf_utils import _analyze, PDFSeoReport
-from .imports import *
+from typing import Any, Callable, Dict, List, Optional
 from typing import Literal
-from pydantic import BaseModel
 
-def get_num_pdf_pages(pdf_path):
-    reader = PdfReader(pdf_path)
-    return len(reader.pages)
-# ---- schemas ---------------------------------------------------------------
+from pydantic import BaseModel, ConfigDict
+
+from .imports import *
+
+logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Optional third-party deps — fail silently at import time.
+# ---------------------------------------------------------------------------
+
+try:
+    from abstract_ocr import paddle_image as _paddle_image
+except ImportError:
+    _paddle_image = None
+
+try:
+    from abstract_webtools import (
+        get_soup_text as _get_soup_text,
+        get_body_from_url as _get_body_from_url,
+    )
+    from bs4 import BeautifulSoup
+except ImportError:
+    _get_soup_text = None
+    _get_body_from_url = None
+    BeautifulSoup = None
+
+try:
+    from PyPDF2 import PdfReader as _PdfReader
+except ImportError:
+    _PdfReader = None
+
+# ---------------------------------------------------------------------------
+# Schema helpers
+# ---------------------------------------------------------------------------
 
 
 class GenParams(BaseModel):
@@ -22,22 +57,41 @@ class GenParams(BaseModel):
     use_chat_template: bool = False
     messages: Optional[List[Dict[str, str]]] = None
     do_sample: bool = False
-    unbounded:bool=True
+    unbounded: bool = True
 
     def to_kwargs(self) -> dict:
         return self.model_dump()
 
+
 @dataclass(frozen=True)
 class AnalyzePresets:
-    """How _analyze is parameterized for a given scope."""
     scope: str = "full"
     summary_preset: str = "article"
     keyword_preset: str = "seo"
 
 
-# ---- extractor registry ----------------------------------------------------
+# ---------------------------------------------------------------------------
+# PDF helpers
+# ---------------------------------------------------------------------------
 
-# An extractor turns a source (path or url) into plain text.
+def get_num_pdf_pages(pdf_path: str) -> int:
+    if _PdfReader is None:
+        raise ImportError("PyPDF2 is required. pip install PyPDF2")
+    reader = _PdfReader(pdf_path)
+    return len(reader.pages)
+
+
+def extract_single_pdf_page_text(pdf_path: str, page_index: int) -> str:
+    if _PdfReader is None:
+        raise ImportError("PyPDF2 is required. pip install PyPDF2")
+    reader = _PdfReader(pdf_path)
+    return reader.pages[page_index].extract_text() or ""
+
+
+# ---------------------------------------------------------------------------
+# Extractor registry
+# ---------------------------------------------------------------------------
+
 Extractor = Callable[[str], str]
 _EXTRACTORS: dict[str, Extractor] = {}
 
@@ -54,202 +108,115 @@ def get_extractor(kind: str) -> Extractor:
     return _EXTRACTORS[kind]
 
 
-# Concrete extractors. Each one is the only thing that knows how its source
-# becomes text. If a new format shows up, add one extractor here, done.
-
-register_extractor("image", paddle_image)
-register_extractor("audio", transcribe_file)
-register_extractor("video", transcribe_file)
-register_extractor("website", get_soup_text)
-
-def _website_body_text(url: str) -> str:
-    soup = BeautifulSoup(get_body_from_url(url), "html.parser")
-    lines = [line for line in soup.text.split("\n") if line]
-    return "\n".join(lines)
+def _image_extractor(path: str) -> str:
+    if _paddle_image is None:
+        raise ImportError("abstract_ocr is required for image extraction")
+    return _paddle_image(path)
 
 
+def _transcribe_extractor(path: str) -> str:
+    from ...managers.dispatch import execute_prompt
+    result = execute_prompt(file=path, task="automatic-speech-recognition")
+    return getattr(result, "text", str(result))
+
+
+def _website_extractor(url: str) -> str:
+    if _get_soup_text is None:
+        raise ImportError("abstract_webtools is required for website extraction")
+    return _get_soup_text(url)
+
+
+register_extractor("image", _image_extractor)
+register_extractor("audio", _transcribe_extractor)
+register_extractor("video", _transcribe_extractor)
+register_extractor("website", _website_extractor)
 
 
 def _pdf_full_text(path: str) -> str:
-    """Whole-PDF text. The page-level SEO report is a separate operation."""
     parts = []
-    for page_num in range(get_num_pdf_pages(path)):
-        parts.append(extract_single_pdf_page_text(pdf_path=path, page_index=page_num))
+    for i in range(get_num_pdf_pages(path)):
+        parts.append(extract_single_pdf_page_text(pdf_path=path, page_index=i))
     return "\n\n".join(parts)
+
 
 register_extractor("pdf", _pdf_full_text)
 
-def source_to_text(source: str, kind: str | None = None) -> str:
-    """
-    Convert an incoming source into plain text.
 
-    For kind='text', the source is already text and should not be extracted.
-    For file/url-backed kinds, dispatch through the extractor registry.
-    """
+def source_to_text(source: str, kind: str | None = None) -> str:
     if kind in (None, "", "text"):
         return source
-
     return get_extractor(kind)(source)
-# ---- core operations -------------------------------------------------------
 
-def summarize(source: str, kind: str = None, presets: AnalyzePresets = AnalyzePresets()) -> dict:
-    """Run the SEO analyzer over text extracted from `source`."""
-    logger.info(kind)
 
+# ---------------------------------------------------------------------------
+# Core operations
+# ---------------------------------------------------------------------------
+
+def summarize(source: str, kind: str = None,
+              presets: AnalyzePresets = AnalyzePresets()) -> dict:
+    from ...utils.seo.pdf_utils import _analyze
     text = source_to_text(source, kind)
-
     report = _analyze(
         text,
         scope=presets.scope,
         summary_preset=presets.summary_preset,
         keyword_preset=presets.keyword_preset,
     )
-
     return report.to_dict()
+
 
 async def analyze(
     source: str,
-    kind: SOURCEKIND = "text",
+    kind: str = "text",
     prompt: str = "Please analyze the following content.",
     params: GenParams | None = None,
-    model_key: str = DEFAULT_CHAT_MODEL,
-) -> ChatResult:
+    model_key: str = None,
+) -> Any:
+    from ...managers.dispatch import runner_for
+    from ...imports.src.schemas.chat_schemas import ChatRequest
+    from ...imports.src.constants import DEFAULT_CHAT_MODEL
+    model_key = model_key or DEFAULT_CHAT_MODEL
     params = params or GenParams()
     text = source_to_text(source, kind)
     params = params.model_copy(update={
         "messages": [{"role": "user", "content": f"{prompt}\n\n{text}"}]
     })
-
-    # GenParams carries some fields ChatRequest doesn't know about
-    # (use_chat_template is a runner-internal toggle). Strip them here.
     payload = params.model_dump(exclude={"use_chat_template"})
-
     req = ChatRequest(model_key=model_key, **payload)
     runner = runner_for(model_key)
     return await runner.run(req)
 
-# ---- PDF: the one operation that's actually different ----------------------
 
-def summarize_pdf_by_page(path: str) -> dict:
-    """PDF gets its own per-page summary because PDFSeoReport is page-structured."""
-    report = PDFSeoReport()
-    for page_num in range(get_num_pdf_pages(path)):
-        text = extract_single_pdf_page_text(pdf_path=path, page_index=page_num)
-        report.pages.append(
-            _analyze(
-                text,
-                scope=f"page:{page_num}",
-                summary_preset="brief",
-                keyword_preset="long_tail",
-            )
-        )
-    return report.to_dict()
+# ---------------------------------------------------------------------------
+# Back-compat shims
+# ---------------------------------------------------------------------------
 
+_GEN_KEYS = {"max_new_tokens", "temperature", "top_p", "use_chat_template",
+             "messages", "do_sample"}
 
-async def analyze_pdf_by_page(
-    path: str,
-    prompt: str = "Please analyze this PDF page",
-    params: GenParams | None = None,
-    model_key: str = 'DeepCoder-14B',
-) -> List[Any]:
-    """Generate one analysis per page. Returns a list, indexed by page number."""
-    results: List[Any] = []
-    for page_num in range(get_num_pdf_pages(path)):
-        text = extract_single_pdf_page_text(pdf_path=path, page_index=page_num)
-        page_prompt = f"{prompt} (page {page_num})\n\n{text}"
-        params = params.model_copy(update={
-            "messages": [{"role": "user", "content": page_prompt}]
-        })
-
-        # GenParams carries some fields ChatRequest doesn't know about
-        # (use_chat_template is a runner-internal toggle). Strip them here.
-        payload = params.model_dump(exclude={"use_chat_template"})
-
-        req = ChatRequest(model_key=model_key, **payload)
-        runner = runner_for(model_key) 
-        res = await runner.run(req)
-        results.append(res.text)
-    prompt = f"please provide a full analysis of the following sumaries:\n{results}"
-
-    params = params.model_copy(update={
-        "messages": [{"role": "user", "content": prompt}]
-    })
-
-    # GenParams carries some fields ChatRequest doesn't know about
-    # (use_chat_template is a runner-internal toggle). Strip them here.
-    payload = params.model_dump(exclude={"use_chat_template"})
-
-    req = ChatRequest(model_key=model_key, **payload)
-    res = await runner.run(req)
-    return res.text
-
-
-
-# ---- image analysis: doesn't go through text, separate path ----------------
-
-def image_analysis(path: str, prompt: str = "Please describe the following text", max_new_tokens: int = 100):
-    return deepcoder_image_analysis(
-        image_path=path,
-        prompt=prompt,
-        max_new_tokens=max_new_tokens,
-    )
-
-
-# ---- back-compat shims -----------------------------------------------------
-# Keep the old names working so nothing downstream breaks while you migrate.
-# Mark them deprecated; delete in a follow-up pass.
-
-
-def summarize_text(path=None, prompt="Please summarize the text",
-                model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze(path, "text", prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-def get_pdf_text(path):
-    return [
-        {"page_num": i, "text": extract_single_pdf_page_text(pdf_path=path, page_index=i)}
-        for i in range(get_num_pdf_pages(path))
-    ]
-
-def summarize_pdf(path):       return summarize_pdf_by_page(path)
-def analyze_pdf(path=None, prompt="Please summarize the pdf component",
-                model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze_pdf_by_page(path, prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-def image_to_text(path):       return get_extractor("image")(path)
-##def summarize_image(path):      return summarize(path, "image")  # legacy: was always image-backed
-def summarize_image(path=None, prompt="Please summarize the following",
-                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze(path, "image", prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-def video_to_text(path):       return get_extractor("video")(path)
-##def summarize_video(path):     return summarize(path, "video")
-def summarize_video(path=None, prompt="Please summarize the video transcription",
-                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze(path, "video", prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-def audio_to_text(path):       return get_extractor("audio")(path)
-##def summarize_audio(path):     return summarize(path, "audio")
-def summarize_audio(path=None, prompt="Please summarize the audio transcription",
-                  model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze(path, "audio", prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-def website_to_text(url):           return get_soup_text(url)
-def website_body_to_text(url):      return get_extractor("website")(url)
-##def summarize_website(url):         return summarize(url, "website")
-def summarize_website(url=None, prompt="Please summarize the website",
-                    model_key: str = DEFAULT_CHAT_MODEL, **kw):
-    return analyze(url, "website", prompt=prompt, model_key=model_key,
-                   params=GenParams(**_filter_gen_kw(kw)))
-
-
-_GEN_KEYS = {"max_new_tokens", "temperature", "top_p", "use_chat_template", "messages", "do_sample"}
 
 def _filter_gen_kw(kw: dict) -> dict:
-    """Drop unknown kwargs so legacy callers passing extras don't blow up GenParams."""
     return {k: v for k, v in kw.items() if k in _GEN_KEYS}
 
+
+def image_analysis(path: str, prompt: str = "Please describe the image",
+                   max_new_tokens: int = 100):
+    from ...managers.vision.vision_coder import deepcoder_image_analysis
+    return deepcoder_image_analysis(image_path=path, prompt=prompt,
+                                    max_new_tokens=max_new_tokens)
+
+
+def image_to_text(path: str) -> str:
+    return get_extractor("image")(path)
+
+
+def video_to_text(path: str) -> str:
+    return get_extractor("video")(path)
+
+
+def audio_to_text(path: str) -> str:
+    return get_extractor("audio")(path)
+
+
+def website_to_text(url: str) -> str:
+    return _website_extractor(url)

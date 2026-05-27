@@ -1,6 +1,9 @@
+import logging
 
 from .models_dict import MODELS
-from .imports import MODELS_DICT_PATH,ModelConfig,safe_load_from_json,Dict,make_list
+from .imports import MODELS_DICT_PATH, ModelConfig, safe_load_from_json, Dict, make_list
+
+logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------
 # Model registry
 # ---------------------------------------------------------------------

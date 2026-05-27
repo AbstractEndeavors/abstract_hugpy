@@ -19,11 +19,13 @@ LLAMA_HOST_DEFAULT = get_env_value("LLAMA_HOST") or "http://127.0.0.1"
 
 def get_llama_ports():
     context_tokens = {}
-    for module_key,values in MODEL_REGISTRY.items():
+    for module_key, values in MODEL_REGISTRY.items():
         if values.framework == "llama_cpp":
             port = values.port
-            if not is_number(port):
-                port = get_port(module_key) or port
+            if not isinstance(port, (int, float)):
+                # fall back to env override
+                env_port = os.environ.get(f"LLAMA_PORT_{module_key.upper().replace('-','_')}")
+                port = int(env_port) if env_port else port
             context_tokens[module_key] = port
     return context_tokens
 LLAMA_MODEL_PORTS: dict[str, int] = get_llama_ports()

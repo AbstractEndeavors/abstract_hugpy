@@ -17,8 +17,7 @@ Rules:
 
 from __future__ import annotations
 
-from abstract_utilities import lazy_import
-from abstract_utilities.import_utils.src.layze_import_utils.nullProxy import nullProxy
+from ._compat import lazy_import, nullProxy
 
 
 # ---------------------------------------------------------------------------

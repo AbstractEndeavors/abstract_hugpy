@@ -6,8 +6,12 @@ class WhisperRunner:
     request_type = TranscribeRequest
     result_type = TranscribeResult
 
-    def __init__(self, model_key: str = "whisper"):
-        self.model_key = model_key
+    def __init__(self, cfg):
+        # cfg is a ModelConfig; accept either object or plain string for compat
+        if isinstance(cfg, str):
+            self.model_key = cfg
+        else:
+            self.model_key = cfg.model_key
 
     async def run(self, req: TranscribeRequest) -> TranscribeResult:
         if not req.file_path:

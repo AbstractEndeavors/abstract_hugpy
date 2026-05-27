@@ -2,23 +2,21 @@ from .imports import *
 from .models_config import *
 
 
-
 def resolve_hf_model_dir(base_dir: str) -> str:
-
     if config_exists(base_dir):
         return base_dir
 
-    snapshots = os.path.join(base,"snapshots")
+    snapshots = os.path.join(base_dir, "snapshots")
     if is_dir(snapshots):
         candidates = [
             p for p in itter_dir(snapshots)
             if is_dir(p) and config_exists(p)
         ]
-
         if candidates:
             return max(candidates, key=lambda p: st_mtime(p))
 
-    raise FileNotFoundError(f"No usable Hugging Face model dir found under: {base}")
+    raise FileNotFoundError(f"No usable Hugging Face model dir found under: {base_dir}")
+
 
 # ---------------------------------------------------------------------
 # Registry utilities
@@ -43,38 +41,36 @@ def list_model_options():
             "task": cfg.tasks,
             "framework": cfg.framework,
             "filename": cfg.filename,
-            "max_new_tokens": cfg.max_new_tokens,
+            "model_max_length": cfg.model_max_length,
             "port": cfg.port,
-        
         }
         for key, cfg in MODEL_REGISTRY.items()
     }
+
 
 # ---------------------------------------------------------------------
 # Path resolution
 # ---------------------------------------------------------------------
 
-def get_model_path(key: str):
+def get_model_path(key: str) -> str:
     env_override = get_env_value(f"MODEL_{key.upper()}")
-
     if env_override:
         return env_override
-
     cfg = get_model_config(key)
-    return os.path.join(MODELS_HOME,cfg.folder)
+    return os.path.join(MODELS_HOME, cfg.folder)
 
 
 def get_gguf_file(path: str, cfg: ModelConfig) -> Optional[str]:
     if cfg.filename:
-        candidate = os.path.join(path,cfg.filename)
+        candidate = os.path.join(path, cfg.filename)
         if exists(candidate):
             return candidate
 
-    ggufs = get_glob(path,"*.gguf")
+    ggufs = get_glob(path, "*.gguf")
     if ggufs:
         return ggufs[0]
 
-    recursive_ggufs = get_glob(path,"*.gguf")
+    recursive_ggufs = get_glob(path, "**/*.gguf")
     if recursive_ggufs:
         return recursive_ggufs[0]
 
@@ -82,14 +78,7 @@ def get_gguf_file(path: str, cfg: ModelConfig) -> Optional[str]:
 
 
 def model_looks_downloaded(path: str, cfg: Optional[ModelConfig] = None) -> bool:
-    """
-    Lightweight check to avoid treating partial Hugging Face / Git-LFS
-    pointer directories as usable model directories.
-
-    Supports both:
-      - transformers model dirs
-      - GGUF model dirs for llama.cpp
-    """
+    """Lightweight check — avoids treating partial HF / Git-LFS pointer dirs as usable."""
     if not exists(path) or not is_dir(path):
         return False
 
@@ -100,8 +89,7 @@ def model_looks_downloaded(path: str, cfg: Optional[ModelConfig] = None) -> bool
     if not config_exists(path):
         return False
 
-    safetensor_files = list(get_glob(path,"*.safetensors"))
-
+    safetensor_files = list(get_glob(path, "*.safetensors"))
     if safetensor_files:
         for file_path in safetensor_files:
             if st_size(file_path) < 1024 * 1024:
@@ -116,8 +104,9 @@ def model_looks_downloaded(path: str, cfg: Optional[ModelConfig] = None) -> bool
         "preprocessor_config.json",
         "processor_config.json",
     ]
+    path_obj = Path(path)
+    return any((path_obj / name).exists() for name in expected_any)
 
-    return any((path / name).exists() for name in expected_any)
 
 # ---------------------------------------------------------------------
 # Model download
@@ -132,38 +121,36 @@ def ensure_model(key: str) -> str:
 
     os.makedirs(path, exist_ok=True)
 
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise ImportError(
+            "huggingface_hub is required for model download. "
+            "pip install huggingface_hub"
+        ) from exc
+
     download_kwargs = {
         "repo_id": cfg.hub_id,
-        "local_dir": str,
+        "local_dir": str(path),
         "local_dir_use_symlinks": False,
     }
-
     if cfg.include:
         download_kwargs["allow_patterns"] = cfg.include
 
     snapshot_download(**download_kwargs)
-
     return path
 
 
 def resolve_model_source(key: str) -> str:
     cfg = get_model_config(key)
     local = get_model_path(key)
-    env_override = get_env_value(f"MODEL_{key.upper()}")
-
-    if env_override and not exists(local):
-        raise FileNotFoundError(
-            f"MODEL_{key.upper()}={env_override} was set but path does not exist"
-        )
 
     if cfg.framework == "llama_cpp":
         if not model_looks_downloaded(local, cfg):
             return cfg.hub_id
-
         gguf = get_gguf_file(local, cfg)
         if not gguf:
             raise FileNotFoundError(f"No GGUF file found in {local}")
-
         return str(gguf)
 
     if model_looks_downloaded(local, cfg):
@@ -177,21 +164,16 @@ def resolve_model_source(key: str) -> str:
 # ---------------------------------------------------------------------
 
 class _LazyModelPaths:
-    """
-    Dict-like that resolves on access, not import.
-
-    Managers that cache DEFAULT_PATHS["foo"] in __init__ get the
-    correct value at construction time — even if the model was
-    downloaded or deleted after the module was first imported.
-    """
+    """Dict-like that resolves on access — managers that cache DEFAULT_PATHS["foo"]
+    in __init__ get the correct value at construction time."""
 
     def __getitem__(self, key: str) -> str:
         return resolve_model_source(key)
 
-    def get(self, key: str, default=None) -> str:
+    def get(self, key: str, default=None):
         try:
             return self[key]
-        except KeyError:
+        except (KeyError, FileNotFoundError):
             return default
 
     def __contains__(self, key: str) -> bool:

@@ -3,8 +3,16 @@ import logging
 logging.basicConfig(level=logging.WARNING)
 logging.getLogger("pdfminer").setLevel(logging.WARNING)
 logging.getLogger("pdfplumber").setLevel(logging.WARNING)
-import pdfplumber
-from PyPDF2 import PdfReader
+
+try:
+    import pdfplumber as pdfplumber
+except ImportError:
+    pdfplumber = None
+
+try:
+    from PyPDF2 import PdfReader
+except ImportError:
+    PdfReader = None
 
 # -------------------------
 # QUALITY SCORING
@@ -45,6 +53,8 @@ def normalize_text(text: str) -> str:
 # -------------------------
 def extract_with_pdfplumber(pdf_path: str, first_page: int = None, last_page: int = None):
     """Extract text from PDF using pdfplumber, yield page by page."""
+    if pdfplumber is None:
+        raise ImportError("pdfplumber is required. pip install pdfplumber")
     with pdfplumber.open(pdf_path) as pdf:
         total_pages = len(pdf.pages)
         start = first_page or 0
@@ -68,6 +78,8 @@ def extract_with_pdfplumber(pdf_path: str, first_page: int = None, last_page: in
 
 def extract_with_pypdf2(pdf_path: str, first_page: int = None, last_page: int = None):
     """Extract text from PDF using PyPDF2, yield page by page."""
+    if PdfReader is None:
+        raise ImportError("PyPDF2 is required. pip install PyPDF2")
     reader = PdfReader(pdf_path)
     total_pages = len(reader.pages)
     start = first_page or 0

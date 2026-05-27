@@ -3,8 +3,12 @@ from .imports import *
 class SummarizeRunner:
     request_type = SummarizeRequest
     result_type = SummarizeResult
-    def __init__(self, model_key: str):
-        self.model_key = model_key
+    def __init__(self, cfg):
+        # cfg is a ModelConfig; accept either object or plain string for compat
+        if isinstance(cfg, str):
+            self.model_key = cfg
+        else:
+            self.model_key = cfg.model_key
     async def run(self, req):
         summary = await asyncio.to_thread(
             summarize, req.text, backend=self.model_key,

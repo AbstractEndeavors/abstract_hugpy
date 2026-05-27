@@ -176,11 +176,6 @@ MODELS = {
     "primary_task": "summarization",
     "port": None,
   },
-  # NOTE: feature-extraction / sentence-similarity have no runner or builder
-  # registered. validate_registry() will reject these two until you add a
-  # ("transformers", "feature-extraction") runner+builder pair. Leaving them
-  # here as a deliberate signal — if you don't intend to serve them yet,
-  # remove the entries; if you do, wire up the runner.
   "all-minilm-l6-v2": {
     "model_max_length": 512,
     "include": None,
